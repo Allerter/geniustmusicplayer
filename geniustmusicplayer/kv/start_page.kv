@@ -1,0 +1,275 @@
+
+<ScaleLabel@MDLabel>:
+    text_size: self.width, None
+    _scale: 1. if self.texture_size[1] < self.height else float(self.height) / self.texture_size[1]
+    canvas.before:
+        PushMatrix
+        Scale:
+            origin: self.center
+            x: self._scale or 1.
+            y: self._scale or 1.
+    canvas.after:
+        PopMatrix
+
+<StartPage>:
+    welcome_label: welcome_label
+    text_label: text_label
+    manual_btn: manual_info
+    spotify_btn: spotify_info
+    genius_btn: genius_info
+
+    cols: 1
+#    canvas.before:
+#        Rectangle:
+#            pos: self.pos
+#            size: self.size
+#            source: 'images/background.png'
+
+    Image:
+        source: 'images/icon.png'
+        size_hint: 0.5, 0.5
+        pos_hint: {'center_x': .5, 'center_y': 0.85}
+    ScaleLabel:
+        id: welcome_label
+        halign: 'center'
+        text: 'GeniusT Music Player'
+        font_style: "H4"
+        pos_hint: {'center_x': .5, 'center_y': .70}
+
+    MDFloatLayout:
+        id: choices_layout
+        radius: [25, 25, 25, 25]
+        size_hint: 0.9, 0.5
+        pos_hint: {'center_x': 0.5, 'center_y': .3}
+
+        ScaleLabel:
+            id: text_label
+            halign: 'justify'
+            text: 'What kind of music do you listen to?'
+            halign: 'center'
+            font_size: '18sp'
+            pos_hint: {'center_x': .5, 'center_y': 0.90}
+        GridLayout:
+            cols: 1
+            spacing: 10
+            row_force_default: True
+            row_default_height: '50dp'
+            size_hint: 0.85, None
+            size_hint_y: None
+            padding: .15
+            pos_hint: {'center_x': .5, 'center_y': .45}
+            MDRectangleFlatButton:
+                id: manual_info
+                text: 'Enter Preferences'
+                on_release: root.select_choice(self)
+                size_hint: .8, None
+            MDRectangleFlatIconButton:
+                id: spotify_info
+                icon: "spotify"
+                text: 'Get Preferences from Spotify'
+                on_release: root.select_choice(self)
+                size_hint: .8, None
+            MDRectangleFlatIconButton:
+                id: genius_info
+                icon: "images/icons8-genius-24.png"
+                text: 'Get Preferences from Genius'
+                on_release: root.select_choice(self)
+                size_hint: .8, None
+            Widget:
+                id: seperator
+                canvas:
+                    BorderImage:
+                        source: 'images/border.png'
+                        pos: choices_layout.pos[0], choices_layout.pos[1]
+                        size: choices_layout.size[0], choices_layout.size[1]
+            #Widget:
+            #    id: separator
+            #    size_hint_y: None
+            #    canvas:
+            #        Color:
+            #            rgba: app.theme_cls.accent_color
+            #        Line:
+            #            width: 1.1
+            #            rectangle: choices_layout.pos[0], choices_layout.pos[1], choices_layout.size[0], choices_layout.size[1]
+
+<ManualInfoPage>:
+    age_button: age_button
+    select_button: select_button
+    button_grid: button_grid
+
+    canvas.before:
+        Rectangle:
+            pos: self.pos
+            size: self.size
+            source: 'images/background.png'
+    ScaleLabel:
+        text: 'Favorite Genres'
+        pos_hint: {'center_x': .5, 'center_y': .8}
+        font_style: "H4"
+        halign: "center"
+    ScaleLabel:
+        id: age_genre_text
+        text: 'Enter age or select genres yourself.'
+        halign: 'center'
+        pos_hint: {'center_x': .5, 'center_y': .7}
+    Label:
+        text: '1/3'
+        pos_hint: {'center_x': .9, 'center_y': .05}
+    GridLayout:
+        id: button_grid
+        cols: 2
+        rows: 1
+        row_force_default: True
+        row_default_height: '50dp'
+        size_hint_y: None
+        pos_hint: {'center_x': .5, 'center_y': .1}
+        MDRectangleFlatButton:
+            id: age_button
+            text: 'Enter Age'
+            size_hint: (.40, .05)
+            on_press: root.enter_age(self)
+        MDRectangleFlatButton:
+            id: select_button
+            text: 'Select Genres'
+            size_hint: (.40, .05)
+            on_press: root.select_genres(self)
+
+
+<AgePage>:
+    Label:
+        pos_hint: {'center_x': .5, 'center_y': .7}
+        text: 'Enter age (e.g. 24)'
+    Label:
+        text: '2/3'
+        pos_hint: {'center_x': .9, 'center_y': .05}
+    TextInput:
+        id: text_input
+        pos_hint: {'center_x': .5, 'center_y': .6}
+        size_hint: 0.2, 0.1
+    Button:
+        id: enter_age
+        text: 'Submit'
+        size_hint: (.1, .090)
+        pos_hint: {'center_x': .6, 'center_y': .5}
+        on_press: root.on_press(text_input.text)
+
+<ArtistsPage>:
+    search_layout: search_layout
+    artists_label: artists_label
+
+    canvas.before:
+        Rectangle:
+            pos: self.pos
+            size: self.size
+            source: 'images/background.png'
+    ScaleLabel:
+        text: 'Favorite Artists'
+        pos_hint: {'center_x': .5, 'center_y': .9}
+        font_style: "H5"
+        halign: "center"
+    ScaleLabel:
+        text: 'Add your favorite artists (optional).'
+        halign: 'center'
+        pos_hint: {'center_x': .5, 'center_y': .85}
+    ScaleLabel:
+        id: artists_label
+        text: '[b]Artists:[/b] -'
+        markup: True
+        halign: 'left'
+        pos: 5, self.pos[1]
+        pos_hint: {'center_y': .8}
+    #GridLayout:
+    #    id: search_grid
+    #    cols: 2
+    #    rows: 1
+    #    row_force_default: True
+    #    row_default_height: '40dp'
+    #    size_hint_y: None
+    #    pos_hint: {'center_x': .5, 'center_y': .7}
+    #    TextInput:
+    #        id: text_input
+    #        size_hint: .8, .03
+    #        multiline: False
+    #    MDRaisedButton:
+    #        id: search_artist
+    #        text: 'Search'
+    #        size_hint: .2, .03
+    #        on_press: root.on_press(text_input.text)
+    #GridLayout:
+    #    id: hits_grid
+    #    cols: 1
+    #    spacing: 10
+    #    size_hint_y: None
+    #    size_hint: (0.7, None)
+    #    pos_hint: {'center_x': .5, 'center_y': .6}
+    Search:
+        id: search_layout
+    MDRectangleFlatButton:
+        id: finish
+        text: 'Finish'
+        size_hint: (1, .07)
+        font_size: sp(16)
+        pos_hint: {'center_x': .5, 'center_y': .15}
+        on_press: root.finish()
+    Label:
+        color: 'black'
+        text: '2/2'
+        pos_hint: {'center_x': .9, 'center_y': .05}
+
+<CustomOneLineListItem>:
+    on_press: self.add_artist(self.text)
+
+<Search>:
+    MDBoxLayout:
+        size_hint_y: None
+        pos_hint: {'center_x': .5, 'center_y': .2}
+        orientation: 'vertical'
+        spacing: dp(10)
+        padding: dp(20)
+
+        MDBoxLayout:
+            adaptive_height: True
+
+            MDIconButton:
+                icon: 'magnify'
+
+            MDTextField:
+                id: search_field
+                hint_text: 'Search artist'
+                on_text: root.register_input()
+        RecycleView:
+            id: rv
+            key_viewclass: 'viewclass'
+            key_size: 'height'
+            size_hint_y: None
+            size: self.size[0], 300
+
+            RecycleBoxLayout:
+                padding: dp(10)
+                default_size: None, dp(48)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+
+# ----------------- OAuth Pages -----------------
+
+<OAuthInfoPage>:
+    welcome_label: welcome_label
+    progress_bar: progress_bar
+
+    canvas.before:
+        Rectangle:
+            pos: self.pos
+            size: self.size
+            source: 'images/background.png'
+    pos_hint: {'center_x': .5, 'center_y': .5}
+    ScaleLabel:
+        id: welcome_label
+        halign: 'center'
+        text: 'Processing Data'
+        font_style: "H5"
+    MDProgressBar:
+        id: progress_bar
+        pos_hint: {"center_y": .45}
+        type: "indeterminate"

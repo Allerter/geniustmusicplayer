@@ -1,0 +1,127 @@
+#: include kv/start_page.kv
+<ScaleLabel@MDLabel>:
+    text_size: self.width, None
+    _scale: 1. if self.texture_size[1] < self.height else float(self.height) / self.texture_size[1]
+    canvas.before:
+        PushMatrix
+        Scale:
+            origin: self.center
+            x: self._scale or 1.
+            y: self._scale or 1.
+    canvas.after:
+        PopMatrix
+# ----------------- Main Page -----------------
+<MainPage>:
+    playback_slider: playback_slider
+    play_button: play_button
+    volume_slider: volume_slider
+    song: None
+
+    ScaleLabel:
+        id: title
+        text: ''
+        pos_hint: {'center_x': .5, 'center_y': 0.9}
+        font_style: "H3"
+        halign: "center"
+    ScaleLabel:
+        id: artist
+        text: ''
+        pos_hint: {'center_x': .5, 'center_y': 0.85}
+        font_style: "Subtitle1"
+        halign: "center"
+    AsyncImage:
+        id: cover_art
+        source: 'images/empty_coverart.png'
+        pos_hint: {'center_x': .5, 'center_y': 0.55}
+        size_hint_y: 0.5
+        anim_delay: 0
+        allow_stretch: True
+        size: root.size[0], root.size[1]
+    # Playback Progress
+    # GridLayout:
+    # pos_hint: {'center_x': .5, 'center_y': .2}
+    # size_hint_y: None
+    MDLabel:
+        id: track_current
+        text: '0:00'
+        size_hint: 0.1, None
+        pos_hint: {'center_y': 0.25}
+        pos: root.playback_slider.pos[0] - 25, self.pos[1]
+    PlaybackSlider:
+        id: playback_slider
+    MDLabel:
+        id: track_length
+        text: ''
+        size_hint: 0.1, None
+        pos_hint: {'center_y': 0.25}
+        pos: root.playback_slider.pos[0] + root.playback_slider.size[0] - 6, self.pos[1]
+
+    # Volume
+    MDIcon:
+        size_hint_x: None
+        size_hint_y: None
+        pos: root.volume_slider.center_x - 10, root.volume_slider.top - 50
+        icon: "volume-high"
+    VolumeSlider:
+        id: volume_slider
+        size_hint: None, 0.15
+        pos_hint: {'center_x': 0.90, 'center_y': 0.1}
+
+
+    # Playlist
+    ImageButton:
+        id: playlist_button
+        size_hint: .1, .1
+        pos_hint: {'center_x': 0.1, 'center_y': 0.1}
+        allow_stretch: True
+        source: 'images/playlist.png'
+        on_release: root.playlist_menu.open()
+
+    # Playback Controls
+    ImageButton:
+        id: previous_button
+        size_hint: .15, .15
+        pos_hint: {'center_x': 0.3, 'center_y': 0.1}
+        allow_stretch: True
+        source: 'images/previous.png'
+        on_release: play_button.play_previous(self)
+    PlayButton:
+        id: play_button
+        size_hint: .2, .2
+        pos_hint: {'center_x': 0.5, 'center_y': 0.11}
+        allow_stretch: True
+        source: 'images/play2.png'
+        # on_press: print(self.id)
+    ImageButton:
+        id: next_button
+        size_hint: .15, .15
+        size_hint_y: None
+        pos_hint: {'center_x': 0.7, 'center_y': 0.1}
+        allow_stretch: True
+        source: 'images/next.png'
+        on_release: play_button.play_next(self)
+
+<PlaybackSlider>:
+    min: 0
+    value: 0
+    hint: True
+    size_hint: 0.8, None
+    pos_hint: {'center_x': 0.5, 'center_y': 0.25}
+
+<VolumeSlider>:
+    min: 0
+    max: 100
+    value: 50
+    hint: False
+    orientation: 'vertical'
+
+<PlayButton>
+
+<ImageButton@ButtonBehavior+Image>
+
+<RightContentCls>
+    MDIconButton:
+        icon: 'close-box'
+        user_font_size: "16sp"
+        pos_hint: {"center_y": .5}
+        on_release: app.main_page.remove_playlist_item(root)
