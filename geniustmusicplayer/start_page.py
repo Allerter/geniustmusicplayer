@@ -239,7 +239,7 @@ class ArtistsPage(FloatLayout):
             volume=self.app.volume,
             playlist=self.app.playlist.tracks,
         )
-
+        switch_screen(main.LoadingPage(), 'loading_page')
         # get playlist
         tracks = self.app.api.get_recommendations(
             self.app.genres,
@@ -248,46 +248,10 @@ class ArtistsPage(FloatLayout):
             async_request=False,
         ).response
         self.app.playlist = main.Playlist(tracks)
-
-        # switch screen and remove other screens
-        # def remove_screens(*args):
-        #    for screen in self.app.screen_manager.children[:]:
-        #        if not isinstance(screen, main.MainPage):
-        #            self.app.screen_manager.remove_widget(screen)
         self.app.main_page = main.MainPage()
-        # Clock.schedule_once(remove_screens, 2)
-
-        # load song
         song = self.app.playlist.next()
-        song_file = requests.get(song.preview_url)
-        mp3_filename = f'songs/{song.artist} - {song.name} preview.mp3'
-        ogg_filename = mp3_filename[:-4] + '.ogg'
-        with open(mp3_filename, 'wb') as f:
-            f.write(song_file.content)
-        ffmpeg.run(
-            ffmpeg.output(
-                ffmpeg.input(mp3_filename),
-                ogg_filename)
-        )
-        song.filename = ogg_filename
-        self.app.song = SoundLoader.load(song.filename)
-        self.app.song.last_pos = 0
-        self.app.song.name = song.name
-        self.app.song.artist = song.artist
-        self.app.song.cover_art = (
-            song.cover_art
-            if song.cover_art is not None
-            else 'images/empty_coverart.png'
-        )
-
-        # update UI to reflect song metadata
-        self.app.main_page.ids.track_length.text = str(timedelta(
-            seconds=self.app.song.length)
-        )[3:7]
-        self.app.main_page.ids.playback_slider.max = self.app.song.length
-        self.app.main_page.update_song_info()
-        self.app.main_page.update_cover_art()
-
+        self.app.play_button.load_song(song)
+        self.app.main_page.edit_ui_for_song()
         switch_screen(self.app.main_page, 'main_page')
 
 class CustomOneLineListItem(OneLineListItem):

@@ -14,18 +14,25 @@ class Song:
         self.artist = artist
         self.id_spotify = id_spotify
         self.isrc = isrc
-        self.cover_art = cover_art
+        self.cover_art = (cover_art
+                          if cover_art is not None
+                          else 'images/empty_coveart.png'
+                          )
         self.preview_url = preview_url
+        self.preview_file = None
         self.download_url = download_url
         self.filename = None
 
+    def __repr__(self):
+        return f'Song(artist={self.artist!r}, song={self.name!r})'
 
 class Response:
 
-    def __init__(self, trigger):
+    def __init__(self, trigger, context: dict = None):
         self.response = None
         self.is_finished = False
         self.trigger = trigger
+        self.context = context if context else {}
         Logger.debug('Response: Response object with trigger %s', trigger)
 
     def on_finish(self, req, result):
@@ -34,6 +41,9 @@ class Response:
         if req.resp_status == 200:
             if req.url.startswith('https://geniust.herokuapp.com/api/recommendations'):
                 self.response = [Song(**x) for x in result['response']['tracks']]
+            elif not req.url.startswith(Sender.API_ROOT):
+                # self.context['song'].preview_raw = result.content
+                self.response = result
             else:
                 self.response = result['response']
         else:
@@ -43,6 +53,10 @@ class Response:
         if self.trigger is not None:
             Logger.debug('Trigger: Activated for %s', req.url)
             self.trigger()
+
+    def __repr__(self):
+        return (f'Response(is_finished={self.is_finished},'
+                f' trigger={True if self.trigger else False}')
 
 
 class Sender:
@@ -71,10 +85,14 @@ class Sender:
         web=False,
         trigger=None,
         async_request: bool = True,
+        api: bool = True,
         **kwargs
     ):
         """Makes a request to Genius."""
-        url = self.API_ROOT + path
+        if api:
+            url = self.API_ROOT + path
+        else:
+            url = path
 
         params = params if params else {}
 
@@ -90,7 +108,7 @@ class Sender:
         new_url = parse.urlunparse(url_parse)
 
         # Make the request
-        response = Response(trigger)
+        response = Response(trigger, context=kwargs)
         req = UrlRequest(new_url,
                          on_success=response.on_finish,
                          on_failure=response.on_finish,
@@ -103,7 +121,7 @@ class Sender:
         # #Logger.debug('request to %s', new_url)
 
         # Enforce rate limiting
-        time.sleep(self.sleep_time)
+        # time.sleep(self.sleep_time)
 
         if not async_request:
             req.wait()
@@ -173,6 +191,22 @@ class API():
             params=params,
             trigger=trigger,
             async_request=async_request
+        )
+
+        return res
+
+    def download_preview(
+        self,
+        song: Song,
+        trigger=None,
+        async_request: bool = True
+    ) -> List[str]:
+        res = self.sender.make_request(
+            song.preview_url,
+            # song=song,
+            trigger=trigger,
+            async_request=async_request,
+            api=False,
         )
 
         return res
