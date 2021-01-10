@@ -16,7 +16,7 @@ class Song:
         self.isrc = isrc
         self.cover_art = (cover_art
                           if cover_art is not None
-                          else 'images/empty_coveart.png'
+                          else 'images/empty_coverart.png'
                           )
         self.preview_url = preview_url
         self.preview_file = None

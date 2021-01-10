@@ -29,7 +29,10 @@ Logger.setLevel(LOG_LEVELS['debug'])
 # os.environ['KIVY_IMAGE'] = 'sdl2,gif'
 # os.environ['KIVY_AUDIO'] = 'ffpyplayer'
 
-if platform != 'android':
+if platform == 'android':
+    from android_audio_player import SoundAndroidPlayer
+    SoundLoader.register(SoundAndroidPlayer)
+else:
     Window.size = (330, 650)
 
 
@@ -151,6 +154,7 @@ class PlayButton(ButtonBehavior, Image):
             song.preview_file = f'songs/{song.artist} - {song.name} preview.mp3'
             with open(song.preview_file, 'wb') as f:
                 f.write(data)
+
         app.song = SoundLoader.load(song.preview_file)
         app.song.song_object = song
         app.song.name = song.name
@@ -170,14 +174,17 @@ class PlayButton(ButtonBehavior, Image):
             if app.song.song_object not in app.history:
                 app.history.append(app.playlist.current_track)
 
-        if song.preview_file:
-            self.load_song(song)
-        elif app.song is None or app.song.song_object != song:
+        if app.song is None or app.song.song_object != song:
             def call_load_song(*args):
                 self.load_song(song, res.response)
 
-            trigger = Clock.create_trigger(call_load_song)
-            res = app.api.download_preview(song, trigger=trigger)
+            if song.preview_file:
+                self.load_song(song)
+            else:
+                Logger.debug('play_track: downloading preview')
+                app.main_page.ids.cover_art.source = 'images/loading_coverart.gif'
+                trigger = Clock.create_trigger(call_load_song)
+                res = app.api.download_preview(song, trigger=trigger)
             return
 
         app.song.play()
