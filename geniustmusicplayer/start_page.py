@@ -1,27 +1,21 @@
 from time import time
 import secrets
-from datetime import timedelta
 
-import requests
-import ffmpeg
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.properties import ListProperty, ObjectProperty
 from kivy.clock import Clock
 from kivy.utils import get_color_from_hex
-from kivy.core.audio import SoundLoader
-from kivy.core.window import Window
 from kivy.uix.textinput import TextInput
 from kivy.logger import Logger
 from kivymd.app import MDApp
-from kivymd.uix.button import MDRectangleFlatButton, MDRaisedButton, MDFlatButton
+from kivymd.uix.button import MDRectangleFlatButton, MDRaisedButton
 from kivymd.uix.label import MDLabel
 from kivymd.uix.list import OneLineListItem
-from kivymd.uix.textfield import MDTextField
+# from kivymd.uix.textfield import MDTextField
 from kivymd.uix.spinner import MDSpinner
-from kivymd.uix.snackbar import Snackbar
 
-from utils import log, switch_screen
+from utils import log, switch_screen, create_snackbar
 
 
 class StartPage(FloatLayout):
@@ -91,12 +85,25 @@ class ManualInfoPage(FloatLayout):
                     self.add_widget(self.error_label)
                 return
 
+            def retry(*args):
+                self.snackbar.dismiss()
+                self.retry_event.cancel()
+                self.enter_age(button)
+                return
+
             def get_and_save_genres(*args):
-                self.app.genres = req.response['genres']
-                Logger.debug(self.app.genres)
+                if req.status_code == 200:
+                    Logger.debug(self.app.genres)
+                    self.app.genres = req.response['genres']
+                    switch_screen(ArtistsPage(), 'artists_page')
+                else:
+                    msg = "Failed to get genrs. Retrying in 3 seconds."
+                    self.snackbar = create_snackbar(msg, retry)
+                    self.retry_event = Clock.schedule_once(retry, 3)
+                    self.snackbar.open()
+
             trigger = Clock.create_trigger(get_and_save_genres)
             req = self.app.api.get_genres(age=age, trigger=trigger)
-            switch_screen(ArtistsPage(), 'artists_page')
         else:
             self.input_displayed = True
             self.ids.age_genre_text.text = 'Enter your age, e.g. 24'
@@ -146,32 +153,21 @@ class ManualInfoPage(FloatLayout):
                     self.add_widget(self.error_label)
         else:
             def retry(*args):
+                self.retry_event.cancel()
                 self.snackbar.dismiss()
                 self.select_genres(None)
 
             def create_genres_grid(*args):
                 self.remove_widget(self.loading)
-                genres = req.response.get('genres')
-                Logger.debug('Fetched Genres: %s', genres)
-                if not genres:
-                    self.snackbar = snackbar = Snackbar(
-                        text="Couldn't get genres.",
-                        snackbar_x="10dp",
-                        snackbar_y="10dp",
-                    )
-                    snackbar.size_hint_x = (
-                        Window.width - (snackbar.snackbar_x * 2)
-                    ) / Window.width
-                    snackbar.buttons = [
-                        MDFlatButton(
-                            text="RETRY",
-                            text_color=(1, 1, 1, 1),
-                            on_release=retry,
-                        ),
-                    ]
-                    snackbar.open()
+                if req.status_code != 200:
+                    msg = "Failed to get genres. Reyting in 3 seconds."
+                    self.snackbar = create_snackbar(msg, retry)
+                    self.retry_event = Clock.schedule_once(retry, 3)
+                    self.snackbar.open()
                     return
 
+                genres = req.response.get('genres')
+                Logger.debug('Fetched Genres: %s', genres)
                 genres_grid = GridLayout(
                     cols=3,
                     spacing=15,
@@ -228,9 +224,7 @@ class ArtistsPage(FloatLayout):
         self.app = MDApp.get_running_app()
         self.app.artists_page = self
 
-    def finish(self):
-        import main
-
+    def save_preferences(self):
         # save user preferences
         self.app.store.put(
             'user',
@@ -239,20 +233,42 @@ class ArtistsPage(FloatLayout):
             volume=self.app.volume,
             playlist=self.app.playlist.tracks,
         )
-        switch_screen(main.LoadingPage(), 'loading_page')
+        self.finish()
+
+    def finish(self):
+        import main
+
+        def retry(*args):
+            self.snackbar.dismiss()
+            self.retry_event.cancel()
+            self.finish()
+
+        def get_tracks(*args):
+            if req.status_code == 200:
+                tracks = req.response['tracks']
+                switch_screen(main.LoadingPage(), 'loading_page')
+                # create main page and get playlist
+                self.app.playlist = main.Playlist(tracks)
+                self.app.main_page = main.MainPage()
+                song = self.app.playlist.next()
+                self.app.play_button.load_song(song)
+                self.app.main_page.edit_ui_for_song()
+                switch_screen(self.app.main_page, 'main_page')
+            else:
+                msg = "Failed to get playlist. Retrying in 3 seconds."
+                self.snackbar = create_snackbar(msg, retry)
+                self.retry_event = Clock.schedule_once(retry, 3)
+                self.snackbar.open()
+
         # get playlist
-        tracks = self.app.api.get_recommendations(
+        trigger = Clock.create_trigger(get_tracks)
+        req = self.app.api.get_recommendations(
             self.app.genres,
             self.app.artists,
             has_preview_url=True,
-            async_request=False,
-        ).response
-        self.app.playlist = main.Playlist(tracks)
-        self.app.main_page = main.MainPage()
-        song = self.app.playlist.next()
-        self.app.play_button.load_song(song)
-        self.app.main_page.edit_ui_for_song()
-        switch_screen(self.app.main_page, 'main_page')
+            trigger=trigger,
+            async_request=True,
+        )
 
 class CustomOneLineListItem(OneLineListItem):
 

@@ -1,8 +1,11 @@
 from datetime import timedelta
-from math import ceil
+from math import ceil, floor
+import os
+from os.path import join
 
-import ffmpeg
-import requests
+os.environ['KIVY_AUDIO'] = 'android'
+os.environ['KIVY_IMAGE'] = 'pil,sdl2,gif'
+
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
 from kivymd.uix.slider import MDSlider
@@ -22,7 +25,7 @@ from kivy.utils import platform
 from kivy.loader import Loader
 
 import start_page
-from utils import log, switch_screen
+from utils import log, switch_screen, create_snackbar
 from api import API
 
 Logger.setLevel(LOG_LEVELS['debug'])
@@ -31,8 +34,15 @@ Logger.setLevel(LOG_LEVELS['debug'])
 
 if platform == 'android':
     from android_audio_player import SoundAndroidPlayer
+    # from android.storage import primary_external_storage_path
+    # from android.permissions import request_permissions, Permission
+    # request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
+    # storage_path = primary_external_storage_path()
+    from android.storage import app_storage_path
+    storage_path = app_storage_path()
     SoundLoader.register(SoundAndroidPlayer)
 else:
+    storage_path = 'songs/'
     Window.size = (330, 650)
 
 
@@ -151,9 +161,11 @@ class PlayButton(ButtonBehavior, Image):
         #    )
         #    song.filename = ogg_filename
         if data:
-            song.preview_file = f'songs/{song.artist} - {song.name} preview.mp3'
+            song.preview_file = join(storage_path,
+                                     f'{song.artist} - {song.name} preview.mp3')
             with open(song.preview_file, 'wb') as f:
                 f.write(data)
+            Logger.debug('load_song: %s', song.preview_file)
 
         app.song = SoundLoader.load(song.preview_file)
         app.song.song_object = song
@@ -168,7 +180,6 @@ class PlayButton(ButtonBehavior, Image):
 
     @log
     def play_track(self, song, seek=0):
-        Logger.debug('play_track: playing %s', song.name)
         if app.song:
             app.song.stop()
             if app.song.song_object not in app.history:
@@ -191,6 +202,7 @@ class PlayButton(ButtonBehavior, Image):
         app.song.seek(seek)
         self.source = 'images/stop2.png'
         self.event = Clock.schedule_interval(self.update_track_current, 1)
+        Logger.debug('play_track: playing %s', song.name)
 
     @log
     def control(self, instance, **kwargs):
@@ -202,15 +214,30 @@ class PlayButton(ButtonBehavior, Image):
 
         if play_next or app.song is None or app.song.state == 'stop':
             if (play_next and app.playlist.is_last) or app.playlist.tracks == []:
-                tracks = app.api.get_recommendations(
+                def retry(*args):
+                    self.snackbar.dismiss()
+                    self.retry_event.cancel()
+                    self.control(instance, play_next=True)
+
+                def get_tracks(*args):
+                    if req.status_code == 200:
+                        tracks = req.response['tracks']
+                        app.playlist = Playlist(tracks)
+                        self.control(instance, play_next=True)
+                    else:
+                        msg = "Failed to get playlist. Retrying in 3 seconds."
+                        self.snackbar = create_snackbar(msg, retry)
+                        self.retry_event = Clock.schedule_once(retry, 3)
+                        self.snackbar.open()
+
+                trigger = Clock.create_trigger(get_tracks)
+                req = app.api.get_recommendations(
                     app.genres,
                     app.artists,
                     has_preview_url=True,
-                    async_request=False,
-                ).response
-                app.playlist = Playlist(tracks)
-                self.control(instance, play_next=True)
-                return
+                    trigger=trigger,
+                    async_request=True,
+                )
             elif play_next or app.song is None:
                 self.stop_song()
                 song = app.playlist.next()

@@ -31,6 +31,7 @@ class Response:
     def __init__(self, trigger, context: dict = None):
         self.response = None
         self.is_finished = False
+        self.status_code = 0
         self.trigger = trigger
         self.context = context if context else {}
         Logger.debug('Response: Response object with trigger %s', trigger)
@@ -38,7 +39,8 @@ class Response:
     def on_finish(self, req, result):
         Logger.debug('%s status code for %s', req.resp_status, req.url)
         self.is_finished = True
-        if req.resp_status == 200:
+        self.status_code = req.resp_status
+        if self.status_code == 200:
             if req.url.startswith('https://geniust.herokuapp.com/api/recommendations'):
                 self.response = [Song(**x) for x in result['response']['tracks']]
             elif not req.url.startswith(Sender.API_ROOT):
