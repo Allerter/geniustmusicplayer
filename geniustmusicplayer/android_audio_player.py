@@ -1,10 +1,10 @@
 from jnius import autoclass
 from kivy.core.audio import Sound
 
-
 MediaPlayer = autoclass("android.media.MediaPlayer")
 FileInputStream = autoclass("java.io.FileInputStream")
 AudioManager = autoclass("android.media.AudioManager")
+AudioAttributes = autoclass("android.media.AudioAttributes")
 
 
 class SoundAndroidPlayer(Sound):
@@ -19,7 +19,12 @@ class SoundAndroidPlayer(Sound):
     def load(self):
         self.unload()
         self._mediaplayer = MediaPlayer()
-        self._mediaplayer.setAudioStreamType(AudioManager.STREAM_MUSIC)
+        self._mediaplayer.setAudioAttributes(
+            (AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .build())
+        )
         self._mediaplayer.setDataSource(self.filename)
         self._mediaplayer.prepare()
 
@@ -36,7 +41,8 @@ class SoundAndroidPlayer(Sound):
     def stop(self):
         if not self._mediaplayer:
             return
-        self._mediaplayer.reset()
+        self._mediaplayer.stop()
+        super(SoundAndroidPlayer, self).stop()
 
     def seek(self, position):
         if not self._mediaplayer:
