@@ -1,3 +1,4 @@
+#:import rgba kivy.utils.get_color_from_hex
 #: include kv/start_page.kv
 <ScaleLabel@MDLabel>:
     text_size: self.width, None
@@ -32,19 +33,16 @@
         halign: "center"
 
     # Volume
-    MDIcon:
-        size_hint_x: None
-        size_hint_y: None
+    MDIconButton:
         pos_hint: {'center_y': 0.85}
-        pos: volume_slider.pos[0] - 20, self.pos[1]
-        icon: "volume-medium"
+        pos: volume_slider.pos[0] - 30, self.pos[1]
+        icon: "volume-medium" if volume_slider.value != 0 else "volume-mute"
+        on_release: volume_slider.value = 0.0 if volume_slider.value != 0 else volume_slider.last_value
     VolumeSlider:
         id: volume_slider
         size_hint: 0.8, 0.15
         pos_hint: {'center_x': 0.5, 'center_y': 0.85}
     MDIcon:
-        size_hint_x: None
-        size_hint_y: None
         pos_hint: {'center_y': 0.85}
         pos: volume_slider.pos[0] + volume_slider.size[0] - 6, self.pos[1]
         icon: "volume-high"
@@ -78,41 +76,44 @@
         pos: root.playback_slider.pos[0] + root.playback_slider.size[0], self.pos[1]
 
     # Playlist
-    ImageButton:
+    MDIconButton:
         id: playlist_button
-        size_hint: .1, .1
+        icon: 'playlist-music'
+        user_font_size: '35sp'
         pos_hint: {'center_x': 0.1, 'center_y': 0.1}
-        allow_stretch: True
-        source: 'images/playlist.png'
         on_release: root.playlist_menu.open()
 
     # Playback Controls
-    ImageButton:
+    MDIconButton:
         id: previous_button
-        size_hint: .15, .15
+        icon: 'skip-previous'
+        user_font_size: '35sp'
         pos_hint: {'center_x': 0.3, 'center_y': 0.1}
-        allow_stretch: True
-        source: 'images/previous.png'
         on_release: play_button.play_previous(self)
     PlayButton:
         id: play_button
-        size_hint: .2, .2
+        # size_hint: .2, .2
         pos_hint: {'center_x': 0.5, 'center_y': 0.11}
+        icon: 'play-outline'
+        user_font_size: '50sp'
         allow_stretch: True
+        theme_text_color: "Custom"
+        text_color: app.theme_cls.primary_color if app.theme_cls.theme_style == 'Light' else app.theme_cls.accent_color
         source: 'images/play2.png'
         # on_press: print(self.id)
-    ImageButton:
+    MDIconButton:
         id: next_button
-        size_hint: .15, .15
+        icon: 'skip-next'
+        user_font_size: '35sp'
         pos_hint: {'center_x': 0.7, 'center_y': 0.1}
-        allow_stretch: True
-        source: 'images/next.png'
         on_release: play_button.play_next(self)
     FavoriteButton:
         id: favorite_button
         size_hint: None, None
-        user_font_size: sp(50)
+        user_font_size: '35sp'
         pos_hint: {'center_x': 0.9, 'center_y': 0.1}
+        theme_text_color: "Custom"
+        text_color: rgba('#ff0000') if app.theme_cls.theme_style == 'Light' else rgba('#cc0000')
 
 <PlaybackSlider>:
     min: 0
@@ -130,7 +131,7 @@
 
 <PlayButton>
 
-<ImageButton@ButtonBehavior+Image>
+<ImageButton@MDIconButton>
 
 <FavoriteButton>
 

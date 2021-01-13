@@ -14,7 +14,7 @@ from kivymd.uix.button import MDIconButton
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.properties import ListProperty, BooleanProperty
+from kivy.properties import ListProperty, BooleanProperty, NumericProperty
 from kivy.core.window import Window
 from kivy.animation import Animation
 from kivy.clock import Clock
@@ -24,6 +24,7 @@ from kivy.core.audio import SoundLoader
 from kivy.logger import Logger, LOG_LEVELS
 from kivy.utils import platform
 from kivy.loader import Loader
+from kivy.utils import get_color_from_hex
 
 import start_page
 from utils import log, switch_screen, create_snackbar
@@ -213,25 +214,29 @@ class PlaybackSlider(MDSlider):
                 trigger = Clock.create_trigger(save_preview)
                 req = app.api.download_preview(next_song, trigger=trigger)
 
+
 class VolumeSlider(MDSlider):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.last_value = 0
         self.bind(value=self.on_value)
 
     @log
     def on_value(self, instance, value):
+        self.last_value = app.volume
         app.volume = instance.value_normalized
         if app.song:
             app.song.volume = app.volume
 
 
-class PlayButton(ButtonBehavior, Image):
+class PlayButton(MDIconButton):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.bind(on_release=lambda instance: self.control(instance))
         self.event = None
+        self.snackbar = None
         app.play_button = self
 
     @log
@@ -279,10 +284,22 @@ class PlayButton(ButtonBehavior, Image):
 
         if app.song is None or app.song.song_object != song:
             def call_load_song(*args):
-                self.load_song(song, res.response)
-                self.play_track(song)
+                if self.snackbar:
+                    self.snackbar.dismiss()
+                if res.status_code == 200:
+                    self.load_song(song, res.response)
+                    self.play_track(song)
+                else:
+                    song.preview_file = None
+                    msg = 'Dowloading Song Failed. Retrying...'
+                    self.snackbar = create_snackbar(
+                        msg,
+                        lambda *args: self.play_track(song)
+                    )
+                    Clock.schedule_once(lambda *args: self.play_track(song), 1)
+                    self.snackbar.open()
 
-            if song.preview_file:
+            if song.preview_file and song.preview_file != 'downloading':
                 self.load_song(song)
             else:
                 Logger.debug('play_track: downloading preview')
@@ -296,6 +313,7 @@ class PlayButton(ButtonBehavior, Image):
         app.song.volume = app.volume
         Logger.info('VOLUME %s', app.song.volume)
         self.source = 'images/stop2.png'
+        self.icon = 'pause'
         if self.event:
             self.event.cancel()
         self.event = Clock.schedule_interval(self.update_track_current, 1)
@@ -354,6 +372,7 @@ class PlayButton(ButtonBehavior, Image):
             app.song.stop()
             Logger.debug('control: stopped at %s', app.song.last_pos)
             self.source = "images/play2.png"
+            self.icon = 'play'
             self.event.cancel()
 
     @log
@@ -407,7 +426,6 @@ class FavoriteButton(MDIconButton):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.bind(on_favorited=self.set_icon)
         self.bind(on_release=self.favorite)
         self.icon = "heart-outline"
 
@@ -428,7 +446,21 @@ class FavoriteButton(MDIconButton):
 
 
 class RightContentCls(RightContent):
-    pass
+    def __init__(self, **kwargs):
+        song = kwargs.pop('song')
+        super().__init__(**kwargs)
+        if song.id_spotify:
+            spotify_button = MDIconButton(
+                icon='spotify',
+                user_font_size="20sp",
+                pos_hint={"center_y": .5},
+                theme_text_color="Custom",
+                text_color=get_color_from_hex("#1DB954"),
+                on_release=lambda *args: create_snackbar(
+                    'Spotify',
+                    lambda *args: None).open(),
+            )
+            self.add_widget(spotify_button)
 
 
 def is_removable(song):
@@ -441,18 +473,17 @@ class MainPage(FloatLayout):
         global app
         app = MDApp.get_running_app()
         self.song = app.song
-        Logger.debug('Playlist: Tracks: %s', app.playlist.tracks)
-        menu_items = [
-            {"right_content_cls": RightContentCls(),  # = if is_removable(i) else None,
-             "text": i.name,
-             "song": i
-             } for i in app.playlist.tracks
-        ]
-        self.playlist_menu = MDDropdownMenu(
-            caller=self.ids.playlist_button, items=menu_items, width_mult=4
-        )
-
-        self.playlist_menu.bind(on_release=self.play_from_playlist)
+        self.playlist_menu = None
+        # menu_items = [
+        #    {"right_content_cls": RightContentCls(song=i),
+        #     "text": i.name,
+        #     "song": i
+        #     } for i in app.playlist.tracks
+        # ]
+        # self.playlist_menu = MDDropdownMenu(
+        #    caller=self.ids.playlist_button, items=menu_items, width_mult=4
+        # )
+        # self.playlist_menu.bind(on_release=self.play_from_playlist)
 
     @log
     def edit_ui_for_song(self):
@@ -478,13 +509,14 @@ class MainPage(FloatLayout):
     @log
     def update_playlist_menu(self, *args):
         menu_items = [
-            {"right_content_cls": RightContentCls() if is_removable(i) else None,
+            {"right_content_cls": RightContentCls(song=i) if is_removable(i) else None,
              "text": i.name,
              "song": i,
              "icon": 'play-outline' if i == app.song.song_object else None
              } for i in app.playlist.tracks
         ]
-        self.playlist_menu.dismiss()
+        if self.playlist_menu:
+            self.playlist_menu.dismiss()
         self.playlist_menu = MDDropdownMenu(
             caller=self.ids.playlist_button, items=menu_items, width_mult=4,
             opening_time=0,
@@ -539,6 +571,7 @@ class MainApp(MDApp):
     def build(self):
         self.theme_cls.primary_palette = "Indigo"
         self.theme_cls.accent_palette = "Amber"
+        self.theme_cls.theme_style = "Light"
         Loader.loading_image = 'images/loading_coverart.gif'
 
         self.screen_manager = ScreenManager()
@@ -581,6 +614,10 @@ class MainApp(MDApp):
             page = start_page.StartPage()
             page_name = 'start_page'
         switch_screen(page, page_name)
+
+    def on_volume(self, *args):
+        if app.song:
+            app.song.volume = app.volume
 
     def on_stop(self):
         song_pos = app.song.get_pos()
