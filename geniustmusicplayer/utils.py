@@ -57,10 +57,10 @@ def log(func):
         cls = get_class_that_defined_method(func)
         if cls is not None:
             cls = cls.__name__
-        Logger.debug("Entering: %s.%s", cls, func.__name__)
+        # Logger.debug("Entering: %s.%s", cls, func.__name__)
         result = func(*args, **kwargs)
-        Logger.debug("Exiting: %s.%s (return value: %s)",
-                     cls, func.__name__, repr(result))
+        # Logger.debug("Exiting: %s.%s (return value: %s)",
+        #             cls, func.__name__, repr(result))
         return result
 
     return wrapper

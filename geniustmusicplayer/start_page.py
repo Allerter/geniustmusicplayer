@@ -63,6 +63,14 @@ class ManualInfoPage(FloatLayout):
         self.app = MDApp.get_running_app()
         self.genres_displayed = False
         self.input_displayed = False
+        self.loading = MDSpinner(
+            size_hint=(None, None),
+            size=('30dp', '30dp'),
+            pos_hint={'center_x': .5, 'center_y': .5},
+            size_hint_y=None,
+        )
+        self.loading.active = False
+        self.add_widget(self.loading)
 
     @log
     def enter_age(self, button):
@@ -93,8 +101,8 @@ class ManualInfoPage(FloatLayout):
 
             def get_and_save_genres(*args):
                 if req.status_code == 200:
-                    Logger.debug(self.app.genres)
                     self.app.genres = req.response['genres']
+                    Logger.debug(self.app.genres)
                     switch_screen(ArtistsPage(), 'artists_page')
                 else:
                     msg = "Failed to get genrs. Retrying in 3 seconds."
@@ -104,6 +112,7 @@ class ManualInfoPage(FloatLayout):
 
             trigger = Clock.create_trigger(get_and_save_genres)
             req = self.app.api.get_genres(age=age, trigger=trigger)
+            self.loading.active = True
         else:
             self.input_displayed = True
             self.ids.age_genre_text.text = 'Enter your age, e.g. 24'
@@ -158,14 +167,13 @@ class ManualInfoPage(FloatLayout):
                 self.select_genres(None)
 
             def create_genres_grid(*args):
-                self.remove_widget(self.loading)
                 if req.status_code != 200:
                     msg = "Failed to get genres. Reyting in 3 seconds."
                     self.snackbar = create_snackbar(msg, retry)
                     self.retry_event = Clock.schedule_once(retry, 3)
                     self.snackbar.open()
                     return
-
+                self.loading.active = False
                 genres = req.response.get('genres')
                 Logger.debug('Fetched Genres: %s', genres)
                 genres_grid = GridLayout(
@@ -187,16 +195,8 @@ class ManualInfoPage(FloatLayout):
             # Get genres from server
             trigger = Clock.create_trigger(create_genres_grid)
             req = self.app.api.get_genres(trigger=trigger)
+            self.loading.active = True
             if button is not None:
-                self.loading = MDSpinner(
-                    size_hint=(None, None),
-                    size=('30dp', '30dp'),
-                    pos_hint={'center_x': .5, 'center_y': .5},
-                    size_hint_y=None,
-                    active=True,
-                )
-                self.add_widget(self.loading)
-
                 # Edit button
                 button.text = 'Submit'
                 # button.fade_out()
@@ -204,7 +204,7 @@ class ManualInfoPage(FloatLayout):
 
     @log
     def genre_selected(self, button):
-        genre = button.text
+        genre = button.text.lower()
         if genre in self.app.genres:
             button.md_bg_color = self.original_color
             self.app.genres.remove(genre)
@@ -245,14 +245,14 @@ class ArtistsPage(FloatLayout):
 
         def get_tracks(*args):
             if req.status_code == 200:
-                tracks = req.response['tracks']
+                tracks = req.response
                 switch_screen(main.LoadingPage(), 'loading_page')
                 # create main page and get playlist
                 self.app.playlist = main.Playlist(tracks)
                 self.app.main_page = main.MainPage()
                 song = self.app.playlist.next()
-                self.app.play_button.load_song(song)
-                self.app.main_page.edit_ui_for_song()
+                res = self.app.api.download_preview(song, async_request=False)
+                self.app.play_button.load_song(song, res.response)
                 switch_screen(self.app.main_page, 'main_page')
             else:
                 msg = "Failed to get playlist. Retrying in 3 seconds."
@@ -293,30 +293,35 @@ class Search(FloatLayout):
         self.app = MDApp.get_running_app()
         self.last_input = time()
         self.current_input = time()
-        self.event = Clock.schedule_interval(self.search_artists, 0.1)
+        self.event = Clock.schedule_interval(self.search_artists, 0.01)
         self.loading = MDSpinner(
             size_hint=(None, None),
             size=('30dp', '30dp'),
             pos_hint={'center_x': .5, 'center_y': .5},
             size_hint_y=None,
-            active=False,
         )
+        self.loading.active = False
+        self.add_widget(self.loading)
 
     def register_input(self):
         self.current_input = time()
 
-    @log
     def search_artists(self, *args):
         def add_items(*args):
             self.loading.active = False
             self.ids.rv.data = []
-            for artist in req.response['artists']:
-                self.ids.rv.data.append(
-                    {
-                        "viewclass": "CustomOneLineListItem",
-                        "text": artist,
-                    }
-                )
+            if req.status_code == 200:
+                for artist in req.response['artists']:
+                    self.ids.rv.data.append(
+                        {
+                            "viewclass": "CustomOneLineListItem",
+                            "text": artist,
+                        }
+                    )
+            else:
+                Logger.error('search_artists: failed payload: %s', req.response)
+                create_snackbar("Search failed.", self.search_artists).open()
+
         text = self.ids.search_field.text
         # start the search when the user stops typing
         if len(text) > 2 and self.current_input - self.last_input > 0.3:
