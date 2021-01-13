@@ -24,7 +24,7 @@ from kivy.core.audio import SoundLoader
 from kivy.logger import Logger, LOG_LEVELS
 from kivy.utils import platform
 from kivy.loader import Loader
-from kivy.utils import get_color_from_hex
+from kivy.utils import rgba as rgba
 
 import start_page
 from utils import log, switch_screen, create_snackbar
@@ -127,6 +127,11 @@ class Playlist:
 
 
 @log
+def save_favorites(favorites):
+    save_keys(favorites=[song.to_dict() for song in favorites])
+
+
+@log
 def save_keys(**kwargs):
     for key, value in kwargs.items():
         app.store['user'][key] = value
@@ -186,7 +191,7 @@ class PlaybackSlider(MDSlider):
                 app.song.last_pos = slider.value
             elif app.song:
                 play_button.event = Clock.schedule_interval(
-                    play_button.update_track_current, 1
+                    play_button.update_track_current, 0.1
                 )
             return True
         return False
@@ -310,13 +315,14 @@ class PlayButton(MDIconButton):
 
         app.song.play()
         app.song.seek(seek)
-        app.song.volume = app.volume
+        # TODO: fix volume 0 plays at full volume
+        app.song.volume = float(str(app.volume)[:4])
         Logger.info('VOLUME %s', app.song.volume)
         self.source = 'images/stop2.png'
         self.icon = 'pause'
         if self.event:
             self.event.cancel()
-        self.event = Clock.schedule_interval(self.update_track_current, 1)
+        self.event = Clock.schedule_interval(self.update_track_current, 0.1)
         Logger.info('play_track: playing %s', song.name)
 
     @log
@@ -442,12 +448,14 @@ class FavoriteButton(MDIconButton):
         else:
             self.favorited = False
             app.favorites.remove(app.song.song_object)
-        save_keys(favorites=[song.to_dict() for song in app.favorites])
+
+        save_favorites(app.favorites)
 
 
 class RightContentCls(RightContent):
     def __init__(self, **kwargs):
         song = kwargs.pop('song')
+        is_removable = kwargs.pop('is_removable')
         super().__init__(**kwargs)
         if song.id_spotify:
             spotify_button = MDIconButton(
@@ -455,12 +463,33 @@ class RightContentCls(RightContent):
                 user_font_size="20sp",
                 pos_hint={"center_y": .5},
                 theme_text_color="Custom",
-                text_color=get_color_from_hex("#1DB954"),
+                text_color=rgba("#1DB954"),
                 on_release=lambda *args: create_snackbar(
                     'Spotify',
                     lambda *args: None).open(),
             )
             self.add_widget(spotify_button)
+
+        favorite_button = MDIconButton(
+            size_hint=(None, None),
+            user_font_size='16sp',
+            pos_hint={'center_y': 0.5},
+            theme_text_color="Custom",
+            text_color=(rgba('#ff0000') if app.theme_cls.theme_style == 'Light'
+                        else rgba('#cc0000')),
+            icon='heart' if song in app.favorites else 'heart-outline',
+            on_release=lambda *args: app.main_page.favorite_playlist_item(self, song)
+        )
+        self.add_widget(favorite_button)
+
+        if is_removable:
+            remove_button = MDIconButton(
+                icon='close-box',
+                user_font_size="16sp",
+                pos_hint={"center_y": .5},
+                on_release=lambda *args: app.main_page.remove_playlist_item(song),
+            )
+            self.add_widget(remove_button)
 
 
 def is_removable(song):
@@ -497,28 +526,50 @@ class MainPage(FloatLayout):
         self.update_song_info()
 
     @log
-    def remove_playlist_item(self, instance):
+    def remove_playlist_item(self, song):
+        app.playlist.remove(song)
+        self.update_playlist_menu()
+
+    @log
+    def favorite_playlist_item(self, instance, song):
+        if song in app.favorites:
+            favorited = False
+            app.favorites.remove(song)
+            icon = 'heart-outline'
+        else:
+            favorited = True
+            app.favorites.append(song)
+            icon = 'heart'
+
+        # Correct main favorite button if user (un)favorited item == current song
+        if app.song.song_object == song:
+            app.main_page.favorite_button.favorited = favorited
+
         items = app.main_page.playlist_menu.items
         for item in items:
             if item['right_content_cls'] == instance:
-                removed_song = item['song']
+                for child in instance.children:
+                    if 'heart' in child.icon:
+                        child.icon = icon
 
-        app.playlist.remove(removed_song)
-        self.update_playlist_menu()
+        save_favorites(app.favorites)
 
     @log
     def update_playlist_menu(self, *args):
         menu_items = [
-            {"right_content_cls": RightContentCls(song=i) if is_removable(i) else None,
+            {"right_content_cls": RightContentCls(song=i,
+                                                  is_removable=is_removable(i)),
              "text": i.name,
              "song": i,
-             "icon": 'play-outline' if i == app.song.song_object else None
+             "icon": 'play-outline' if i == app.song.song_object else None,
              } for i in app.playlist.tracks
         ]
         if self.playlist_menu:
             self.playlist_menu.dismiss()
         self.playlist_menu = MDDropdownMenu(
-            caller=self.ids.playlist_button, items=menu_items, width_mult=4,
+            caller=self.ids.playlist_button,
+            items=menu_items,
+            width_mult=5,
             opening_time=0,
         )
         self.playlist_menu.bind(on_release=self.play_from_playlist)
