@@ -2,6 +2,7 @@ from datetime import timedelta
 from math import ceil, floor
 import os
 from os.path import join
+from time import time
 
 # os.environ['KIVY_AUDIO'] = 'android'
 os.environ['KIVY_IMAGE'] = 'pil,sdl2,gif'
@@ -29,10 +30,11 @@ from kivy.core.audio import SoundLoader
 from kivy.logger import Logger, LOG_LEVELS
 from kivy.utils import platform
 from kivy.loader import Loader
-from kivy.utils import rgba as rgba
+from kivy.utils import rgba
 
 import start_page
-from utils import log, switch_screen, create_snackbar
+import favorites_page
+from utils import log, switch_screen, create_snackbar, save_favorites, save_keys
 from api import API, Song
 
 Logger.setLevel(LOG_LEVELS['debug'])
@@ -129,19 +131,6 @@ class Playlist:
 
     def __repr__(self):
         return f'Playlist({len(self.tracks)} Tracks, current={self._current})'
-
-
-@log
-def save_favorites(favorites):
-    save_keys(favorites=[song.to_dict() for song in favorites])
-
-
-@log
-def save_keys(**kwargs):
-    for key, value in kwargs.items():
-        app.store['user'][key] = value
-    app.store.put('user', **app.store['user'])
-
 
 def save_song(song, data):
     song_name = "".join(
@@ -448,9 +437,11 @@ class FavoriteButton(MDIconButton):
 
     def favorite(self, *args):
         if not self.favorited:
+            app.song.song_object.date_favorited = time()
             self.favorited = True
             app.favorites.append(app.song.song_object)
         else:
+            app.song.song_object.date_favorited = None
             self.favorited = False
             app.favorites.remove(app.song.song_object)
 
@@ -562,10 +553,12 @@ class MainPage(FloatLayout):
     def favorite_playlist_item(self, instance, song):
         if song in app.favorites:
             favorited = False
+            song.date_favorited = None
             app.favorites.remove(song)
             icon = 'heart-outline'
         else:
             favorited = True
+            song.date_favorited = time()
             app.favorites.append(song)
             icon = 'heart'
 
@@ -589,6 +582,7 @@ class MainPage(FloatLayout):
     def update_song_info(self):
         self.ids.title.text = app.song.name
         self.ids.artist.text = app.song.artist
+
 
 class ContentNavigationDrawer(BoxLayout):
     screen_manager = ObjectProperty()
@@ -667,11 +661,23 @@ class MainApp(MDApp):
             app.main_page.ids.track_current.text = str(timedelta(
                 seconds=slider.value
             ))[3:7]
+
+            # adding screens
+            main_screen = Screen(name='main_page')
+            main_screen.add_widget(page)
+            self.screen_manager.add_widget(main_screen)
+            self.screen_manager.switch_to(main_screen)
+
+            favorites_screen = Screen(name='favorites_page')
+            app.favorites_page = favorites_page.FavoritesPage()
+            favorites_screen.add_widget(app.favorites_page)
+            self.screen_manager.add_widget(favorites_screen)
+
         else:
             self.nav_drawer.type = 'standard'
             page = start_page.StartPage()
             page_name = 'start_page'
-        switch_screen(page, page_name)
+            switch_screen(page, page_name)
 
     def on_volume(self, *args):
         if app.song:

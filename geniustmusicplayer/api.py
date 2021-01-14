@@ -9,7 +9,8 @@ from kivy.network.urlrequest import UrlRequest
 class Song:
     def __init__(self, name, artist,
                  id_spotify=None, isrc=None, cover_art=None,
-                 preview_url=None, download_url=None, preview_file=None):
+                 preview_url=None, download_url=None, preview_file=None,
+                 date_favorited=None,):
         self.name = name
         self.artist = artist
         self.id_spotify = id_spotify
@@ -21,6 +22,7 @@ class Song:
         self.preview_url = preview_url
         self.download_url = download_url
         self.preview_file = preview_file
+        self.date_favorited = date_favorited
 
     def to_dict(self):
         return dict(
@@ -31,7 +33,8 @@ class Song:
             cover_art=self.cover_art,
             preview_url=self.preview_url,
             download_url=self.download_url,
-            preview_file=self.preview_file
+            preview_file=self.preview_file,
+            date_favorited=self.date_favorited,
         )
 
     def __eq__(self, other):

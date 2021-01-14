@@ -67,6 +67,19 @@ def log(func):
 
 
 @log
+def save_favorites(favorites):
+    save_keys(favorites=[song.to_dict() for song in favorites])
+
+
+@log
+def save_keys(**kwargs):
+    app = MDApp.get_running_app()
+    for key, value in kwargs.items():
+        app.store['user'][key] = value
+    app.store.put('user', **app.store['user'])
+
+
+@log
 def switch_screen(page, name):
     screen = Screen(name=name)
     screen.add_widget(page)

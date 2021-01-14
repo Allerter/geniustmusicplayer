@@ -1,5 +1,6 @@
 #:import rgba kivy.utils.get_color_from_hex
 #: include kv/start_page.kv
+#: include kv/favorites_page.kv
 <ScaleLabel@MDLabel>:
     text_size: self.width, None
     _scale: 1. if self.texture_size[1] < self.height else float(self.height) / self.texture_size[1]
@@ -19,9 +20,18 @@
         MDList:
 
             OneLineAvatarListItem:
+                text: "Music Player"
+                on_press:
+                    root.nav_drawer.set_state("close")
+                    app.screen_manager.current = "main_page"
+                IconLeftWidget:
+                    icon: "headphones"
+
+            OneLineAvatarListItem:
                 text: "Favorites"
                 on_press:
                     root.nav_drawer.set_state("close")
+                    app.favorites_page.set_songs()
                     app.screen_manager.current = "favorites_page"
                 IconLeftWidget:
                     icon: "playlist-star"

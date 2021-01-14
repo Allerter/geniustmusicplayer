@@ -1,0 +1,48 @@
+<FavoritesPage>:
+    BoxLayout:
+        MDToolbar:
+            id: toolbar
+            pos_hint: {"top": 1}
+            title: "Favorites"
+            elevation: 10
+            left_action_items: [['menu', lambda x: app.nav_drawer.set_state('open')]]
+
+    MDLabel:
+        id: label
+        text: "Sort By "
+        pos_hint: {'center_y': .85}
+        pos: 10, self.pos[1]
+    MDDropDownItem:
+        id: drop_item
+        pos_hint: {'center_y': .85}
+        pos: label.pos[0] + 55, self.pos[1]
+        text: 'Date Added'
+        on_release: root.menu.open()
+    MDIconButton:
+        id: sort_ascending
+        pos_hint: {'center_x': .80, 'center_y': 0.85}
+        icon: 'sort-ascending'
+        theme_text_color: "Custom"
+        text_color: app.theme_cls.disabled_hint_text_color
+        on_release:
+            self.text_color = app.theme_cls.primary_color
+            sort_descending.text_color = app.theme_cls.disabled_hint_text_color
+            root.set_songs()
+    MDIconButton:
+        id: sort_descending
+        pos_hint: {'center_x': .90, 'center_y': 0.85}
+        icon: 'sort-descending'
+        theme_text_color: "Custom"
+        text_color: app.theme_cls.primary_color
+        on_release:
+            self.text_color = app.theme_cls.primary_color
+            sort_ascending.text_color = app.theme_cls.disabled_hint_text_color
+            root.set_songs()
+
+    MDBoxLayout:
+        size_hint_y: None
+        pos_hint: {'center_y': 0.75}
+
+        ScrollView:
+            MDList:
+                id: favorites_list
