@@ -16,9 +16,10 @@ from kivymd.uix.list import OneLineAvatarIconListItem, OneLineListItem, IRightBo
 from kivymd.uix.list import IconLeftWidget
 from kivy.factory import Factory
 from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.properties import ListProperty, BooleanProperty, NumericProperty
+from kivy.properties import ListProperty, BooleanProperty, NumericProperty, ObjectProperty
 from kivy.core.window import Window
 from kivy.animation import Animation
 from kivy.clock import Clock
@@ -589,6 +590,10 @@ class MainPage(FloatLayout):
         self.ids.title.text = app.song.name
         self.ids.artist.text = app.song.artist
 
+class ContentNavigationDrawer(BoxLayout):
+    screen_manager = ObjectProperty()
+    nav_drawer = ObjectProperty()
+
 # -------------------- App --------------------
 
 
@@ -624,17 +629,19 @@ class MainApp(MDApp):
         self.theme_cls.theme_style = "Light"
         Loader.loading_image = 'images/loading_coverart.gif'
 
-        self.screen_manager = ScreenManager()
-        switch_screen(LoadingPage(), 'loading_page')
+        self.nav_layout = Factory.NavLayout()
+        self.screen_manager = self.nav_layout.screen_manager
+        self.nav_drawer = self.nav_layout.nav_drawer
+        # switch_screen(LoadingPage(), 'loading_page')
         self.load_first_page()
-        return self.screen_manager
+        return self.nav_layout
 
     @log
     def load_first_page(self, *args):
         if 'user' in self.store and self.store['user'].get('genres'):
-            page = MainPage()
+            app.main_page = page = MainPage()
             page_name = 'main_page'
-            app.main_page = page
+            self.nav_drawer.type = 'modal'
             user = self.store['user']
             app.genres = user['genres']
             app.artists = user['artists']
@@ -661,6 +668,7 @@ class MainApp(MDApp):
                 seconds=slider.value
             ))[3:7]
         else:
+            self.nav_drawer.type = 'standard'
             page = start_page.StartPage()
             page_name = 'start_page'
         switch_screen(page, page_name)

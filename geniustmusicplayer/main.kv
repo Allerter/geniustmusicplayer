@@ -11,7 +11,47 @@
             y: self._scale or 1.
     canvas.after:
         PopMatrix
+
+<ContentNavigationDrawer>:
+
+    ScrollView:
+
+        MDList:
+
+            OneLineAvatarListItem:
+                text: "Favorites"
+                on_press:
+                    root.nav_drawer.set_state("close")
+                    app.screen_manager.current = "favorites_page"
+                IconLeftWidget:
+                    icon: "playlist-star"
+
+            OneLineAvatarListItem:
+                text: "Settings"
+                on_press:
+                    root.nav_drawer.set_state("close")
+                    app.screen_manager.current = "settings_page"
+                IconLeftWidget:
+                    icon: "tools"
+
 # ----------------- Main Page -----------------
+# Menu Drawer
+<NavLayout@MDNavigationLayout>:
+    screen_manager: screen_manager
+    nav_drawer: nav_drawer
+    x: 100
+
+
+    ScreenManager:
+        id: screen_manager
+
+    MDNavigationDrawer:
+        id: nav_drawer
+
+        ContentNavigationDrawer:
+            screen_manager: screen_manager
+            nav_drawer: nav_drawer
+
 <MainPage>:
     playback_slider: playback_slider
     play_button: play_button
@@ -19,6 +59,17 @@
     volume_slider: volume_slider
     song: None
 
+
+
+    MDIconButton:
+        id: drawer_button
+        icon: 'view-headline'
+        user_font_size: '30sp'
+        pos_hint: {'center_x': 0.05, 'center_y': 0.92}
+        on_release: app.nav_drawer.set_state("open")
+
+
+    # Song Artist and Title
     ScaleLabel:
         id: title
         text: ''

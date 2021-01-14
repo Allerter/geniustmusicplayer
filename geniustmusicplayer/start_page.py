@@ -253,6 +253,7 @@ class ArtistsPage(FloatLayout):
                 song = self.app.playlist.next()
                 res = self.app.api.download_preview(song, async_request=False)
                 self.app.play_button.load_song(song, res.response)
+                self.app.nav_drawer.type = 'modal'
                 switch_screen(self.app.main_page, 'main_page')
             else:
                 msg = "Failed to get playlist. Retrying in 3 seconds."
