@@ -11,6 +11,10 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.slider import MDSlider
 from kivymd.uix.menu import MDDropdownMenu, RightContent
 from kivymd.uix.button import MDIconButton
+from kivymd.uix.bottomsheet import MDCustomBottomSheet
+from kivymd.uix.list import OneLineAvatarIconListItem, OneLineListItem, IRightBodyTouch
+from kivymd.uix.list import IconLeftWidget
+from kivy.factory import Factory
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -299,9 +303,9 @@ class PlayButton(MDIconButton):
                     msg = 'Dowloading Song Failed. Retrying...'
                     self.snackbar = create_snackbar(
                         msg,
-                        lambda *args: self.play_track(song)
+                        lambda *args, song=song: self.play_track(song)
                     )
-                    Clock.schedule_once(lambda *args: self.play_track(song), 1)
+                    Clock.schedule_once(lambda *args, y=song: self.play_track(y), 1)
                     self.snackbar.open()
 
             if song.preview_file and song.preview_file != 'downloading':
@@ -452,6 +456,13 @@ class FavoriteButton(MDIconButton):
         save_favorites(app.favorites)
 
 
+# IRightBodyTouch, OneLineListItem
+class ItemForCustomBottomSheet(OneLineAvatarIconListItem):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._txt_left_pad = '10dp'
+
+
 class RightContentCls(RightContent):
     def __init__(self, **kwargs):
         song = kwargs.pop('song')
@@ -487,7 +498,7 @@ class RightContentCls(RightContent):
                 icon='close-box',
                 user_font_size="16sp",
                 pos_hint={"center_y": .5},
-                on_release=lambda *args: app.main_page.remove_playlist_item(song),
+                on_release=lambda *args: app.main_page.remove_playlist_item(self, song),
             )
             self.add_widget(remove_button)
 
@@ -503,16 +514,6 @@ class MainPage(FloatLayout):
         app = MDApp.get_running_app()
         self.song = app.song
         self.playlist_menu = None
-        # menu_items = [
-        #    {"right_content_cls": RightContentCls(song=i),
-        #     "text": i.name,
-        #     "song": i
-        #     } for i in app.playlist.tracks
-        # ]
-        # self.playlist_menu = MDDropdownMenu(
-        #    caller=self.ids.playlist_button, items=menu_items, width_mult=4
-        # )
-        # self.playlist_menu.bind(on_release=self.play_from_playlist)
 
     @log
     def edit_ui_for_song(self):
@@ -526,9 +527,35 @@ class MainPage(FloatLayout):
         self.update_song_info()
 
     @log
-    def remove_playlist_item(self, song):
+    def update_playlist_menu(self, *args):
+        self.playlist_menu = MDCustomBottomSheet(
+            screen=Factory.PlaylistLayout(height=66 * len(app.playlist.tracks)),
+        )
+        for i in app.playlist.tracks:
+            item = ItemForCustomBottomSheet(
+                text=i.name,
+                on_release=lambda *args, song=i: self.play_from_playlist(song),
+            )
+            # adding right-side icons
+            item.add_widget(RightContentCls(
+                song=i,
+                is_removable=is_removable(i)))
+            # different background for current song
+            if i == app.song.song_object:
+                item.bg_color = rgba('#cbcbcb')
+            self.playlist_menu.screen.songs_grid.add_widget(item)
+
+    @log
+    def play_from_playlist(self, track):
+        # track = app.playlist.track_by_name(selected_item.text)
+        if track == app.playlist.current_track:  # track is already playing
+            return
+        app.play_button.play_track(track)
+
+    @log
+    def remove_playlist_item(self, instance, song):
+        self.playlist_menu.screen.songs_grid.remove_widget(instance.parent.parent)
         app.playlist.remove(song)
-        self.update_playlist_menu()
 
     @log
     def favorite_playlist_item(self, instance, song):
@@ -545,41 +572,13 @@ class MainPage(FloatLayout):
         if app.song.song_object == song:
             app.main_page.favorite_button.favorited = favorited
 
-        items = app.main_page.playlist_menu.items
-        for item in items:
-            if item['right_content_cls'] == instance:
-                for child in instance.children:
-                    if 'heart' in child.icon:
-                        child.icon = icon
+        # change heart icon that was pressed
+        for icon_button in instance.children:
+            if 'heart' in icon_button.icon:
+                icon_button.icon = icon
+                break
 
         save_favorites(app.favorites)
-
-    @log
-    def update_playlist_menu(self, *args):
-        menu_items = [
-            {"right_content_cls": RightContentCls(song=i,
-                                                  is_removable=is_removable(i)),
-             "text": i.name,
-             "song": i,
-             "icon": 'play-outline' if i == app.song.song_object else None,
-             } for i in app.playlist.tracks
-        ]
-        if self.playlist_menu:
-            self.playlist_menu.dismiss()
-        self.playlist_menu = MDDropdownMenu(
-            caller=self.ids.playlist_button,
-            items=menu_items,
-            width_mult=5,
-            opening_time=0,
-        )
-        self.playlist_menu.bind(on_release=self.play_from_playlist)
-
-    @log
-    def play_from_playlist(self, instance, selected_item):
-        track = app.playlist.track_by_name(selected_item.text)
-        if track == app.playlist.current_track:  # track is already playing
-            return
-        app.play_button.play_track(track)
 
     @log
     def update_cover_art(self):

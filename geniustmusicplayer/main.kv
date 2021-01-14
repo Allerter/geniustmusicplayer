@@ -134,3 +134,15 @@
 <ImageButton@MDIconButton>
 
 <FavoriteButton>
+
+<PlaylistLayout@BoxLayout>:
+    songs_grid: songs_grid
+    orientation: "vertical"
+    size_hint_y: None
+
+    ScrollView:
+
+        MDGridLayout:
+            id: songs_grid
+            cols: 1
+            adaptive_height: True
