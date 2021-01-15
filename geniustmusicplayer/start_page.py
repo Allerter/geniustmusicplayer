@@ -224,16 +224,16 @@ class ArtistsPage(FloatLayout):
         self.app = MDApp.get_running_app()
         self.app.artists_page = self
 
-    def save_preferences(self):
+    def save_preferences(self, playlist):
         # save user preferences
         self.app.store.put(
             'user',
             genres=self.app.genres,
             artists=self.app.artists,
             volume=self.app.volume,
-            playlist=self.app.playlist.tracks,
+            playlist=playlist.to_dict(),
+            dark_mode=False,
         )
-        self.finish()
 
     def finish(self):
         import main
@@ -247,14 +247,9 @@ class ArtistsPage(FloatLayout):
             if req.status_code == 200:
                 tracks = req.response
                 switch_screen(main.LoadingPage(), 'loading_page')
-                # create main page and get playlist
-                self.app.playlist = main.Playlist(tracks)
-                self.app.main_page = main.MainPage()
-                song = self.app.playlist.next()
-                res = self.app.api.download_preview(song, async_request=False)
-                self.app.play_button.load_song(song, res.response)
-                self.app.nav_drawer.type = 'modal'
-                switch_screen(self.app.main_page, 'main_page')
+                playlist = main.Playlist(tracks)
+                self.save_preferences(playlist)
+                self.app.load_first_page()
             else:
                 msg = "Failed to get playlist. Retrying in 3 seconds."
                 self.snackbar = create_snackbar(msg, retry)

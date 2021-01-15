@@ -10,7 +10,7 @@ from kivy.properties import (
 from kivy.metrics import dp
 from kivymd.uix.list import BaseListItem, ContainerSupport
 
-from utils import save_keys
+from utils import save_keys, switch_screen
 
 
 class CustomOneLineIconListItem(OneLineAvatarIconListItem):
@@ -76,5 +76,7 @@ class SettingsPage(FloatLayout):
         self.reset_dialog.open()
 
     def reset_preferences(self, *args):
-        toast('reset prefernces')
+        import start_page
         self.reset_dialog.dismiss()
+        self.app.store['user'] = {}
+        switch_screen(start_page.StartPage(), 'start_page')

@@ -108,6 +108,7 @@ class Sender:
         trigger=None,
         async_request: bool = True,
         api: bool = True,
+        timeout=None,
         **kwargs
     ):
         """Makes a request to Genius."""
@@ -136,8 +137,9 @@ class Sender:
                          on_failure=response.on_finish,
                          on_error=response.on_finish,
                          req_headers=self.headers,
-                         timeout=self.timeout,
+                         timeout=timeout or self.timeout,
                          debug=True,
+                         verify=False,
                          )
         response.is_finished = req.is_finished
         # #Logger.debug('request to %s', new_url)
@@ -182,6 +184,7 @@ class API():
         has_download_url: bool = False,
         trigger=None,
         async_request: bool = True,
+        timeout=None,
     ) -> List[str]:
         params = {
             'genres': ','.join(genres),
@@ -196,7 +199,8 @@ class API():
             'recommendations',
             params=params,
             trigger=trigger,
-            async_request=async_request
+            async_request=async_request,
+            timeout=timeout,
         )
 
         return res

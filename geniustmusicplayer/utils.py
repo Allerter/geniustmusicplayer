@@ -21,9 +21,9 @@ def create_snackbar(text, callback):
     ) / Window.width
     snackbar.buttons = [
         MDFlatButton(
-            text="RETRY",
+            text="RETRY" if callback is not None else "OK",
             text_color=(1, 1, 1, 1),
-            on_release=callback,
+            on_release=callback if callback is not None else lambda *args: None,
         ),
     ]
     return snackbar
