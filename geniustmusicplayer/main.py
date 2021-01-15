@@ -33,6 +33,7 @@ from kivy.loader import Loader
 from kivy.utils import rgba
 
 import start_page
+import settings_page
 import favorites_page
 from utils import log, switch_screen, create_snackbar, save_favorites, save_keys
 from api import API, Song
@@ -131,6 +132,7 @@ class Playlist:
 
     def __repr__(self):
         return f'Playlist({len(self.tracks)} Tracks, current={self._current})'
+
 
 def save_song(song, data):
     song_name = "".join(
@@ -620,7 +622,6 @@ class MainApp(MDApp):
     def build(self):
         self.theme_cls.primary_palette = "Indigo"
         self.theme_cls.accent_palette = "Amber"
-        self.theme_cls.theme_style = "Light"
         Loader.loading_image = 'images/loading_coverart.gif'
 
         self.nav_layout = Factory.NavLayout()
@@ -637,6 +638,7 @@ class MainApp(MDApp):
             page_name = 'main_page'
             self.nav_drawer.type = 'modal'
             user = self.store['user']
+            self.theme_cls.theme_style = "Dark" if user['dark_mode'] else "Light"
             app.genres = user['genres']
             app.artists = user['artists']
             app.volume = user['volume']
@@ -672,6 +674,11 @@ class MainApp(MDApp):
             app.favorites_page = favorites_page.FavoritesPage()
             favorites_screen.add_widget(app.favorites_page)
             self.screen_manager.add_widget(favorites_screen)
+
+            settings_screen = Screen(name='settings_page')
+            app.settings_page = settings_page.SettingsPage()
+            settings_screen.add_widget(app.settings_page)
+            self.screen_manager.add_widget(settings_screen)
 
         else:
             self.nav_drawer.type = 'standard'

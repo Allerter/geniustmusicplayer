@@ -77,7 +77,7 @@ class FavoritesPage(FloatLayout):
 
     def set_songs(self):
         sort = self.ids.drop_item.current_item
-        if self.ids.sort_descending.text_color == self.app.theme_cls.primary_color:
+        if self.ids.sort_descending.text_color != self.app.theme_cls.disabled_hint_text_color:
             descending = True
         else:
             descending = False

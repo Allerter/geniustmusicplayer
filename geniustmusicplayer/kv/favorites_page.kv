@@ -23,9 +23,9 @@
         pos_hint: {'center_x': .80, 'center_y': 0.85}
         icon: 'sort-ascending'
         theme_text_color: "Custom"
-        text_color: app.theme_cls.disabled_hint_text_color
+        text_color: app.theme_cls.primary_light if app.theme_cls.theme_style == 'Dark' else app.theme_cls.primary_color
         on_release:
-            self.text_color = app.theme_cls.primary_color
+            self.text_color = app.theme_cls.primary_light if app.theme_cls.theme_style == 'Dark' else app.theme_cls.primary_color
             sort_descending.text_color = app.theme_cls.disabled_hint_text_color
             root.set_songs()
     MDIconButton:
@@ -33,9 +33,9 @@
         pos_hint: {'center_x': .90, 'center_y': 0.85}
         icon: 'sort-descending'
         theme_text_color: "Custom"
-        text_color: app.theme_cls.primary_color
+        text_color: app.theme_cls.disabled_hint_text_color
         on_release:
-            self.text_color = app.theme_cls.primary_color
+            self.text_color = app.theme_cls.primary_light if app.theme_cls.theme_style == 'Dark' else app.theme_cls.primary_color
             sort_ascending.text_color = app.theme_cls.disabled_hint_text_color
             root.set_songs()
 

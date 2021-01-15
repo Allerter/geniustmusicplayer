@@ -1,6 +1,7 @@
 #:import rgba kivy.utils.get_color_from_hex
 #: include kv/start_page.kv
 #: include kv/favorites_page.kv
+#: include kv/settings_page.kv
 <ScaleLabel@MDLabel>:
     text_size: self.width, None
     _scale: 1. if self.texture_size[1] < self.height else float(self.height) / self.texture_size[1]
