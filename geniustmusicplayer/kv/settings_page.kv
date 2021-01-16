@@ -22,11 +22,11 @@
                     MDBoxLayout:
                         adaptive_size: True
 
-                    MDCheckbox:
+                    MDSwitch:
                         id: dark_mode_checkbox
                         active: True if app.theme_cls.theme_style == 'Dark' else False
-                        selected_color:
-                            app.theme_cls.primary_light if app.theme_cls.theme_style == 'Dark' else app.theme_cls.primary_color
+                        #selected_color:
+                        #    app.theme_cls.primary_light if app.theme_cls.theme_style == 'Dark' else app.theme_cls.primary_color
                         size_hint: None, None
                         size: "48dp", "48dp"
                         pos_hint: {'center_x': .5, 'center_y': .5}
@@ -35,8 +35,8 @@
             MyBaseListItem:
                 MDTextButton:
                     pos_hint: {"center_x": .5, "center_y": .5}
-                    custom_color:
-                        app.theme_cls.primary_light if app.theme_cls.theme_style == 'Dark' else app.theme_cls.primary_color
+                    # custom_color:
+                    #    app.theme_cls.primary_light if app.theme_cls.theme_style == 'Dark' else app.theme_cls.primary_color
                     text: "RESET PREFERENCES"
                     on_release: root.show_alert_dialog()
 

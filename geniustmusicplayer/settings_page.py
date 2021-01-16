@@ -48,7 +48,7 @@ class SettingsPage(FloatLayout):
         # self.app.theme_cls.primary_palette = "Amber"
         # self.app.theme_cls.accent_palette = "Indigo"
         self.app.theme_cls.theme_style = "Dark"
-        self.ids.dark_mode_checkbox.selected_color = self.app.theme_cls.primary_light
+        # self.ids.dark_mode_checkbox.selected_color = self.app.theme_cls.primary_light
         save_keys(dark_mode=True)
 
     def on_checkbox_active(self, checkbox, value):
@@ -56,19 +56,21 @@ class SettingsPage(FloatLayout):
             self.enable_dark_mode()
         else:
             self.disable_dark_mode()
+        drawer = self.app.nav_drawer.children[0].ids.nav_drawer_list
+        drawer.set_color_item(drawer.children[0])
 
     def show_alert_dialog(self):
         if not self.reset_dialog:
             self.reset_dialog = MDDialog(
                 text="Reset Preferences?",
-                md_bg_color=(255, 255, 255, 255),
+                md_bg_color=(1, 1, 1, 1),
                 buttons=[
                     MDFlatButton(
-                        text="CANCEL", text_color=self.app.theme_cls.primary_color,
+                        text="CANCEL", text_color=(0, 0, 0, 0),
                         on_release=lambda *args: self.reset_dialog.dismiss()
                     ),
                     MDFlatButton(
-                        text="RESET", text_color=self.app.theme_cls.primary_color,
+                        text="RESET", text_color=(0, 0, 0, 0),
                         on_release=self.reset_preferences,
                     ),
                 ],

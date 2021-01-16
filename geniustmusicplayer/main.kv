@@ -14,36 +14,82 @@
     canvas.after:
         PopMatrix
 
+
+<ItemDrawer>:
+    theme_text_color: "Custom"
+    text_color:
+        app.theme_cls.text_color if app.theme_cls.theme_style != 'Dark' else (1, 1, 1, 0.87)
+
+    IconLeftWidget:
+        id: icon
+        icon: root.icon
+        theme_text_color: "Custom"
+        text_color: root.text_color
+
 <ContentNavigationDrawer>:
+    orientation: "vertical"
+    padding: "8dp"
+    spacing: "8dp"
+
+    AnchorLayout:
+        anchor_x: "left"
+        size_hint_y: None
+        height: avatar.height
+
+        Image:
+            id: avatar
+            size_hint: None, None
+            size: "56dp", "56dp"
+            source: "images/icon.png"
+
+    MDLabel:
+        text: "GeniusT Music Player"
+        font_style: "Button"
+        size_hint_y: None
+        height: self.texture_size[1]
+
+    MDLabel:
+        text: "t.me/genius_the_bot"
+        font_style: "Caption"
+        size_hint_y: None
+        height: self.texture_size[1]
+
 
     ScrollView:
 
-        MDList:
+        DrawerList:
+            id: nav_drawer_list
 
-            OneLineAvatarListItem:
+            ItemDrawer:
                 text: "Music Player"
-                on_press:
+                text_color:
+                    app.theme_cls.primary_color if app.theme_cls.theme_style != 'Dark' else app.theme_cls.primary_light
+                icon: 'headphones'
+                on_release:
                     root.nav_drawer.set_state("close")
+                    self.parent.set_color_item(self)
                     app.screen_manager.current = "main_page"
-                IconLeftWidget:
-                    icon: "headphones"
 
-            OneLineAvatarListItem:
+            ItemDrawer:
                 text: "Favorites"
-                on_press:
+                text_color:
+                    app.theme_cls.text_color if app.theme_cls.theme_style != 'Dark' else (1, 1, 1, 0.87)
+                icon: 'playlist-star'
+                on_release:
                     root.nav_drawer.set_state("close")
+                    self.parent.set_color_item(self)
                     app.favorites_page.set_songs()
                     app.screen_manager.current = "favorites_page"
-                IconLeftWidget:
-                    icon: "playlist-star"
 
-            OneLineAvatarListItem:
+            ItemDrawer:
                 text: "Settings"
-                on_press:
+                text_color:
+                    self.theme_cls.text_color if app.theme_cls.theme_style != 'Dark' else (1, 1, 1, 0.87)
+                icon: 'tools'
+                on_release:
                     root.nav_drawer.set_state("close")
+                    self.parent.set_color_item(self)
                     app.screen_manager.current = "settings_page"
-                IconLeftWidget:
-                    icon: "tools"
 
 # ----------------- Main Page -----------------
 # Menu Drawer
@@ -143,7 +189,9 @@
         icon: 'playlist-music'
         user_font_size: '35sp'
         pos_hint: {'center_x': 0.1, 'center_y': 0.1}
-        on_release: root.playlist_menu.open()
+        on_release:
+            root.update_playlist_menu()
+            root.playlist_menu.open()
 
     # Playback Controls
     MDIconButton:

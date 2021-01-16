@@ -1,6 +1,5 @@
-from datetime import timedelta
-from math import ceil, floor
 import os
+from datetime import timedelta
 from os.path import join
 from time import time
 
@@ -13,14 +12,15 @@ from kivymd.uix.slider import MDSlider
 from kivymd.uix.menu import MDDropdownMenu, RightContent
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
-from kivymd.uix.list import OneLineAvatarIconListItem, OneLineListItem, IRightBodyTouch
-from kivymd.uix.list import IconLeftWidget
+from kivymd.uix.list import OneLineAvatarIconListItem, OneLineListItem, OneLineIconListItem
+from kivymd.uix.list import IconLeftWidget, MDList
+from kivymd.theming import ThemableBehavior
 from kivy.factory import Factory
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.properties import ListProperty, BooleanProperty, NumericProperty, ObjectProperty
+from kivy.properties import ListProperty, BooleanProperty, NumericProperty, ObjectProperty, StringProperty
 from kivy.core.window import Window
 from kivy.animation import Animation
 from kivy.clock import Clock
@@ -32,7 +32,6 @@ from kivy.utils import platform
 from kivy.loader import Loader
 from kivy.utils import rgba
 
-import start_page
 import settings_page
 import favorites_page
 from utils import log, switch_screen, create_snackbar, save_favorites, save_keys
@@ -585,12 +584,37 @@ class MainPage(FloatLayout):
         self.ids.title.text = app.song.name
         self.ids.artist.text = app.song.artist
 
+# -------------------- App --------------------
+
+
+class ItemDrawer(OneLineIconListItem):
+    icon = StringProperty()
+
 
 class ContentNavigationDrawer(BoxLayout):
     screen_manager = ObjectProperty()
     nav_drawer = ObjectProperty()
 
-# -------------------- App --------------------
+
+class DrawerList(ThemableBehavior, MDList):
+    def set_color_item(self, instance_item):
+        '''Called when tap on a menu item.'''
+
+        # Set the color of the icon and text for the menu item.
+        dark_mode = True if self.theme_cls.theme_style == 'Dark' else False
+        selected_colors = (self.theme_cls.primary_color, self.theme_cls.primary_light)
+        for item in self.children:
+            if item.text_color in selected_colors:
+                item.text_color = (
+                    self.theme_cls.text_color
+                    if not dark_mode
+                    else (1, 1, 1, 0.87))
+                break
+        instance_item.text_color = (
+            self.theme_cls.primary_color
+            if not dark_mode
+            else self.theme_cls.primary_light
+        )
 
 
 class LoadingPage(Screen):
@@ -602,8 +626,8 @@ class LoadingPage(Screen):
             pos=(logo.pos[0] + logo.size[0] + 5, logo.pos[1]))
         self.add_widget(logo)
         self.add_widget(label)
-        # animation = Animation(x=0, y=0, d=2)
-        # animation.start(logo)
+        animation = Animation(x=0, y=0, d=2)
+        animation.start(logo)
 
 
 class MainApp(MDApp):
@@ -638,7 +662,11 @@ class MainApp(MDApp):
             page_name = 'main_page'
             self.nav_drawer.type = 'modal'
             user = self.store['user']
-            self.theme_cls.theme_style = "Dark" if user['dark_mode'] else "Light"
+            if user['dark_mode']:
+                self.theme_cls.theme_style = "Dark"
+            else:
+                self.theme_cls.theme_style = "Light"
+
             app.genres = user['genres']
             app.artists = user['artists']
             app.volume = user['volume']
@@ -681,6 +709,7 @@ class MainApp(MDApp):
             self.screen_manager.add_widget(settings_screen)
 
         else:
+            import start_page
             self.nav_drawer.type = 'standard'
             page = start_page.StartPage()
             page_name = 'start_page'
