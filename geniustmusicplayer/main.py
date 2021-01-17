@@ -310,15 +310,14 @@ class PlayButton(MDIconButton):
 
         app.song.play()
         app.song.seek(seek)
-        # TODO: fix volume 0 plays at full volume
+        # TODO: fix: volume 0 plays at full volume
         app.song.volume = float(str(app.volume)[:4])
         Logger.info('VOLUME %s', app.song.volume)
-        self.source = 'images/stop2.png'
         self.icon = 'pause'
         if self.event:
             self.event.cancel()
         self.event = Clock.schedule_interval(self.update_track_current, 0.1)
-        Logger.info('play_track: playing %s', song.name)
+        Logger.info('play_track: playing %s | seek: %s', song.name, seek)
 
     @log
     def control(self, instance, **kwargs):
@@ -371,8 +370,8 @@ class PlayButton(MDIconButton):
         else:
             app.song.last_pos = app.song.get_pos()
             app.song.stop()
-            Logger.debug('control: stopped at %s', app.song.last_pos)
-            self.source = "images/play2.png"
+            Logger.debug('control: stopped at %s (state: %s)',
+                         app.song.last_pos, app.song.state)
             self.icon = 'play'
             self.event.cancel()
 
@@ -637,7 +636,7 @@ class MainApp(MDApp):
     store = JsonStore('preferences.json')
     favorites = ([Song(**x) for x in store['user']['favorites']]
                  if store.exists('user') else [])
-    volume = store['user']['volume'] if store.exists('user') else 50
+    volume = store['user']['volume'] if store.exists('user') else 0.5
     song = None
     main_page = None
     api = API()
@@ -715,9 +714,9 @@ class MainApp(MDApp):
             page_name = 'start_page'
             switch_screen(page, page_name)
 
-    def on_volume(self, *args):
-        if app.song:
-            app.song.volume = app.volume
+    # def on_volume(self, *args):
+    #    if app.song:
+    #        app.song.volume = app.volume
 
     def on_stop(self):
         song_pos = app.song.get_pos()
