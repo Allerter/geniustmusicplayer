@@ -223,6 +223,13 @@ class ArtistsPage(FloatLayout):
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
         self.app.artists_page = self
+        self.loading = MDSpinner(
+            size_hint=(None, None),
+            size=('30dp', '30dp'),
+            pos_hint={'center_x': .5, 'center_y': .5},
+            size_hint_y=None,
+        )
+        self.loading.active = False
 
     def save_preferences(self, playlist):
         # save user preferences
@@ -257,6 +264,7 @@ class ArtistsPage(FloatLayout):
                 self.retry_event = Clock.schedule_once(retry, 3)
                 self.snackbar.open()
 
+        self.loading.active = True
         # get playlist
         trigger = Clock.create_trigger(get_tracks)
         req = self.app.api.get_recommendations(
