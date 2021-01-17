@@ -6,12 +6,14 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.properties import ListProperty, ObjectProperty
 from kivy.clock import Clock
 from kivy.logger import Logger
+from kivy.utils import rgba
 from kivymd.app import MDApp
 from kivymd.uix.button import MDRectangleFlatButton, MDRaisedButton
 from kivymd.uix.label import MDLabel
 from kivymd.uix.list import OneLineListItem
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.spinner import MDSpinner
+
 
 from utils import log, switch_screen, create_snackbar
 
@@ -187,11 +189,13 @@ class ManualInfoPage(FloatLayout):
                     pos_hint={'center_x': .5, 'center_y': .5}
                 )
                 for genre in genres:
-                    button = MDRectangleFlatButton(text=genre.capitalize(),
-                                                   on_press=self.genre_selected,
-                                                   size_hint=(.3, None))
+                    button = MDRaisedButton(
+                        text=genre.capitalize(),
+                        on_press=self.genre_selected,
+                        size_hint=(.3, None)
+                    )
+                    button.md_bg_color = self.app.theme_cls.disabled_hint_text_color
                     genres_grid.add_widget(button)
-                self.original_color = genres_grid.children[0].md_bg_color
                 self.add_widget(genres_grid)
                 self.genres_displayed = True
 
@@ -200,21 +204,28 @@ class ManualInfoPage(FloatLayout):
             req = self.app.api.get_genres(trigger=trigger)
             self.loading.active = True
             if button is not None:
-                self.button_grid.remove_widget(self.age_button)
-                button.text = 'Submit'
+                self.remove_widget(self.button_grid)
+                button = MDRaisedButton(
+                    text='SUBMIT',
+                    on_press=lambda *args: self.select_genres(None),
+                    size_hint=(1, None)
+                )
+                self.add_widget(button)
+                self.ids.age_genre_text.text = 'Select your favorite genres.'
 
     @log
     def genre_selected(self, button):
         genre = button.text.lower()
         if genre in self.app.genres:
-            button.md_bg_color = self.original_color
+            button.md_bg_color = self.app.theme_cls.disabled_hint_text_color
             self.app.genres.remove(genre)
             Logger.info('genre_selected: removed %s', genre)
         else:
             if self.error_label:
                 self.remove_widget(self.error_label)
                 self.error_label = None
-            button.md_bg_color = (0, 1, 0, 1)
+            button.md_bg_color = rgba('#1DB954')
+            button.text_color = (1, 1, 1, 0.87)
             self.app.genres.append(genre)
             Logger.info('genre_selected: added %s', genre)
 
@@ -236,7 +247,6 @@ class ArtistsPage(FloatLayout):
         self.add_widget(self.loading)
 
     def save_preferences(self, playlist):
-        # save user preferences
         self.app.store.put(
             'user',
             genres=self.app.genres,

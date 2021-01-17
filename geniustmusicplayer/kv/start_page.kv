@@ -182,17 +182,15 @@
     #    pos_hint: {'center_x': .5, 'center_y': .6}
     Search:
         id: search_layout
-    MDRectangleFlatButton:
+    MDRaisedButton:
         id: finish
-        text: 'Finish'
-        size_hint: (1, .07)
-        font_size: sp(16)
-        pos_hint: {'center_x': .5, 'center_y': .15}
+        text: 'FINISH'
+        size_hint: 1, None
         on_press: root.finish()
     Label:
         color: 'black'
         text: '2/2'
-        pos_hint: {'center_x': .9, 'center_y': .05}
+        pos_hint: {'center_x': .9, 'center_y': .1}
 
 <CustomOneLineListItem>:
     on_press: self.add_artist(self.text)
