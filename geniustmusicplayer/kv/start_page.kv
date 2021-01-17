@@ -197,36 +197,22 @@
 
 <Search>:
     MDBoxLayout:
-        size_hint_y: None
-        pos_hint: {'center_x': .5, 'center_y': .2}
-        orientation: 'vertical'
-        spacing: dp(10)
-        padding: dp(20)
+        size_hint: 1, 0.2
+        pos_hint: {'center_x': .5, 'center_y': .7}
+        adaptive_height: True
 
-        MDBoxLayout:
-            adaptive_height: True
+        MDIconButton:
+            icon: 'magnify'
 
-            MDIconButton:
-                icon: 'magnify'
+        MDTextField:
+            size_hint: 1, None
+            id: search_field
+            hint_text: 'Search artist'
+            on_text: root.register_input()
+    MDList:
+        pos_hint: {'center_y': .5}
+        id: hits
 
-            MDTextField:
-                id: search_field
-                hint_text: 'Search artist'
-                on_text: root.register_input()
-        RecycleView:
-            id: rv
-            key_viewclass: 'viewclass'
-            key_size: 'height'
-            size_hint_y: None
-            size: self.size[0], 300
-
-            RecycleBoxLayout:
-                padding: dp(10)
-                default_size: None, dp(48)
-                default_size_hint: 1, None
-                size_hint_y: None
-                height: self.minimum_height
-                orientation: 'vertical'
 
 # ----------------- OAuth Pages -----------------
 

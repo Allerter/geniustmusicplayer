@@ -320,6 +320,7 @@ class Search(FloatLayout):
             size_hint_y=None,
         )
         self.loading.active = False
+        self.snackbar_retry = False
         self.add_widget(self.loading)
 
     def register_input(self):
@@ -328,29 +329,26 @@ class Search(FloatLayout):
     def search_artists(self, *args):
         def add_items(*args):
             self.loading.active = False
-            self.ids.rv.data = []
+            self.ids.hits.clear_widgets()
             if req.status_code == 200:
                 for artist in req.response['artists']:
-                    self.ids.rv.data.append(
-                        {
-                            "viewclass": "CustomOneLineListItem",
-                            "text": artist,
-                        }
-                    )
+                    self.ids.hits.add_widget(CustomOneLineListItem(text=artist))
             else:
                 Logger.error('search_artists: failed payload: %s', req.response)
                 create_snackbar("Search failed.", self.search_artists).open()
+                self.snackbar_retry = True
 
         text = self.ids.search_field.text
         # start the search when the user stops typing
-        if len(text) > 2 and self.current_input - self.last_input > 0.3:
+        if self.snackbar_retry or (len(text) > 2 and self.current_input - self.last_input > 0.3):
             if self.loading.active is False:
                 self.loading.active = True
+            self.snackbar_retry = False
             self.last_input = time()
             trigger = Clock.create_trigger(add_items)
             req = self.app.api.search_artists(text, trigger=trigger)
         elif len(text) == 0:
-            self.ids.rv.data = []
+            self.ids.hits.clear_widgets()
 
 # -------------------- OAuth Info --------------------
 
