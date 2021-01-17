@@ -15,6 +15,8 @@ from kivymd.uix.bottomsheet import MDCustomBottomSheet
 from kivymd.uix.list import OneLineAvatarIconListItem, OneLineListItem, OneLineIconListItem
 from kivymd.uix.list import IconLeftWidget, MDList
 from kivymd.theming import ThemableBehavior
+from kivymd.uix.list import BaseListItem, ContainerSupport
+import kivymd.material_resources as m_res
 from kivy.factory import Factory
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
@@ -31,6 +33,7 @@ from kivy.logger import Logger, LOG_LEVELS
 from kivy.utils import platform
 from kivy.loader import Loader
 from kivy.utils import rgba
+from kivy.metrics import dp
 
 import settings_page
 import favorites_page
@@ -447,11 +450,25 @@ class FavoriteButton(MDIconButton):
         save_favorites(app.favorites)
 
 
-# IRightBodyTouch, OneLineListItem
-class ItemForCustomBottomSheet(OneLineAvatarIconListItem):
+class MyBaseListItem(ContainerSupport, BaseListItem):
+    _txt_left_pad = NumericProperty("10dp")
+    _txt_top_pad = NumericProperty("20dp")
+    _txt_bot_pad = NumericProperty("19dp")  # dp(24) - dp(5)
+    _height = NumericProperty()
+    _num_lines = 1
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._txt_left_pad = '10dp'
+        self.height = dp(56) if not self._height else self._height
+
+
+class PlaylistSongItem(MyBaseListItem):
+    # dp(40) = dp(16) + dp(24):
+    _txt_right_pad = NumericProperty("40dp")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._txt_right_pad = dp(40) + m_res.HORIZ_MARGINS
 
 
 class RightContentCls(RightContent):
@@ -477,8 +494,9 @@ class RightContentCls(RightContent):
             user_font_size='16sp',
             pos_hint={'center_y': 0.5},
             theme_text_color="Custom",
-            text_color=(rgba('#ff0000') if app.theme_cls.theme_style == 'Light'
-                        else rgba('#cc0000')),
+            text_color=((1, 1, 1, 0.87) if not is_removable
+                        else (rgba('#bd2828') if app.theme_cls.theme_style == 'Light'
+                              else rgba('#cc0000'))),
             icon='heart' if song in app.favorites else 'heart-outline',
             on_release=lambda *args: app.main_page.favorite_playlist_item(self, song)
         )
@@ -486,7 +504,7 @@ class RightContentCls(RightContent):
 
         if is_removable:
             remove_button = MDIconButton(
-                icon='close-box',
+                icon='close',
                 user_font_size="16sp",
                 pos_hint={"center_y": .5},
                 on_release=lambda *args: app.main_page.remove_playlist_item(self, song),
@@ -523,7 +541,7 @@ class MainPage(FloatLayout):
             screen=Factory.PlaylistLayout(height=66 * len(app.playlist.tracks)),
         )
         for i in app.playlist.tracks:
-            item = ItemForCustomBottomSheet(
+            item = PlaylistSongItem(
                 text=i.name,
                 on_release=lambda *args, song=i: self.play_from_playlist(song),
             )
@@ -533,7 +551,9 @@ class MainPage(FloatLayout):
                 is_removable=is_removable(i)))
             # different background for current song
             if i == app.song.song_object:
-                item.bg_color = rgba('#cbcbcb')
+                item.bg_color = app.theme_cls.primary_color  # rgba('#cbcbcb')
+                item.theme_text_color = 'Custom'
+                item.text_color = (1, 1, 1, 1)
             self.playlist_menu.screen.songs_grid.add_widget(item)
 
     @log
@@ -541,6 +561,7 @@ class MainPage(FloatLayout):
         # track = app.playlist.track_by_name(selected_item.text)
         if track == app.playlist.current_track:  # track is already playing
             return
+        self.playlist_menu.dismiss()
         app.play_button.play_track(track)
 
     @log
@@ -712,10 +733,6 @@ class MainApp(MDApp):
             page = start_page.StartPage()
             page_name = 'start_page'
             switch_screen(page, page_name)
-
-    # def on_volume(self, *args):
-    #    if app.song:
-    #        app.song.volume = app.volume
 
     def on_stop(self):
         if app.song:

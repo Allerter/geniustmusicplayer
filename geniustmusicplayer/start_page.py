@@ -5,8 +5,6 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.properties import ListProperty, ObjectProperty
 from kivy.clock import Clock
-from kivy.utils import get_color_from_hex
-from kivy.uix.textinput import TextInput
 from kivy.logger import Logger
 from kivymd.app import MDApp
 from kivymd.uix.button import MDRectangleFlatButton, MDRaisedButton
