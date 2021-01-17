@@ -718,10 +718,11 @@ class MainApp(MDApp):
     #        app.song.volume = app.volume
 
     def on_stop(self):
-        song_pos = app.song.get_pos()
-        playlist = app.playlist.to_dict()
-        playlist.update({'last_pos': song_pos})
-        save_keys(playlist=playlist, volume=app.volume)
+        if app.song:
+            song_pos = app.song.get_pos()
+            playlist = app.playlist.to_dict()
+            playlist.update({'last_pos': song_pos})
+            save_keys(playlist=playlist, volume=app.volume)
 
 
 if __name__ == '__main__':

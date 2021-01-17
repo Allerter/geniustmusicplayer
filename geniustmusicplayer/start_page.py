@@ -12,7 +12,7 @@ from kivymd.app import MDApp
 from kivymd.uix.button import MDRectangleFlatButton, MDRaisedButton
 from kivymd.uix.label import MDLabel
 from kivymd.uix.list import OneLineListItem
-# from kivymd.uix.textfield import MDTextField
+from kivymd.uix.textfield import MDTextField
 from kivymd.uix.spinner import MDSpinner
 
 from utils import log, switch_screen, create_snackbar
@@ -89,7 +89,8 @@ class ManualInfoPage(FloatLayout):
                         pos_hint={'center_x': .51, 'center_y': .55},
                         text='Invalid age. Try again.',
                         theme_text_color='Custom',
-                        text_color=get_color_from_hex('ff0000'),)
+                        text_color=self.app.theme_cls.error_color,
+                    )
                     self.add_widget(self.error_label)
                 return
 
@@ -117,23 +118,27 @@ class ManualInfoPage(FloatLayout):
             self.input_displayed = True
             self.ids.age_genre_text.text = 'Enter your age, e.g. 24'
             self.remove_widget(self.button_grid)
-            self.input_widget = input_widget = TextInput(
+            self.input_widget = input_widget = MDTextField(
                 pos_hint={'center_x': .35, 'center_y': .6},
                 size_hint=(0.6, 0.05),
-                # required=True,
-                # helper_text_mode="on_error",
+                required=True,
+                helper_text="Invalid age.",
+                helper_text_mode="on_error",
                 on_text_validate=self.enter_age,
                 multiline=False,
             )
+            self.add_widget(input_widget)
+            input_widget.bind(focus=self.delete_error_label)
+
             submit_button = MDRaisedButton(
                 text='Submit',
-                on_release=self.enter_age
+                on_release=self.enter_age,
+                size_hint=(None, 0.05),
+                pos_hint={'center_y': .6},
             )
-            input_widget.bind(focus=self.delete_error_label)
+            self.add_widget(submit_button)
             input_widget.bind(
                 pos=lambda widget, values: button_pos(widget, submit_button, values))
-            self.add_widget(input_widget)
-            self.add_widget(submit_button)
 
             @log
             def show_keyboard(event):
@@ -157,7 +162,7 @@ class ManualInfoPage(FloatLayout):
                         pos_hint={'center_x': .51, 'center_y': .25},
                         text='You must at least choose one genre.',
                         theme_text_color='Custom',
-                        text_color=get_color_from_hex('ff0000'),
+                        text_color=self.app.theme_cls.error_color,
                     )
                     self.add_widget(self.error_label)
         else:
@@ -197,10 +202,8 @@ class ManualInfoPage(FloatLayout):
             req = self.app.api.get_genres(trigger=trigger)
             self.loading.active = True
             if button is not None:
-                # Edit button
-                button.text = 'Submit'
-                # button.fade_out()
                 self.button_grid.remove_widget(self.age_button)
+                button.text = 'Submit'
 
     @log
     def genre_selected(self, button):
@@ -208,12 +211,14 @@ class ManualInfoPage(FloatLayout):
         if genre in self.app.genres:
             button.md_bg_color = self.original_color
             self.app.genres.remove(genre)
+            Logger.info('genre_selected: removed %s', genre)
         else:
             if self.error_label:
                 self.remove_widget(self.error_label)
                 self.error_label = None
-            button.md_bg_color = get_color_from_hex('0eea4c')
+            button.md_bg_color = (0, 1, 0, 1)
             self.app.genres.append(genre)
+            Logger.info('genre_selected: added %s', genre)
 
 
 class ArtistsPage(FloatLayout):
@@ -230,6 +235,7 @@ class ArtistsPage(FloatLayout):
             size_hint_y=None,
         )
         self.loading.active = False
+        self.add_widget(self.loading)
 
     def save_preferences(self, playlist):
         # save user preferences
@@ -335,6 +341,8 @@ class Search(FloatLayout):
             self.last_input = time()
             trigger = Clock.create_trigger(add_items)
             req = self.app.api.search_artists(text, trigger=trigger)
+        elif len(text) == 0:
+            self.ids.rv.data = []
 
 # -------------------- OAuth Info --------------------
 

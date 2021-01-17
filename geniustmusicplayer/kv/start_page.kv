@@ -19,11 +19,6 @@
     genius_btn: genius_info
 
     cols: 1
-#    canvas.before:
-#        Rectangle:
-#            pos: self.pos
-#            size: self.size
-#            source: 'images/background.png'
 
     Image:
         source: 'images/icon.png'
@@ -71,37 +66,25 @@
                 size_hint: .8, None
             MDRectangleFlatIconButton:
                 id: genius_info
-                icon: "images/icons8-genius-24.png"
+                icon: "web"
                 text: 'Get Preferences from Genius'
                 on_release: root.select_choice(self)
                 size_hint: .8, None
             Widget:
-                id: seperator
+                id: separator
+                size_hint_y: None
                 canvas:
-                    BorderImage:
-                        source: 'images/border.png'
-                        pos: choices_layout.pos[0], choices_layout.pos[1]
-                        size: choices_layout.size[0], choices_layout.size[1]
-            #Widget:
-            #    id: separator
-            #    size_hint_y: None
-            #    canvas:
-            #        Color:
-            #            rgba: app.theme_cls.accent_color
-            #        Line:
-            #            width: 1.1
-            #            rectangle: choices_layout.pos[0], choices_layout.pos[1], choices_layout.size[0], choices_layout.size[1]
+                    Color:
+                        rgba: (0, 0, 0, 0.87)
+                    Line:
+                        width: 1.1
+                        rectangle: choices_layout.pos[0], choices_layout.pos[1], choices_layout.size[0], choices_layout.size[1]
 
 <ManualInfoPage>:
     age_button: age_button
     select_button: select_button
     button_grid: button_grid
 
-    canvas.before:
-        Rectangle:
-            pos: self.pos
-            size: self.size
-            source: 'images/background.png'
     ScaleLabel:
         text: 'Favorite Genres'
         pos_hint: {'center_x': .5, 'center_y': .8}
@@ -157,11 +140,6 @@
     search_layout: search_layout
     artists_label: artists_label
 
-    canvas.before:
-        Rectangle:
-            pos: self.pos
-            size: self.size
-            source: 'images/background.png'
     ScaleLabel:
         text: 'Favorite Artists'
         pos_hint: {'center_x': .5, 'center_y': .9}
@@ -258,11 +236,6 @@
     welcome_label: welcome_label
     progress_bar: progress_bar
 
-    canvas.before:
-        Rectangle:
-            pos: self.pos
-            size: self.size
-            source: 'images/background.png'
     pos_hint: {'center_x': .5, 'center_y': .5}
     ScaleLabel:
         id: welcome_label
