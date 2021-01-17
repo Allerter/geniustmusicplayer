@@ -15,9 +15,10 @@
     MDDropDownItem:
         id: drop_item
         pos_hint: {'center_y': .85}
-        pos: label.pos[0] + 55, self.pos[1]
+        pos: label.pos[0] + dp(55), self.pos[1]
         text: 'Date Added'
         on_release: root.menu.open()
+
     MDIconButton:
         id: sort_ascending
         pos_hint: {'center_x': .80, 'center_y': 0.85}
@@ -39,9 +40,10 @@
             sort_ascending.text_color = app.theme_cls.disabled_hint_text_color
             root.set_songs()
 
-    MDBoxLayout:
-        size_hint_y: None
-        pos_hint: {'center_y': 0.75}
+    MDGridLayout:
+        cols: 1
+        size_hint: 1, 1
+        pos_hint: {'center_y': 0.3}
 
         ScrollView:
             MDList:

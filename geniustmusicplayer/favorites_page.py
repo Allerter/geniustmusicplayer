@@ -1,7 +1,7 @@
 from kivy.properties import StringProperty
 from kivymd.app import MDApp
 from kivy.uix.floatlayout import FloatLayout
-from kivymd.uix.list import OneLineAvatarIconListItem
+from kivymd.uix.list import TwoLineAvatarIconListItem
 from kivymd.uix.menu import RightContent
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.menu import MDDropdownMenu
@@ -11,11 +11,12 @@ from kivy.utils import rgba
 from utils import create_snackbar, save_favorites
 
 
-class CustomOneLineIconListItem(OneLineAvatarIconListItem):
+class CustomOneLineIconListItem(TwoLineAvatarListItem):
     def __init__(self, **kwargs):
         song = kwargs.pop('song')
         super().__init__(**kwargs)
         self.text = song.name
+        self.secondary_text = song.artist
         self.right_content = FavoriteItemRightContent(song=song)
         self.add_widget(self.right_content)
         self._txt_left_pad = '10dp'
@@ -37,7 +38,7 @@ class FavoriteItemRightContent(RightContent):
         self.add_widget(add_button)
 
         remove_button = MDIconButton(
-            icon='close-box',
+            icon='close',
             user_font_size="16sp",
             pos_hint={"center_y": .5},
             on_release=lambda *args: app.favorites_page.remove_song(song),
@@ -94,7 +95,7 @@ class FavoritesPage(FloatLayout):
         self.ids.favorites_list.clear_widgets()
         for song in songs:
             self.ids.favorites_list.add_widget(
-                CustomOneLineIconListItem(song=song)
+                CustomOneLineIconListItem(song=song, size_hint=(1, None))
             )
 
     def playlist_add(self, song):

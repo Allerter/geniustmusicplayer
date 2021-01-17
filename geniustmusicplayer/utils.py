@@ -84,9 +84,4 @@ def switch_screen(page, name):
     screen = Screen(name=name)
     screen.add_widget(page)
     MDApp.get_running_app().screen_manager.switch_to(screen)
-    # app.screen_manager.add_widget(screen)
-    # app.screen_manager.current = name
-    # for widget in app.screen_manager.children[:]:
-    #     if widget.name != name:
-    #         print(widget)
-    #         app.screen_manager.remove_widget(widget)
+
