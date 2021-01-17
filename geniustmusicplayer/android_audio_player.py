@@ -1,16 +1,20 @@
+
 from jnius import autoclass
-from kivy.core.audio import Sound
+from android import api_version
+from kivy.core.audio import Sound, SoundLoader
+
 
 MediaPlayer = autoclass("android.media.MediaPlayer")
-FileInputStream = autoclass("java.io.FileInputStream")
 AudioManager = autoclass("android.media.AudioManager")
-AudioAttributes = autoclass("android.media.AudioAttributes")
+if api_version >= 21:
+    AudioAttributesBuilder = autoclass("android.media.AudioAttributes$Builder")
 
 
 class SoundAndroidPlayer(Sound):
     @staticmethod
     def extensions():
-        return ("mp3", "mp4", "aac", "3gp", "flac", "mkv", "wav", "ogg")
+        return ("mp3", "mp4", "aac", "3gp", "flac", "mkv", "wav", "ogg", "m4a",
+                "gsm", "mid", "xmf", "mxmf", "rtttl", "rtx", "ota", "imy")
 
     def __init__(self, **kwargs):
         self._mediaplayer = None
@@ -19,18 +23,20 @@ class SoundAndroidPlayer(Sound):
     def load(self):
         self.unload()
         self._mediaplayer = MediaPlayer()
-        self._mediaplayer.setAudioAttributes(
-            (AudioAttributes.Builder()
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .setUsage(AudioAttributes.USAGE_MEDIA)
+        if api_version >= 21:
+            self._mediaplayer.setAudioAttributes(
+                AudioAttributesBuilder()
+                .setLegacyStreamType(AudioManager.STREAM_MUSIC)
                 .build())
-        )
-        self._mediaplayer.setDataSource(self.filename)
+        else:
+            self._mediaplayer.setAudioStreamType(AudioManager.STREAM_MUSIC)
+        self._mediaplayer.setDataSource(self.source)
         self._mediaplayer.prepare()
 
     def unload(self):
-        self.stop()
-        self._mediaplayer = None
+        if self._mediaplayer:
+            self._mediaplayer.release()
+            self._mediaplayer = None
 
     def play(self):
         if not self._mediaplayer:
@@ -42,12 +48,13 @@ class SoundAndroidPlayer(Sound):
         if not self._mediaplayer:
             return
         self._mediaplayer.stop()
+        self._mediaplayer.prepare()
         super(SoundAndroidPlayer, self).stop()
 
     def seek(self, position):
         if not self._mediaplayer:
             return
-        self._mediaplayer.seekTo(float(position))
+        self._mediaplayer.seekTo(float(position) * 1000)
 
     def get_pos(self):
         if self._mediaplayer:
@@ -63,3 +70,7 @@ class SoundAndroidPlayer(Sound):
         if self._mediaplayer:
             return self._mediaplayer.getDuration() / 1000.
         return super(SoundAndroidPlayer, self)._get_length()
+
+    def on_loop(self, instance, loop):
+        if self._mediaplayer:
+            self._mediaplayer.setLooping(loop)
