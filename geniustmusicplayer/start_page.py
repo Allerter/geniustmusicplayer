@@ -231,6 +231,7 @@ class ArtistsPage(FloatLayout):
             genres=self.app.genres,
             artists=self.app.artists,
             volume=self.app.volume,
+            favorites=[],
             playlist=playlist.to_dict(),
             dark_mode=False,
         )

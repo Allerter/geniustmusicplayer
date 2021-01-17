@@ -135,3 +135,6 @@ songs/
 *.ogg
 preferences*.json
 *.psd
+.buildozer
+!buildozer.spec
+bin/

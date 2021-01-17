@@ -3,7 +3,7 @@ from datetime import timedelta
 from os.path import join
 from time import time
 
-# os.environ['KIVY_AUDIO'] = 'android'
+os.environ['KIVY_AUDIO'] = 'android'
 os.environ['KIVY_IMAGE'] = 'pil,sdl2,gif'
 
 from kivymd.app import MDApp
@@ -42,14 +42,14 @@ Logger.setLevel(LOG_LEVELS['debug'])
 # os.environ['KIVY_AUDIO'] = 'ffpyplayer'
 
 if platform == 'android':
-    from android_audio_player import SoundAndroidPlayer
+    # from android_audio_player import SoundAndroidPlayer
     # from android.storage import primary_external_storage_path
     # from android.permissions import request_permissions, Permission
     # request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
     # storage_path = primary_external_storage_path()
     from android.storage import app_storage_path
     storage_path = app_storage_path()
-    SoundLoader.register(SoundAndroidPlayer)
+    # SoundLoader.register(SoundAndroidPlayer)
 else:
     storage_path = ''
     Window.size = (330, 650)
