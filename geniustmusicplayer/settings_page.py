@@ -32,7 +32,6 @@ class MyBaseListItem(ContainerSupport, BaseListItem):
 
 
 class SettingsPage(FloatLayout):
-    reset_dialog = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -60,21 +59,18 @@ class SettingsPage(FloatLayout):
         drawer.set_color_item(drawer.children[0])
 
     def show_alert_dialog(self):
-        if not self.reset_dialog:
-            self.reset_dialog = MDDialog(
-                text="Reset Preferences?",
-                md_bg_color=(1, 1, 1, 1),
-                buttons=[
-                    MDFlatButton(
-                        text="CANCEL", text_color=(0, 0, 0, 0),
-                        on_release=lambda *args: self.reset_dialog.dismiss()
-                    ),
-                    MDFlatButton(
-                        text="RESET", text_color=(0, 0, 0, 0),
-                        on_release=self.reset_preferences,
-                    ),
-                ],
-            )
+        self.reset_dialog = MDDialog(
+            text="Reset Preferences?",
+            buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    on_release=lambda *args: self.reset_dialog.dismiss()
+                ),
+                MDFlatButton(
+                    text="RESET",
+                ),
+            ],
+        )
         self.reset_dialog.open()
 
     def reset_preferences(self, *args):
