@@ -596,12 +596,12 @@ class MainPage(FloatLayout):
 
     @log
     def update_cover_art(self):
-        self.ids.cover_art.source = app.song.cover_art
+        self.ids.cover_art.source = app.song.song_object.cover_art
 
     @log
     def update_song_info(self):
-        self.ids.title.text = app.song.name
-        self.ids.artist.text = app.song.artist
+        self.ids.title.text = app.song.song_object.name
+        self.ids.artist.text = app.song.song_object.artist
 
 # -------------------- App --------------------
 
@@ -652,8 +652,11 @@ class LoadingPage(Screen):
 class MainApp(MDApp):
     artists = ListProperty([])
     genres = ListProperty([])
-    playlist = Playlist([])
     store = JsonStore('preferences.json')
+    playlist = Playlist(
+        [Song(**x) for x in store['user']['playlist']['tracks']],
+        current=store['user']['playlist']['current']
+    ) if store.exists('user') else Playlist([])
     favorites = ([Song(**x) for x in store['user']['favorites']]
                  if store.exists('user') else [])
     volume = store['user']['volume'] if store.exists('user') else 0.5
@@ -690,17 +693,20 @@ class MainApp(MDApp):
             app.artists = user['artists']
             app.volume = user['volume']
             app.main_page.ids.volume_slider.value = app.volume * 100
-            # get playlist
-            playlist = Playlist(
-                [Song(**x) for x in user['playlist']['tracks']],
-                current=user['playlist']['current']
-            )
-            app.playlist = playlist
             # load song
             song = self.playlist.current_track
             if song.preview_file is None:
-                res = self.api.download_preview(song, async_request=False)
-                self.play_button.load_song(song, res.response)
+                def get_preview(*args):
+                    if req.status_code == 200:
+                        song.preview_file = save_song(song, req.response)
+                        Logger.debug('SONG LOAD: download successful')
+                        self.load_first_page()
+                    else:
+                        song.preview_file = None
+                        Logger.debug('SONG LOAD: download failed')
+                trigger = Clock.create_trigger(get_preview)
+                req = self.api.download_preview(song, trigger=trigger)
+                return
             else:
                 self.play_button.load_song(song)
             app.song.last_pos = user['playlist'].get('last_pos', 0)

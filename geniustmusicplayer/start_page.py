@@ -269,8 +269,8 @@ class ArtistsPage(FloatLayout):
             if req.status_code == 200:
                 tracks = req.response
                 switch_screen(main.LoadingPage(), 'loading_page')
-                playlist = main.Playlist(tracks)
-                self.save_preferences(playlist)
+                self.app.playlist = main.Playlist(tracks, current=0)
+                self.save_preferences(self.app.playlist)
                 self.app.load_first_page()
             else:
                 msg = "Failed to get playlist. Retrying in 3 seconds."
