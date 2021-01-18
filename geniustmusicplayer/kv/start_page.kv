@@ -11,10 +11,26 @@
     canvas.after:
         PopMatrix
 
+<AgeDialogContent>
+    orientation: "vertical"
+    spacing: "12dp"
+    size_hint_y: None
+    height: "60dp"
+
+    MDTextField:
+        id: age_textfield
+        hint_text: "Age"
+
+<GenreItem>
+    check: check
+    on_release: root.set_icon(check)
+
+    CheckboxLeftWidget:
+        id: check
+
 <StartPage>:
     welcome_label: welcome_label
     text_label: text_label
-    manual_btn: manual_info
     spotify_btn: spotify_info
     genius_btn: genius_info
 
@@ -35,7 +51,7 @@
         id: choices_layout
         radius: [25, 25, 25, 25]
         size_hint: 0.9, 0.5
-        pos_hint: {'center_x': 0.5, 'center_y': .3}
+        pos_hint: {'center_x': 0.5, 'center_y': .35}
 
         ScaleLabel:
             id: text_label
@@ -54,9 +70,12 @@
             padding: .15
             pos_hint: {'center_x': .5, 'center_y': .45}
             MDRectangleFlatButton:
-                id: manual_info
-                text: 'Enter Preferences'
-                on_release: root.select_choice(self)
+                text: 'Enter Age'
+                on_release: root.enter_age()
+                size_hint: .8, None
+            MDRectangleFlatButton:
+                text: 'Select Favorite Genres Manually'
+                on_release: root.select_genres()
                 size_hint: .8, None
             MDRectangleFlatIconButton:
                 id: spotify_info
@@ -80,61 +99,6 @@
                         width: 1.1
                         rectangle: choices_layout.pos[0], choices_layout.pos[1], choices_layout.size[0], choices_layout.size[1]
 
-<ManualInfoPage>:
-    age_button: age_button
-    select_button: select_button
-    button_grid: button_grid
-
-    ScaleLabel:
-        text: 'Favorite Genres'
-        pos_hint: {'center_x': .5, 'center_y': .8}
-        font_style: "H4"
-        halign: "center"
-    ScaleLabel:
-        id: age_genre_text
-        text: 'Enter age or select genres yourself.'
-        halign: 'center'
-        pos_hint: {'center_x': .5, 'center_y': .7}
-    Label:
-        text: '1/3'
-        pos_hint: {'center_x': .9, 'center_y': .05}
-    GridLayout:
-        id: button_grid
-        cols: 2
-        rows: 1
-        row_force_default: True
-        row_default_height: '50dp'
-        size_hint_y: None
-        pos_hint: {'center_x': .5, 'center_y': .1}
-        MDRectangleFlatButton:
-            id: age_button
-            text: 'Enter Age'
-            size_hint: (.40, .05)
-            on_press: root.enter_age(self)
-        MDRectangleFlatButton:
-            id: select_button
-            text: 'Select Genres'
-            size_hint: (.40, .05)
-            on_press: root.select_genres(self)
-
-
-<AgePage>:
-    Label:
-        pos_hint: {'center_x': .5, 'center_y': .7}
-        text: 'Enter age (e.g. 24)'
-    Label:
-        text: '2/3'
-        pos_hint: {'center_x': .9, 'center_y': .05}
-    TextInput:
-        id: text_input
-        pos_hint: {'center_x': .5, 'center_y': .6}
-        size_hint: 0.2, 0.1
-    Button:
-        id: enter_age
-        text: 'Submit'
-        size_hint: (.1, .090)
-        pos_hint: {'center_x': .6, 'center_y': .5}
-        on_press: root.on_press(text_input.text)
 
 <ArtistsPage>:
     search_layout: search_layout
@@ -156,41 +120,13 @@
         halign: 'left'
         pos: 5, self.pos[1]
         pos_hint: {'center_y': .8}
-    #GridLayout:
-    #    id: search_grid
-    #    cols: 2
-    #    rows: 1
-    #    row_force_default: True
-    #    row_default_height: '40dp'
-    #    size_hint_y: None
-    #    pos_hint: {'center_x': .5, 'center_y': .7}
-    #    TextInput:
-    #        id: text_input
-    #        size_hint: .8, .03
-    #        multiline: False
-    #    MDRaisedButton:
-    #        id: search_artist
-    #        text: 'Search'
-    #        size_hint: .2, .03
-    #        on_press: root.on_press(text_input.text)
-    #GridLayout:
-    #    id: hits_grid
-    #    cols: 1
-    #    spacing: 10
-    #    size_hint_y: None
-    #    size_hint: (0.7, None)
-    #    pos_hint: {'center_x': .5, 'center_y': .6}
     Search:
         id: search_layout
-    MDRaisedButton:
+    MDFillRoundFlatButton:
         id: finish
         text: 'FINISH'
-        size_hint: 1, None
+        pos_hint: {'center_x': 0.8, 'center_y': 0.1}
         on_press: root.finish()
-    Label:
-        color: 'black'
-        text: '2/2'
-        pos_hint: {'center_x': .9, 'center_y': .1}
 
 <CustomOneLineListItem>:
     on_press: self.add_artist(self.text)

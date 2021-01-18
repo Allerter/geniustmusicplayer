@@ -1,175 +1,145 @@
 from time import time
 import secrets
+import webbrowser
 
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ListProperty, ObjectProperty
 from kivy.clock import Clock
 from kivy.logger import Logger
 from kivy.utils import rgba
 from kivymd.app import MDApp
-from kivymd.uix.button import MDRectangleFlatButton, MDRaisedButton
+from kivymd.uix.button import (
+    MDRectangleFlatButton, MDRaisedButton, MDFillRoundFlatButton, MDFlatButton)
 from kivymd.uix.label import MDLabel
 from kivymd.uix.list import OneLineListItem
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.spinner import MDSpinner
-
+from kivymd.toast import toast
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.list import OneLineAvatarIconListItem
 
 from utils import log, switch_screen, create_snackbar
+
+
+class AgeDialogContent(BoxLayout):
+    pass
+
+
+class GenreItem(OneLineAvatarIconListItem):
+    divider = None
+
+    def set_icon(self, instance_check):
+        instance_check.active = True if not instance_check.active else False
+
+
+def loading_spinner():
+    loading = MDSpinner(
+        size_hint=(None, None),
+        size=('30dp', '30dp'),
+        pos_hint={'center_x': .5, 'center_y': .2},
+        size_hint_y=None,
+    )
+    loading.active = False
+    return loading
 
 
 class StartPage(FloatLayout):
     welcome_label = ObjectProperty(None)
 
-    @log
-    def select_choice(self, button):
-        # self.ids.separator.canvas.clear()
-        if button.text == 'Enter Preferences':
-            switch_screen(ManualInfoPage(), 'manual_page')
-        else:
-            unique_value = secrets.token_urlsafe().replace("_", "-")
-            if 'Genius' in button.text:
-                state = f'genius_android_{unique_value}'
-                url = ('https://api.genius.com/oauth/authorize?'
-                       'client_id=VnApM3tX-j1YzGOTu5pUjs9lzR-2-9'
-                       'qmOeuxHuqTZO0bNFuYEyTZhEjn3K7Aa8Fe'
-                       '&redirect_uri=https%3A%2F%2Fgeniust.herokuapp.com%2Fcallback'
-                       '&response_type=code'
-                       '&scope=me+vote'
-                       f'&state={state}')
-            else:
-                state = f'spotify_android_{unique_value}'
-                url = ('https://accounts.spotify.com/authorize?'
-                       'client_id=0f3710c5e6654c7983ad32e438f68f9d'
-                       '&redirect_uri=http%3A%2F%2Fgeniust.herokuapp.com%2Fcallback'
-                       '&response_type=code'
-                       '&scope=user-top-read'
-                       '&show_dialog=true'
-                       f'&state={state}')
-            print('sending state to webserver')
-            # webbrowser.open(url)
-            switch_screen(OAuthInfoPage(), 'auth_page')
-
-
-# -------------------- Manual Info --------------------
-
-
-class ManualInfoPage(FloatLayout):
-    original_color = ListProperty([])
-    error_label = None
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
-        self.genres_displayed = False
-        self.input_displayed = False
-        self.loading = MDSpinner(
-            size_hint=(None, None),
-            size=('30dp', '30dp'),
-            pos_hint={'center_x': .5, 'center_y': .5},
-            size_hint_y=None,
-        )
-        self.loading.active = False
-        self.add_widget(self.loading)
+        self.age_dialog = None
+        self.genres_dialog = None
 
     @log
-    def enter_age(self, button):
+    def select_choice(self, button):
+        # self.ids.separator.canvas.clear()
 
-        def button_pos(widget, button, values):
-            button.pos = (values[0] + widget.size[0] + 15,
-                          values[1])
-
-        if self.input_displayed:
-            text = self.input_widget.text
-            try:
-                age = int(text)
-            except ValueError:
-                if self.error_label is None:
-                    self.error_label = MDLabel(
-                        pos_hint={'center_x': .51, 'center_y': .55},
-                        text='Invalid age. Try again.',
-                        theme_text_color='Custom',
-                        text_color=self.app.theme_cls.error_color,
-                    )
-                    self.add_widget(self.error_label)
-                return
-
-            def retry(*args):
-                self.snackbar.dismiss()
-                self.retry_event.cancel()
-                self.enter_age(button)
-                return
-
-            def get_and_save_genres(*args):
-                if req.status_code == 200:
-                    self.app.genres = req.response['genres']
-                    Logger.debug(self.app.genres)
-                    switch_screen(ArtistsPage(), 'artists_page')
-                else:
-                    msg = "Failed to get genrs. Retrying in 3 seconds."
-                    self.snackbar = create_snackbar(msg, retry)
-                    self.retry_event = Clock.schedule_once(retry, 3)
-                    self.snackbar.open()
-
-            trigger = Clock.create_trigger(get_and_save_genres)
-            req = self.app.api.get_genres(age=age, trigger=trigger)
-            self.loading.active = True
+        unique_value = secrets.token_urlsafe().replace("_", "-")
+        if 'Genius' in button.text:
+            state = f'genius_android_{unique_value}'
+            url = ('https://api.genius.com/oauth/authorize?'
+                   'client_id=VnApM3tX-j1YzGOTu5pUjs9lzR-2-9'
+                   'qmOeuxHuqTZO0bNFuYEyTZhEjn3K7Aa8Fe'
+                   '&redirect_uri=https%3A%2F%2Fgeniust.herokuapp.com%2Fcallback'
+                   '&response_type=code'
+                   '&scope=me+vote'
+                   f'&state={state}')
         else:
-            self.input_displayed = True
-            self.ids.age_genre_text.text = 'Enter your age, e.g. 24'
-            self.remove_widget(self.button_grid)
-            self.input_widget = input_widget = MDTextField(
-                pos_hint={'center_x': .35, 'center_y': .6},
-                size_hint=(0.6, 0.05),
-                required=True,
-                helper_text="Invalid age.",
-                helper_text_mode="on_error",
-                on_text_validate=self.enter_age,
-                multiline=False,
+            state = f'spotify_android_{unique_value}'
+            url = ('https://accounts.spotify.com/authorize?'
+                   'client_id=0f3710c5e6654c7983ad32e438f68f9d'
+                   '&redirect_uri=http%3A%2F%2Fgeniust.herokuapp.com%2Fcallback'
+                   '&response_type=code'
+                   '&scope=user-top-read'
+                   '&show_dialog=true'
+                   f'&state={state}')
+        print('sending state to webserver')
+        webbrowser.open(url)
+        switch_screen(OAuthInfoPage(), 'auth_page')
+
+    def enter_age(self):
+        if not self.age_dialog:
+            self.age_dialog = MDDialog(
+                title="Enter age",
+                text="Enter your age and I'll guess your favorite genres.",
+                type="custom",
+                content_cls=AgeDialogContent(),
+                buttons=[
+                    MDFlatButton(
+                        text="CANCEL", text_color=self.app.theme_cls.primary_color,
+                        on_release=lambda *args: self.age_dialog.dismiss()
+                    ),
+                    MDFlatButton(
+                        text="OK", text_color=self.app.theme_cls.primary_color,
+                        on_release=lambda *args: self.submit_age(
+                            self.age_dialog.content_cls.ids.age_textfield.text)
+                    ),
+                ],
             )
-            self.add_widget(input_widget)
-            input_widget.bind(focus=self.delete_error_label)
+            self.loading = loading_spinner()
+            self.age_dialog.add_widget(self.loading)
+        self.age_dialog.open()
 
-            submit_button = MDRaisedButton(
-                text='Submit',
-                on_release=self.enter_age,
-                size_hint=(None, 0.05),
-                pos_hint={'center_y': .6},
-            )
-            self.add_widget(submit_button)
-            input_widget.bind(
-                pos=lambda widget, values: button_pos(widget, submit_button, values))
+    def submit_age(self, age):
+        try:
+            age = int(age)
+        except ValueError:
+            toast('Invalid age. Try again.')
+            return
 
-            @log
-            def show_keyboard(event):
-                input_widget.focus = True
-            Clock.schedule_once(show_keyboard, 0.2)
+        def retry(*args):
+            self.snackbar.dismiss()
+            self.retry_event.cancel()
+            self.submit_age(age)
+            return
 
-    @log
-    def delete_error_label(self, *_):
-        if self.error_label:
-            self.remove_widget(self.error_label)
-            self.error_label = None
-
-    @log
-    def select_genres(self, button):
-        if self.genres_displayed:
-            if self.app.genres:
+        def get_and_save_genres(*args):
+            self.loading.active = False
+            if req.status_code == 200:
+                self.app.genres = req.response['genres']
+                Logger.debug(self.app.genres)
+                self.age_dialog.dismiss()
                 switch_screen(ArtistsPage(), 'artists_page')
             else:
-                if self.error_label is None:
-                    self.error_label = MDLabel(
-                        pos_hint={'center_x': .51, 'center_y': .25},
-                        text='You must at least choose one genre.',
-                        theme_text_color='Custom',
-                        text_color=self.app.theme_cls.error_color,
-                    )
-                    self.add_widget(self.error_label)
-        else:
+                msg = "Failed to get genrs. Retrying in 3 seconds."
+                self.snackbar = create_snackbar(msg, retry)
+                self.retry_event = Clock.schedule_once(retry, 3)
+                self.snackbar.open()
+
+        self.loading.active = True
+        trigger = Clock.create_trigger(get_and_save_genres)
+        req = self.app.api.get_genres(age=age, trigger=trigger)
+
+    def select_genres(self):
+        if not self.genres_dialog:
             def retry(*args):
                 self.retry_event.cancel()
                 self.snackbar.dismiss()
-                self.select_genres(None)
+                self.select_genres()
 
             def create_genres_grid(*args):
                 if req.status_code != 200:
@@ -178,56 +148,45 @@ class ManualInfoPage(FloatLayout):
                     self.retry_event = Clock.schedule_once(retry, 3)
                     self.snackbar.open()
                     return
-                self.loading.active = False
                 genres = req.response.get('genres')
-                Logger.debug('Fetched Genres: %s', genres)
-                genres_grid = GridLayout(
-                    cols=3,
-                    spacing=15,
-                    size_hint_y=None,
-                    size_hint=(0.9, None),
-                    pos_hint={'center_x': .5, 'center_y': .5}
+                self.genres_dialog = MDDialog(
+                    title="Favorite Genres",
+                    type="confirmation",
+                    items=[GenreItem(text=x.capitalize()) for x in genres],
+                    buttons=[
+                        MDFlatButton(
+                            text="CANCEL", text_color=self.app.theme_cls.primary_color,
+                            on_release=lambda *args: self.genres_dialog.dismiss()
+                        ),
+                        MDFlatButton(
+                            text="OK", text_color=self.app.theme_cls.primary_color,
+                            on_release=lambda *args: self.submit_genres(
+                                [x.text.lower()
+                                 for x in self.genres_dialog.items
+                                 if x.check.active])
+                        ),
+                    ],
                 )
-                for genre in genres:
-                    button = MDRaisedButton(
-                        text=genre.capitalize(),
-                        on_press=self.genre_selected,
-                        size_hint=(.3, None)
-                    )
-                    button.md_bg_color = self.app.theme_cls.disabled_hint_text_color
-                    genres_grid.add_widget(button)
-                self.add_widget(genres_grid)
-                self.genres_displayed = True
+                self.remove_widget(self.loading)
+                self.genres_dialog.open()
 
             # Get genres from server
             trigger = Clock.create_trigger(create_genres_grid)
             req = self.app.api.get_genres(trigger=trigger)
+            self.loading = loading_spinner()
+            self.add_widget(self.loading)
             self.loading.active = True
-            if button is not None:
-                self.remove_widget(self.button_grid)
-                button = MDRaisedButton(
-                    text='SUBMIT',
-                    on_press=lambda *args: self.select_genres(None),
-                    size_hint=(1, None)
-                )
-                self.add_widget(button)
-                self.ids.age_genre_text.text = 'Select your favorite genres.'
-
-    @log
-    def genre_selected(self, button):
-        genre = button.text.lower()
-        if genre in self.app.genres:
-            button.md_bg_color = self.app.theme_cls.disabled_hint_text_color
-            self.app.genres.remove(genre)
-            Logger.info('genre_selected: removed %s', genre)
         else:
-            if self.error_label:
-                self.remove_widget(self.error_label)
-                self.error_label = None
-            button.md_bg_color = rgba('#1DB954')
-            button.text_color = (1, 1, 1, 0.87)
-            self.app.genres.append(genre)
-            Logger.info('genre_selected: added %s', genre)
+            self.genres_dialog.open()
+
+    def submit_genres(self, genres):
+        Logger.info('GENRES: %s', genres)
+        if len(genres) > 1:
+            self.genres_dialog.dismiss()
+            self.app.genres = genres
+            switch_screen(ArtistsPage(), 'artists_page')
+        else:
+            toast('You must at least choose one genre.')
 
 
 class ArtistsPage(FloatLayout):
@@ -302,8 +261,9 @@ class CustomOneLineListItem(OneLineListItem):
         page = self.app.artists_page
 
         page.search_layout.ids.search_field.text = ''
-        page.search_layout.ids.rv.data = []
+        page.search_layout.ids.hits.clear_widgets()
         page.artists_label.text = f"[b]Artists:[/b] {', '.join(self.app.artists)}"
+        Logger.info("ARTISTS: %s", self.app.artists)
 
 class Search(FloatLayout):
 
