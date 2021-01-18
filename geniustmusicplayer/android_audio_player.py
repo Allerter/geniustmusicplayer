@@ -33,7 +33,7 @@ class SoundAndroidPlayer(Sound):
     def load(self):
         self.unload()
         self._mediaplayer = MediaPlayer()
-        self._mediaPlayer.setOnCompletionListener(MyOnCompleteListener())
+        self._mediaplayer.setOnCompletionListener(MyOnCompleteListener())
         if api_version >= 21:
             self._mediaplayer.setAudioAttributes(
                 AudioAttributesBuilder()
