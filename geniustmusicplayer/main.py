@@ -226,7 +226,8 @@ class VolumeSlider(MDSlider):
 
     @log
     def on_value(self, instance, value):
-        self.last_value = app.volume
+        if value != 0:
+            self.last_value = value
         app.volume = instance.value_normalized
         if app.song:
             app.song.volume = app.volume
@@ -538,7 +539,7 @@ class MainPage(FloatLayout):
     @log
     def update_playlist_menu(self, *args):
         self.playlist_menu = MDCustomBottomSheet(
-            screen=Factory.PlaylistLayout(height=66 * len(app.playlist.tracks)),
+            screen=Factory.PlaylistLayout(height=dp(65 * len(app.playlist.tracks))),
         )
         for i in app.playlist.tracks:
             item = PlaylistSongItem(
@@ -692,7 +693,8 @@ class MainApp(MDApp):
             app.genres = user['genres']
             app.artists = user['artists']
             app.volume = user['volume']
-            app.main_page.ids.volume_slider.value = app.volume * 100
+            volume_slider = app.main_page.ids.volume_slider
+            volume_slider.value = volume_slider.last_value = app.volume * 100
             # load song
             song = self.playlist.current_track
             if song.preview_file is None:
