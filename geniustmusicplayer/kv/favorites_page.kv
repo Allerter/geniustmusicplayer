@@ -7,17 +7,19 @@
             elevation: 10
             left_action_items: [['menu', lambda x: app.nav_drawer.set_state('open')]]
 
-    MDLabel:
-        id: label
-        text: "Sort By "
-        pos_hint: {'center_y': .85}
+    MDBoxLayout:
+        adaptive_size: True
         pos: 10, self.pos[1]
-    MDDropDownItem:
-        id: drop_item
-        pos_hint: {'center_y': .85}
-        pos: label.pos[0] + dp(55), self.pos[1]
-        text: 'Date Added'
-        on_release: root.menu.open()
+        pos_hint: {'center_y': 0.85}
+        size_hint_x: 0.55
+
+        MDLabel:
+            id: label
+            text: "Sort By "
+        MDDropDownItem:
+            id: drop_item
+            text: 'Date Added'
+            on_release: root.menu.open()
 
     MDIconButton:
         id: sort_ascending
