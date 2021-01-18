@@ -6,6 +6,7 @@ from time import time
 # os.environ['KIVY_AUDIO'] = 'android'
 os.environ['KIVY_IMAGE'] = 'pil,sdl2,gif'
 
+import kivymd.material_resources as m_res
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
 from kivymd.uix.slider import MDSlider
@@ -16,7 +17,7 @@ from kivymd.uix.list import OneLineAvatarIconListItem, OneLineListItem, OneLineI
 from kivymd.uix.list import IconLeftWidget, MDList
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.list import BaseListItem, ContainerSupport
-import kivymd.material_resources as m_res
+from kivymd.toast import toast
 from kivy.factory import Factory
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
@@ -58,8 +59,8 @@ else:
 
 songs_path = join(storage_path, 'songs')
 if not os.path.isdir(songs_path):
-    Logger.info('created songs directory')
     os.mkdir(songs_path)
+    Logger.info('created songs directory')
 
 
 class Playlist:
@@ -697,19 +698,22 @@ class MainApp(MDApp):
             volume_slider.value = volume_slider.last_value = app.volume * 100
             # load song
             song = self.playlist.current_track
-            if song.preview_file is None:
+            song.tried_downloading = False
+            if song.preview_file is None and not song.tried_downloading:
                 def get_preview(*args):
                     if req.status_code == 200:
                         song.preview_file = save_song(song, req.response)
                         Logger.debug('SONG LOAD: download successful')
                         self.load_first_page()
                     else:
+                        song.tried_downloading = True
+                        toast('Failed to download song.')
                         song.preview_file = None
                         Logger.debug('SONG LOAD: download failed')
                 trigger = Clock.create_trigger(get_preview)
                 req = self.api.download_preview(song, trigger=trigger)
                 return
-            else:
+            elif song.preview_file:
                 self.play_button.load_song(song)
             app.song.last_pos = user['playlist'].get('last_pos', 0)
             # update track current
