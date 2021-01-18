@@ -151,7 +151,7 @@
     # Volume
     MDIconButton:
         pos_hint: {'center_y': 0.85}
-        pos: volume_slider.pos[0] - 30, self.pos[1]
+        pos: volume_slider.pos[0] - dp(35), self.pos[1]
         icon: "volume-medium" if volume_slider.value != 0 else "volume-mute"
         on_release: volume_slider.value = 0.0 if volume_slider.value != 0 else volume_slider.last_value
     VolumeSlider:
@@ -172,16 +172,14 @@
         anim_delay: 0
         allow_stretch: True
         size: root.size[0], root.size[1]
-    # Playback Progress
-    # GridLayout:
-    # pos_hint: {'center_x': .5, 'center_y': .2}
-    # size_hint_y: None
+
+    # Playback Slider
     MDLabel:
         id: track_current
         text: '0:00'
         size_hint: 0.1, None
         pos_hint: {'center_y': 0.25}
-        pos: root.playback_slider.pos[0] - 30, self.pos[1]
+        pos: root.playback_slider.pos[0] - dp(30), self.pos[1]
     PlaybackSlider:
         id: playback_slider
     MDLabel:
