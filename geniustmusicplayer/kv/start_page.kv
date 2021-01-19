@@ -67,8 +67,8 @@
             row_default_height: '50dp'
             size_hint: 0.85, None
             size_hint_y: None
-            padding: .15
-            pos_hint: {'center_x': .5, 'center_y': .45}
+            # padding: .15
+            pos_hint: {'center_x': .5, 'center_y': .65}
             MDRectangleFlatButton:
                 text: 'Enter Age'
                 on_release: root.enter_age()
@@ -96,7 +96,7 @@
                     Color:
                         rgba: (0, 0, 0, 0.87)
                     Line:
-                        width: 1.1
+                        width: 1
                         rectangle: choices_layout.pos[0], choices_layout.pos[1], choices_layout.size[0], choices_layout.size[1]
 
 

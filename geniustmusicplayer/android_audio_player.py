@@ -1,11 +1,9 @@
-
 from jnius import autoclass, java_method, PythonJavaClass
 from android import api_version
-from kivy.core.audio import Sound, SoundLoader
+from kivy.core.audio import Sound
 
 
 MediaPlayer = autoclass("android.media.MediaPlayer")
-OnCompletionListener = autoclass("android.media.MediaPlayer$OnCompletionListener")
 AudioManager = autoclass("android.media.AudioManager")
 if api_version >= 21:
     AudioAttributesBuilder = autoclass("android.media.AudioAttributes$Builder")
@@ -33,7 +31,7 @@ class SoundAndroidPlayer(Sound):
     def load(self):
         self.unload()
         self._mediaplayer = MediaPlayer()
-        self._mediaplayer.setOnCompletionListener(MyOnCompleteListener())
+        # self._mediaPlayer.setOnCompletionListener(MyOnCompleteListener())
         if api_version >= 21:
             self._mediaplayer.setAudioAttributes(
                 AudioAttributesBuilder()

@@ -698,30 +698,6 @@ class MainApp(MDApp):
             volume_slider.value = volume_slider.last_value = app.volume * 100
             # load song
             song = self.playlist.current_track
-            song.tried_downloading = False
-            if song.preview_file is None and not song.tried_downloading:
-                def get_preview(*args):
-                    if req.status_code == 200:
-                        song.preview_file = save_song(song, req.response)
-                        Logger.debug('SONG LOAD: download successful')
-                        self.load_first_page()
-                    else:
-                        song.tried_downloading = True
-                        toast('Failed to download song.')
-                        song.preview_file = None
-                        Logger.debug('SONG LOAD: download failed')
-                trigger = Clock.create_trigger(get_preview)
-                req = self.api.download_preview(song, trigger=trigger)
-                return
-            elif song.preview_file:
-                self.play_button.load_song(song)
-            app.song.last_pos = user['playlist'].get('last_pos', 0)
-            # update track current
-            slider = app.main_page.ids.playback_slider
-            slider.value = app.song.last_pos
-            app.main_page.ids.track_current.text = str(timedelta(
-                seconds=slider.value
-            ))[3:7]
 
             # adding screens
             main_screen = Screen(name='main_page')
@@ -738,6 +714,34 @@ class MainApp(MDApp):
             app.settings_page = settings_page.SettingsPage()
             settings_screen.add_widget(app.settings_page)
             self.screen_manager.add_widget(settings_screen)
+
+            def edit_ui():
+                app.song.last_pos = user['playlist'].get('last_pos', 0)
+                # update track current
+                slider = app.main_page.ids.playback_slider
+                slider.value = app.song.last_pos
+                app.main_page.ids.track_current.text = str(timedelta(
+                    seconds=slider.value
+                ))[3:7]
+
+            if song.preview_file is None:
+                def get_preview(*args):
+                    if req.status_code == 200:
+                        song.preview_file = save_song(song, req.response)
+                        Logger.debug('SONG LOAD: download successful')
+                        self.play_button.load_song(song)
+                        edit_ui()
+                    else:
+                        song.tried_downloading = True
+                        toast('Failed to download song.')
+                        song.preview_file = None
+                        Logger.debug('SONG LOAD: download failed')
+                trigger = Clock.create_trigger(get_preview)
+                req = self.api.download_preview(song, trigger=trigger)
+                return
+            elif song.preview_file:
+                self.play_button.load_song(song)
+                edit_ui()
 
         else:
             import start_page
