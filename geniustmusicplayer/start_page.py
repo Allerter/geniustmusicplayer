@@ -19,6 +19,8 @@ from kivymd.uix.spinner import MDSpinner
 from kivymd.toast import toast
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import OneLineAvatarIconListItem
+from kivymd.uix.chip import MDChip
+from kivymd.toast import toast
 
 from utils import log, switch_screen, create_snackbar
 
@@ -215,7 +217,7 @@ class StartPage(FloatLayout):
 class ArtistsPage(FloatLayout):
     search_hits = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, callback=None, **kwargs):
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
         self.app.artists_page = self
@@ -225,8 +227,18 @@ class ArtistsPage(FloatLayout):
             pos_hint={'center_x': .5, 'center_y': .5},
             size_hint_y=None,
         )
+        self.finish = callback if callback is not None else self.finish
         self.loading.active = False
         self.add_widget(self.loading)
+        for artist in self.app.artists:
+            artist_chip = MDChip(
+                text=artist,
+                text_color=(1, 1, 1, 0.87),
+                icon_color=(1, 1, 1, 0.87),
+                icon='close',
+                on_release=self.remove_artist,
+            )
+            self.selected_artists.add_widget(artist_chip)
 
     def save_preferences(self, playlist):
         self.app.store.put(
@@ -271,6 +283,11 @@ class ArtistsPage(FloatLayout):
             async_request=True,
         )
 
+    def remove_artist(self, artist_chip):
+        self.app.artists.remove(artist_chip.text)
+        self.selected_artists.remove_widget(artist_chip)
+        Logger.info("ARTISTS: %s", self.app.artists)
+
 class CustomOneLineListItem(OneLineListItem):
 
     def __init__(self, **kwargs):
@@ -279,14 +296,24 @@ class CustomOneLineListItem(OneLineListItem):
 
     @log
     def add_artist(self, artist):
-        if artist not in self.app.artists:
-            self.app.artists.append(artist)
         page = self.app.artists_page
-
         page.search_layout.ids.search_field.text = ''
         page.search_layout.ids.hits.clear_widgets()
-        page.artists_label.text = f"[b]Artists:[/b] {', '.join(self.app.artists)}"
+
+        if artist not in self.app.artists:
+            self.app.artists.append(artist)
+            artist_chip = MDChip(
+                text=artist,
+                text_color=(1, 1, 1, 0.87),
+                icon_color=(1, 1, 1, 0.87),
+                icon='close',
+                on_release=page.remove_artist,
+            )
+            page.selected_artists.add_widget(artist_chip)
+        else:
+            toast('Artist already selected.')
         Logger.info("ARTISTS: %s", self.app.artists)
+
 
 class Search(FloatLayout):
 

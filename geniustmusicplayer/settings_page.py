@@ -6,10 +6,12 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.toast import toast
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.list import IRightBodyTouch
+from kivymd.uix.button import MDRoundFlatButton
 from kivy.properties import (
     NumericProperty,
 )
 from kivy.metrics import dp
+from kivy.uix.screenmanager import Screen
 from kivy.logger import Logger
 from kivymd.uix.list import BaseListItem, ContainerSupport
 
@@ -71,8 +73,35 @@ class SettingsPage(FloatLayout):
             self.genres_dialog.genres_dialog.dismiss()
             self.app.genres = genres
             save_keys(genres=genres)
+            toast('Updated Favorite genres.')
         else:
             toast('You must at least choose one genre.')
+
+    def open_artists(self, *args):
+        import start_page
+        self.artists_screen = artists_screen = Screen(name='artists_page')
+        artists_page = start_page.ArtistsPage(
+            callback=self.submit_artists,
+        )
+        artists_page.add_widget(MDRoundFlatButton(
+            text='CANCEL',
+            pos_hint={'center_x': 0.6, 'center_y': 0.1},
+            on_press=self.cancel_artists,
+        ))
+        artists_screen.add_widget(artists_page)
+        self.app.screen_manager.add_widget(artists_screen)
+        self.app.screen_manager.current = 'artists_page'
+
+    def submit_artists(self):
+        Logger.info('ARTISTS: %s', self.app.artists)
+        save_keys(artists=self.app.artists)
+        self.app.screen_manager.current = 'settings_page'
+        self.app.screen_manager.remove_widget(self.artists_screen)
+        toast('Updated favorite artists.')
+
+    def cancel_artists(self, *args):
+        self.app.screen_manager.current = 'settings_page'
+        self.app.screen_manager.remove_widget(self.artists_screen)
 
     def on_checkbox_active(self, checkbox, value):
         if value:

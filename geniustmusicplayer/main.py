@@ -703,7 +703,7 @@ class MainApp(MDApp):
             main_screen = Screen(name='main_page')
             main_screen.add_widget(page)
             self.screen_manager.add_widget(main_screen)
-            # self.screen_manager.switch_to(main_screen)
+            self.screen_manager.switch_to(main_screen)
 
             favorites_screen = Screen(name='favorites_page')
             app.favorites_page = favorites_page.FavoritesPage()
@@ -714,7 +714,6 @@ class MainApp(MDApp):
             app.settings_page = settings_page.SettingsPage()
             settings_screen.add_widget(app.settings_page)
             self.screen_manager.add_widget(settings_screen)
-            self.screen_manager.switch_to(settings_screen)
 
             def edit_ui():
                 app.song.last_pos = user['playlist'].get('last_pos', 0)
