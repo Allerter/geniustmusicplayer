@@ -278,7 +278,6 @@ class ArtistsPage(FloatLayout):
         req = self.app.api.get_recommendations(
             self.app.genres,
             self.app.artists,
-            has_preview_url=True,
             trigger=trigger,
             async_request=True,
         )

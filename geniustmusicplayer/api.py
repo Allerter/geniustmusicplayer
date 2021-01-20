@@ -180,8 +180,7 @@ class API():
         self,
         genres: List[str],
         artists: Optional[List[str]] = None,
-        has_preview_url: bool = False,
-        has_download_url: bool = False,
+        song_type='any_file',
         trigger=None,
         async_request: bool = True,
         timeout=None,
@@ -191,10 +190,7 @@ class API():
         }
         if artists:
             params['artists'] = ','.join(artists)
-        if has_download_url:
-            params['has_download_url'] = has_download_url
-        if has_preview_url:
-            params['has_preview_url'] = has_preview_url
+        params['song_type'] = song_type
         res = self.sender.make_request(
             'recommendations',
             params=params,

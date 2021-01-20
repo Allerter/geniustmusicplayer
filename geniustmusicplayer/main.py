@@ -356,10 +356,16 @@ class PlayButton(MDIconButton):
                         self.snackbar.open()
 
                 trigger = Clock.create_trigger(get_tracks)
+                if app.play_mode == 'any':
+                    song_type = 'any_file'
+                elif app.play_mode == 'previews':
+                    song_type = 'preview'
+                else:
+                    song_type = 'full'
                 req = app.api.get_recommendations(
                     app.genres,
                     app.artists,
-                    has_preview_url=True,
+                    song_type=song_type,
                     trigger=trigger,
                     async_request=True,
                 )
