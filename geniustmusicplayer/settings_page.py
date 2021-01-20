@@ -4,10 +4,13 @@ from kivymd.uix.list import OneLineAvatarIconListItem
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.toast import toast
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.list import IRightBodyTouch
 from kivy.properties import (
     NumericProperty,
 )
 from kivy.metrics import dp
+from kivy.logger import Logger
 from kivymd.uix.list import BaseListItem, ContainerSupport
 
 from utils import save_keys, switch_screen
@@ -17,6 +20,10 @@ class CustomOneLineIconListItem(OneLineAvatarIconListItem):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._txt_left_pad = '10dp'
+
+
+class Container(IRightBodyTouch, MDBoxLayout):
+    adaptive_width = True
 
 
 class MyBaseListItem(ContainerSupport, BaseListItem):
@@ -50,6 +57,23 @@ class SettingsPage(FloatLayout):
         # self.ids.dark_mode_checkbox.selected_color = self.app.theme_cls.primary_light
         save_keys(dark_mode=True)
 
+    def open_genres(self, *args):
+        import start_page
+        self.genres_dialog = start_page.GenresDialog(
+            root=self,
+            callback=self.submit_genres,
+            genres=self.app.genres,
+        )
+
+    def submit_genres(self, genres):
+        Logger.info('GENRES: %s', genres)
+        if len(genres) > 1:
+            self.genres_dialog.genres_dialog.dismiss()
+            self.app.genres = genres
+            save_keys(genres=genres)
+        else:
+            toast('You must at least choose one genre.')
+
     def on_checkbox_active(self, checkbox, value):
         if value:
             self.enable_dark_mode()
@@ -64,10 +88,11 @@ class SettingsPage(FloatLayout):
             buttons=[
                 MDFlatButton(
                     text="CANCEL",
-                    on_release=lambda *args: self.reset_dialog.dismiss()
+                    on_release=lambda *args: self.reset_dialog.dismiss(),
                 ),
                 MDFlatButton(
                     text="RESET",
+                    on_release=self.reset_preferences,
                 ),
             ],
         )
@@ -76,5 +101,5 @@ class SettingsPage(FloatLayout):
     def reset_preferences(self, *args):
         import start_page
         self.reset_dialog.dismiss()
-        self.app.store['user'] = {}
+        self.app.store.delete('user')
         switch_screen(start_page.StartPage(), 'start_page')

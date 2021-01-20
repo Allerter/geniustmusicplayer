@@ -44,6 +44,71 @@ def loading_spinner():
     loading.active = False
     return loading
 
+class GenresDialog:
+
+    def __init__(self, root, callback, genres=None):
+        self.root = root
+        self.callback = callback
+        self.genres = genres if genres is not None else []
+        self.genres_dialog = None
+        self.app = MDApp.get_running_app()
+        self.select_genres()
+
+    def select_genres(self):
+        if not self.genres_dialog:
+            def retry(*args):
+                self.retry_event.cancel()
+                self.snackbar.dismiss()
+                self.select_genres()
+
+            def create_genres_grid(*args):
+                if req.status_code != 200:
+                    msg = "Failed to get genres. Reyting in 3 seconds."
+                    self.snackbar = create_snackbar(msg, retry)
+                    self.retry_event = Clock.schedule_once(retry, 3)
+                    self.snackbar.open()
+                    return
+                genres = req.response.get('genres')
+                items = []
+                for genre in genres:
+                    item = GenreItem(text=genre.capitalize())
+                    for user_genre in self.genres:
+                        if user_genre == genre:
+                            item.check.active = True
+                    items.append(item)
+                self.genres_dialog = MDDialog(
+                    title="Favorite Genres",
+                    type="confirmation",
+                    items=items,
+                    buttons=[
+                        MDFlatButton(
+                            text="CANCEL", text_color=self.app.theme_cls.primary_color,
+                            on_release=lambda *args: self.genres_dialog.dismiss()
+                        ),
+                        MDFlatButton(
+                            text="OK", text_color=self.app.theme_cls.primary_color,
+                            on_release=lambda *args: self.submit_genres(
+                                [x.text.lower()
+                                 for x in self.genres_dialog.items
+                                 if x.check.active])
+                        ),
+                    ],
+                )
+                self.root.remove_widget(self.loading)
+                self.genres_dialog.open()
+
+            # Get genres from server
+            trigger = Clock.create_trigger(create_genres_grid)
+            req = self.app.api.get_genres(trigger=trigger)
+            self.loading = loading_spinner()
+            self.root.add_widget(self.loading)
+            self.loading.active = True
+        else:
+            self.genres_dialog.open()
+
+    def submit_genres(self, genres):
+        self.callback(genres)
+
 
 class StartPage(FloatLayout):
     welcome_label = ObjectProperty(None)
@@ -134,55 +199,13 @@ class StartPage(FloatLayout):
         trigger = Clock.create_trigger(get_and_save_genres)
         req = self.app.api.get_genres(age=age, trigger=trigger)
 
-    def select_genres(self):
-        if not self.genres_dialog:
-            def retry(*args):
-                self.retry_event.cancel()
-                self.snackbar.dismiss()
-                self.select_genres()
-
-            def create_genres_grid(*args):
-                if req.status_code != 200:
-                    msg = "Failed to get genres. Reyting in 3 seconds."
-                    self.snackbar = create_snackbar(msg, retry)
-                    self.retry_event = Clock.schedule_once(retry, 3)
-                    self.snackbar.open()
-                    return
-                genres = req.response.get('genres')
-                self.genres_dialog = MDDialog(
-                    title="Favorite Genres",
-                    type="confirmation",
-                    items=[GenreItem(text=x.capitalize()) for x in genres],
-                    buttons=[
-                        MDFlatButton(
-                            text="CANCEL", text_color=self.app.theme_cls.primary_color,
-                            on_release=lambda *args: self.genres_dialog.dismiss()
-                        ),
-                        MDFlatButton(
-                            text="OK", text_color=self.app.theme_cls.primary_color,
-                            on_release=lambda *args: self.submit_genres(
-                                [x.text.lower()
-                                 for x in self.genres_dialog.items
-                                 if x.check.active])
-                        ),
-                    ],
-                )
-                self.remove_widget(self.loading)
-                self.genres_dialog.open()
-
-            # Get genres from server
-            trigger = Clock.create_trigger(create_genres_grid)
-            req = self.app.api.get_genres(trigger=trigger)
-            self.loading = loading_spinner()
-            self.add_widget(self.loading)
-            self.loading.active = True
-        else:
-            self.genres_dialog.open()
+    def select_genres(self, *args):
+        self.genres_dialog = GenresDialog(root=self, callback=self.submit_genres)
 
     def submit_genres(self, genres):
         Logger.info('GENRES: %s', genres)
         if len(genres) > 1:
-            self.genres_dialog.dismiss()
+            self.genres_dialog.genres_dialog.dismiss()
             self.app.genres = genres
             switch_screen(ArtistsPage(), 'artists_page')
         else:

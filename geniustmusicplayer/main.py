@@ -703,7 +703,7 @@ class MainApp(MDApp):
             main_screen = Screen(name='main_page')
             main_screen.add_widget(page)
             self.screen_manager.add_widget(main_screen)
-            self.screen_manager.switch_to(main_screen)
+            # self.screen_manager.switch_to(main_screen)
 
             favorites_screen = Screen(name='favorites_page')
             app.favorites_page = favorites_page.FavoritesPage()
@@ -714,6 +714,7 @@ class MainApp(MDApp):
             app.settings_page = settings_page.SettingsPage()
             settings_screen.add_widget(app.settings_page)
             self.screen_manager.add_widget(settings_screen)
+            self.screen_manager.switch_to(settings_screen)
 
             def edit_ui():
                 app.song.last_pos = user['playlist'].get('last_pos', 0)
@@ -724,7 +725,7 @@ class MainApp(MDApp):
                     seconds=slider.value
                 ))[3:7]
 
-            if song.preview_file is None:
+            if song.preview_file is None or song.preview_file == 'downloading':
                 def get_preview(*args):
                     if req.status_code == 200:
                         song.preview_file = save_song(song, req.response)
@@ -736,6 +737,7 @@ class MainApp(MDApp):
                         toast('Failed to download song.')
                         song.preview_file = None
                         Logger.debug('SONG LOAD: download failed')
+                song.preview_file = None
                 trigger = Clock.create_trigger(get_preview)
                 req = self.api.download_preview(song, trigger=trigger)
                 return
@@ -751,7 +753,7 @@ class MainApp(MDApp):
             switch_screen(page, page_name)
 
     def on_stop(self):
-        if app.song:
+        if app.song and self.store.exists('user'):
             song_pos = app.song.get_pos()
             playlist = app.playlist.to_dict()
             playlist.update({'last_pos': song_pos})

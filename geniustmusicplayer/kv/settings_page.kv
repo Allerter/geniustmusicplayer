@@ -9,10 +9,34 @@
 
     MDBoxLayout:
         size_hint_y: None
-        pos_hint: {'center_y': 0.75}
+        pos_hint: {'center_y': 0.60}
 
         MDList:
             id: favorites_list
+
+            CustomOneLineIconListItem:
+                text: 'Favorite Genres'
+
+                RightContent:
+                    pos_hint: {"center_y": .5}
+                    MDBoxLayout:
+                        adaptive_size: True
+
+                        MDIconButton:
+                            icon: 'chevron-right'
+                            on_release: root.open_genres()
+
+            CustomOneLineIconListItem:
+                text: 'Favorite Artists'
+
+                RightContent:
+                    pos_hint: {"center_y": .5}
+                    MDBoxLayout:
+                        adaptive_size: True
+
+                        MDIconButton:
+                            icon: 'chevron-right'
+                            on_release: root.open_artists()
 
             CustomOneLineIconListItem:
                 text: 'Dark Mode'
