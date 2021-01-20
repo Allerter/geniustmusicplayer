@@ -7,6 +7,7 @@ from kivymd.toast import toast
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.list import IRightBodyTouch
 from kivymd.uix.button import MDRoundFlatButton
+from kivymd.uix.menu import MDDropdownMenu
 from kivy.properties import (
     NumericProperty,
 )
@@ -40,11 +41,39 @@ class MyBaseListItem(ContainerSupport, BaseListItem):
         self.height = dp(56) if not self._height else self._height
 
 
+class SongModeMenu(MDDropdownMenu):
+
+    def set_item(self, instance_menu, instance_menu_item):
+        self.screen.ids.drop_item.set_item(instance_menu_item.text)
+        self.menu.dismiss()
+
+
 class SettingsPage(FloatLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
+        menu_items = [
+            {"text": "Any"},
+            {"text": "Previews"},
+            {"text": "Full Songs"}
+
+        ]
+        self.menu = MDDropdownMenu(
+            caller=self.ids.drop_item,
+            items=menu_items,
+            position="bottom",
+            width_mult=4,
+        )
+        self.menu.bind(on_release=self.set_song_mode)
+
+    def set_song_mode(self, instance_menu, instance_menu_item):
+        self.ids.drop_item.set_item(instance_menu_item.text)
+        self.menu.dismiss()
+        mode = self.ids.drop_item.current_item
+        mode = mode.lower().replace(' ', '_')
+        save_keys(play_mode=mode)
+        Logger.info('PLAY MODE: %s', mode)
 
     def disable_dark_mode(self):
         # self.app.theme_cls.primary_palette = "Indigo"

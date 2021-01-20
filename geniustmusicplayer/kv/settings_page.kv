@@ -9,7 +9,7 @@
 
     MDBoxLayout:
         size_hint_y: None
-        pos_hint: {'center_y': 0.60}
+        pos_hint: {'center_y': 0.50}
 
         MDList:
             id: favorites_list
@@ -39,6 +39,17 @@
                             on_release: root.open_artists()
 
             CustomOneLineIconListItem:
+                text: 'Play Mode'
+
+                RightContent:
+                    pos_hint: {"center_y": .5}
+                    MDDropDownItem:
+                        pos_hint: {"center_y": .5}
+                        id: drop_item
+                        text: app.play_mode.replace('_', ' ').capitalize()
+                        on_release: root.menu.open()
+
+            CustomOneLineIconListItem:
                 text: 'Dark Mode'
 
                 RightContent:
@@ -49,8 +60,6 @@
                     MDSwitch:
                         id: dark_mode_checkbox
                         active: True if app.theme_cls.theme_style == 'Dark' else False
-                        #selected_color:
-                        #    app.theme_cls.primary_light if app.theme_cls.theme_style == 'Dark' else app.theme_cls.primary_color
                         size_hint: None, None
                         size: "48dp", "48dp"
                         pos_hint: {'center_x': .5, 'center_y': .5}

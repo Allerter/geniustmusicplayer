@@ -662,6 +662,7 @@ class MainApp(MDApp):
     favorites = ([Song(**x) for x in store['user']['favorites']]
                  if store.exists('user') else [])
     volume = store['user']['volume'] if store.exists('user') else 0.5
+    play_mode = store['user']['play_mode'] if store.exists('user') else 'any'
     song = None
     main_page = None
     api = API()
