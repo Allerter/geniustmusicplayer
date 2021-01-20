@@ -85,7 +85,7 @@ class SettingsPage(FloatLayout):
         )
         artists_page.add_widget(MDRoundFlatButton(
             text='CANCEL',
-            pos_hint={'center_x': 0.6, 'center_y': 0.1},
+            pos_hint={'center_x': 0.2, 'center_y': 0.1},
             on_press=self.cancel_artists,
         ))
         artists_screen.add_widget(artists_page)
