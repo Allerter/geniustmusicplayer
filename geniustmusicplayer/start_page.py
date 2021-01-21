@@ -248,6 +248,7 @@ class ArtistsPage(FloatLayout):
             volume=self.app.volume,
             favorites=[],
             playlist=playlist.to_dict(),
+            play_mode='any_file',
             dark_mode=False,
         )
 

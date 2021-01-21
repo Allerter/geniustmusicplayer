@@ -52,6 +52,7 @@
         radius: [25, 25, 25, 25]
         size_hint: 0.9, 0.5
         pos_hint: {'center_x': 0.5, 'center_y': .35}
+        md_bg_color: rgba('#fbfb9d')
 
         ScaleLabel:
             id: text_label
@@ -73,31 +74,43 @@
                 text: 'Enter Age'
                 on_release: root.enter_age()
                 size_hint: .8, None
+                theme_text_color: "Custom"
+                text_color: 0, 0, 0, 1
+                line_color: 0, 0, 0, 1
             MDRectangleFlatButton:
                 text: 'Select Favorite Genres Manually'
                 on_release: root.select_genres()
                 size_hint: .8, None
+                theme_text_color: "Custom"
+                text_color: 0, 0, 0, 1
+                line_color: 0, 0, 0, 1
             MDRectangleFlatIconButton:
                 id: spotify_info
                 icon: "spotify"
                 text: 'Get Preferences from Spotify'
                 on_release: root.select_choice(self)
                 size_hint: .8, None
+                theme_text_color: "Custom"
+                text_color: 0, 0, 0, 1
+                line_color: 0, 0, 0, 1
             MDRectangleFlatIconButton:
                 id: genius_info
                 icon: "web"
                 text: 'Get Preferences from Genius'
                 on_release: root.select_choice(self)
                 size_hint: .8, None
-            Widget:
-                id: separator
-                size_hint_y: None
-                canvas:
-                    Color:
-                        rgba: (0, 0, 0, 0.87)
-                    Line:
-                        width: 1
-                        rectangle: choices_layout.pos[0], choices_layout.pos[1], choices_layout.size[0], choices_layout.size[1]
+                theme_text_color: "Custom"
+                text_color: 0, 0, 0, 1
+                line_color: 0, 0, 0, 1
+            # Widget:
+            #    id: separator
+            #    size_hint_y: None
+            #    canvas:
+            #        Color:
+            #            rgba: (0, 0, 0, 0.87)
+            #        Line:
+            #            width: 1
+            #            rectangle: choices_layout.pos[0], choices_layout.pos[1], choices_layout.size[0], choices_layout.size[1]
 
 
 <ArtistsPage>:

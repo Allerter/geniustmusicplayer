@@ -1,4 +1,3 @@
-import time
 from typing import Optional, List
 from urllib import parse
 
@@ -7,12 +6,13 @@ from kivy.network.urlrequest import UrlRequest
 
 
 class Song:
-    def __init__(self, name, artist,
+    def __init__(self, name, artist, genres=None,
                  id_spotify=None, isrc=None, cover_art=None,
                  preview_url=None, download_url=None, preview_file=None,
                  date_favorited=None,):
         self.name = name
         self.artist = artist
+        self.genres = genres if genres else []
         self.id_spotify = id_spotify
         self.isrc = isrc
         self.cover_art = (cover_art
