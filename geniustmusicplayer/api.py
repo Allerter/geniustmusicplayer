@@ -190,7 +190,7 @@ class API():
         }
         if artists:
             params['artists'] = ','.join(artists)
-        params['song_type'] = song_type
+        params['song_type'] = 'preview'  # song_type
         res = self.sender.make_request(
             'recommendations',
             params=params,
