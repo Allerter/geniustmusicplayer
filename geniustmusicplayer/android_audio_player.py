@@ -9,13 +9,17 @@ if api_version >= 21:
     AudioAttributesBuilder = autoclass("android.media.AudioAttributes$Builder")
 
 
-class MyOnCompleteListener(PythonJavaClass):
+class OnCompleteListener(PythonJavaClass):
     __javainterfaces__ = ["android/media/MediaPlayer$OnCompletionListener"]
     __javacontext__ = "app"
 
+    def __init__(self, audio_player, **kwargs):
+        super().__init__(**kwargs)
+        self.audio_player = audio_player
+
     @java_method("(Landroid/media/MediaPlayer;)V")
     def onCompletion(self, mp):
-        print("*********onCompletion here!*************")
+        self.audio_player.state = 'stop'
 
 
 class SoundAndroidPlayer(Sound):
@@ -31,7 +35,8 @@ class SoundAndroidPlayer(Sound):
     def load(self):
         self.unload()
         self._mediaplayer = MediaPlayer()
-        self._mediaplayer.setOnCompletionListener(MyOnCompleteListener())
+        self._completion_listener = OnCompleteListener(self)
+        self._mediaplayer.setOnCompletionListener(self._completion_listener)
         if api_version >= 21:
             self._mediaplayer.setAudioAttributes(
                 AudioAttributesBuilder()
