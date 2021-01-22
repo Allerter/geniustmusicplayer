@@ -59,13 +59,20 @@ class SettingsPage(FloatLayout):
             {"text": "Full Songs"}
 
         ]
+
+        def unavailable(*args):
+            toast('Play mode not available. Try again later.')
+            self.menu.dismiss()
         self.menu = MDDropdownMenu(
             caller=self.ids.drop_item,
             items=menu_items,
             position="bottom",
             width_mult=4,
         )
-        self.menu.bind(on_release=self.set_song_mode)
+        self.menu.bind(
+            on_release=unavailable
+            # self.set_song_mode
+        )
 
     def set_song_mode(self, instance_menu, instance_menu_item):
         self.ids.drop_item.set_item(instance_menu_item.text)

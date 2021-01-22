@@ -250,18 +250,6 @@ class PlayButton(MDIconButton):
 
     @log
     def load_song(self, song, data=None):
-        # if not song.filename:
-        #    song_file = requests.get(song.preview_url)
-        #    mp3_filename = f'songs/{song.artist} - {song.name} preview.mp3'
-        #    ogg_filename = mp3_filename[:-4] + '.ogg'
-        #    with open(mp3_filename, 'wb') as f:
-        #        f.write(song_file.content)
-        #    ffmpeg.run(
-        #        ffmpeg.output(
-        #            ffmpeg.input(mp3_filename),
-        #            ogg_filename)
-        #    )
-        #    song.filename = ogg_filename
         if data:
             song.preview_file = save_song(song, data)
 
@@ -287,6 +275,8 @@ class PlayButton(MDIconButton):
             self.stop_song()
 
         if app.song is None or app.song.song_object != song:
+            app.main_page.edit_ui_for_song(song)
+
             def call_load_song(*args):
                 if self.snackbar:
                     self.snackbar.dismiss()
@@ -542,7 +532,7 @@ class MainPage(FloatLayout):
                 seconds=app.song.length)
             )[3:7]
             self.ids.playback_slider.max = app.song.length
-        song = app.song.song_object if app.song else song
+        song = song if song is not None else app.song.song_object
         app.play_button.update_track_current(0)
         self.update_playlist_menu(song=song)
         self.update_cover_art(song)
