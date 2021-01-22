@@ -38,7 +38,9 @@ class Song:
         )
 
     def __eq__(self, other):
-        if self.name == other.name and self.artist == other.artist:
+        if (isinstance(other, Song)
+            and self.name == other.name
+                and self.artist == other.artist):
             return True
         else:
             return False

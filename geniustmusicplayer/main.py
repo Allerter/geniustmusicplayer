@@ -429,6 +429,9 @@ class PlayButton(MDIconButton):
             track_current.text = str(timedelta(
                 seconds=slider.value
             ))[3:7]
+        else:
+            slider.value = 0
+            track_current.text = '0:00'
 
 
 class FavoriteButton(MDIconButton):
@@ -533,18 +536,20 @@ class MainPage(FloatLayout):
         self.playlist_menu = None
 
     @log
-    def edit_ui_for_song(self):
-        self.ids.track_length.text = str(timedelta(
-            seconds=app.song.length)
-        )[3:7]
-        self.ids.playback_slider.max = app.song.length
+    def edit_ui_for_song(self, song=None):
+        if app.song:
+            self.ids.track_length.text = str(timedelta(
+                seconds=app.song.length)
+            )[3:7]
+            self.ids.playback_slider.max = app.song.length
+        song = app.song.song_object if app.song else song
         app.play_button.update_track_current(0)
-        self.update_playlist_menu()
-        self.update_cover_art()
-        self.update_song_info()
+        self.update_playlist_menu(song=song)
+        self.update_cover_art(song)
+        self.update_song_info(song)
 
     @log
-    def update_playlist_menu(self, *args):
+    def update_playlist_menu(self, *args, song=None):
         self.playlist_menu = MDCustomBottomSheet(
             screen=Factory.PlaylistLayout(height=dp(65 * len(app.playlist.tracks))),
         )
@@ -554,11 +559,16 @@ class MainPage(FloatLayout):
                 on_release=lambda *args, song=i: self.play_from_playlist(song),
             )
             # adding right-side icons
+            removable = (
+                is_removable(i)
+                or i != app.playlist.current_track
+                or (song is not None and i != song)
+            )
             item.add_widget(RightContentCls(
                 song=i,
-                is_removable=is_removable(i)))
+                is_removable=removable))
             # different background for current song
-            if i == app.song.song_object:
+            if not removable:
                 item.bg_color = app.theme_cls.primary_color  # rgba('#cbcbcb')
                 item.theme_text_color = 'Custom'
                 item.text_color = (1, 1, 1, 1)
@@ -603,13 +613,13 @@ class MainPage(FloatLayout):
         save_favorites(app.favorites)
 
     @log
-    def update_cover_art(self):
-        self.ids.cover_art.source = app.song.song_object.cover_art
+    def update_cover_art(self, song):
+        self.ids.cover_art.source = song.cover_art
 
     @log
-    def update_song_info(self):
-        self.ids.title.text = app.song.song_object.name
-        self.ids.artist.text = app.song.song_object.artist
+    def update_song_info(self, song):
+        self.ids.title.text = song.name
+        self.ids.artist.text = song.artist
 
 # -------------------- App --------------------
 
@@ -705,6 +715,7 @@ class MainApp(MDApp):
             volume_slider.value = volume_slider.last_value = app.volume * 100
             # load song
             song = self.playlist.current_track
+            self.main_page.edit_ui_for_song(song)
 
             # adding screens
             main_screen = Screen(name='main_page')
@@ -739,7 +750,7 @@ class MainApp(MDApp):
                         self.play_button.load_song(song)
                         edit_ui()
                     else:
-                        song.tried_downloading = True
+                        song._tried_downloading = True
                         toast('Failed to download song.')
                         song.preview_file = None
                         Logger.debug('SONG LOAD: download failed')
