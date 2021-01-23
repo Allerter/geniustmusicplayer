@@ -245,7 +245,15 @@ class PlayButton(MDIconButton):
 
     @log
     def check_end(self, *args):
-        if app.song.length - app.song.get_pos() < 0.2:
+        is_complete = app.song.is_complete
+        song_pos = app.song.get_pos()
+        song_length = app.song.length
+        Logger.debug(
+            'check_end: is_complete: %s - length: %s - pos: %s',
+            is_complete,
+            song_length,
+            song_pos)
+        if is_complete or song_length - song_pos < 0.2:
             self.play_next(self)
 
     @log
@@ -257,8 +265,7 @@ class PlayButton(MDIconButton):
         app.song = SoundLoader.load(song.preview_file)
         app.song.bind(state=self.check_end)
         app.song.song_object = song
-        app.song.name = song.name
-        app.song.artist = song.artist
+        app.song.is_complete = False
         app.song.volume = app.volume
         if song in app.favorites:
             app.main_page.favorite_button.favorited = True
@@ -266,7 +273,7 @@ class PlayButton(MDIconButton):
             app.main_page.favorite_button.favorited = False
         app.song.cover_art = song.cover_art
         app.song.last_pos = 0
-        app.main_page.edit_ui_for_song()
+        app.main_page.edit_ui_for_song(song)
         app.playlist.set_current(song)
 
     @log
@@ -365,7 +372,7 @@ class PlayButton(MDIconButton):
                 Logger.debug('playing %s', song.name)
                 self.play_track(song)
             else:
-                Logger.debug('control: resuming song %s', app.song.name)
+                Logger.debug('control: resuming song %s', app.song.song_object)
                 self.play_track(app.song.song_object, seek=app.song.last_pos)
         else:
             app.song.last_pos = app.song.get_pos()
@@ -403,7 +410,7 @@ class PlayButton(MDIconButton):
 
     @log
     def stop_song(self):
-        if app.song:
+        if app.song and app.song.state == 'play':
             app.song.stop()
             # app.song.unload() TODO: why does it make app crash?
 
@@ -514,7 +521,8 @@ class RightContentCls(RightContent):
 
 
 def is_removable(song):
-    return True if not app.song or song.name != app.song.name else False
+    return True if not app.song or song.name != app.song.song_object.name else False
+
 
 class MainPage(FloatLayout):
 
@@ -532,7 +540,6 @@ class MainPage(FloatLayout):
                 seconds=app.song.length)
             )[3:7]
             self.ids.playback_slider.max = app.song.length
-        song = song if song is not None else app.song.song_object
         app.play_button.update_track_current(0)
         self.update_playlist_menu(song=song)
         self.update_cover_art(song)

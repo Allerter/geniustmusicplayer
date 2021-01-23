@@ -1,6 +1,7 @@
 from jnius import autoclass, java_method, PythonJavaClass
 from android import api_version
 from kivy.core.audio import Sound
+from kivy.logger import Logger
 
 
 MediaPlayer = autoclass("android.media.MediaPlayer")
@@ -15,11 +16,17 @@ class OnCompleteListener(PythonJavaClass):
 
     def __init__(self, audio_player, **kwargs):
         super().__init__(**kwargs)
+        self.called = False
         self.audio_player = audio_player
 
     @java_method("(Landroid/media/MediaPlayer;)V")
     def onCompletion(self, mp):
+        Logger.info('AUDIO: Playback completed.')
+        self.audio_player._mediaplayer.stop()
+        self.audio_player.is_complete = True
         self.audio_player.state = 'stop'
+        self.audio_player.unload()
+        self.audio_player = None
 
 
 class SoundAndroidPlayer(Sound):
@@ -30,13 +37,12 @@ class SoundAndroidPlayer(Sound):
 
     def __init__(self, **kwargs):
         self._mediaplayer = None
+        self._completion_listener = None
         super(SoundAndroidPlayer, self).__init__(**kwargs)
 
     def load(self):
         self.unload()
         self._mediaplayer = MediaPlayer()
-        self._completion_listener = OnCompleteListener(self)
-        self._mediaplayer.setOnCompletionListener(self._completion_listener)
         if api_version >= 21:
             self._mediaplayer.setAudioAttributes(
                 AudioAttributesBuilder()
@@ -56,6 +62,9 @@ class SoundAndroidPlayer(Sound):
         if not self._mediaplayer:
             return
         self._mediaplayer.start()
+        if self._completion_listener is None:
+            self._completion_listener = OnCompleteListener(self)
+            self._mediaplayer.setOnCompletionListener(self._completion_listener)
         super(SoundAndroidPlayer, self).play()
 
     def stop(self):

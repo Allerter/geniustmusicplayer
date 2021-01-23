@@ -263,7 +263,6 @@ class ArtistsPage(FloatLayout):
         def get_tracks(*args):
             if req.status_code == 200:
                 tracks = req.response
-                switch_screen(main.LoadingPage(), 'loading_page')
                 self.app.playlist = main.Playlist(tracks, current=0)
                 self.save_preferences(self.app.playlist)
                 self.app.load_first_page()
