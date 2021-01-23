@@ -41,27 +41,6 @@ import favorites_page
 from utils import log, switch_screen, create_snackbar, save_favorites, save_keys
 from api import API, Song
 
-Logger.setLevel(LOG_LEVELS['debug'])
-
-
-if platform == 'android':
-    from android_audio_player import SoundAndroidPlayer
-    # from android.storage import primary_external_storage_path
-    # from android.permissions import request_permissions, Permission
-    # request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
-    # storage_path = primary_external_storage_path()
-    from android.storage import app_storage_path
-    storage_path = app_storage_path()
-    SoundLoader.register(SoundAndroidPlayer)
-else:
-    storage_path = ''
-    Window.size = (330, 650)
-
-songs_path = join(storage_path, 'songs')
-if not os.path.isdir(songs_path):
-    os.mkdir(songs_path)
-    Logger.info('created songs directory')
-
 
 class Playlist:
     def __init__(self, tracks: list, current=-1) -> None:
@@ -142,7 +121,7 @@ def save_song(song, data):
         for i in f'{song.artist} - {song.name} preview'
         if i not in r"\/:*?<>|"
     )
-    filename = join(songs_path, f'{song_name}.mp3')
+    filename = join(app.songs_path, f'{song_name}.mp3')
     with open(filename, 'wb') as f:
         f.write(data)
     return filename
@@ -682,14 +661,34 @@ class MainApp(MDApp):
 
     @log
     def build(self):
+        Logger.setLevel(LOG_LEVELS['debug'])
         self.theme_cls.primary_palette = "Indigo"
         self.theme_cls.accent_palette = "Amber"
         Loader.loading_image = 'images/loading_coverart.gif'
+        Loader.num_workers = 4
 
         self.nav_layout = Factory.NavLayout()
         self.screen_manager = self.nav_layout.screen_manager
         self.nav_drawer = self.nav_layout.nav_drawer
-        # switch_screen(LoadingPage(), 'loading_page')
+        if platform == 'android':
+            from android_audio_player import SoundAndroidPlayer
+            # from android.storage import primary_external_storage_path
+            # from android.permissions import request_permissions, Permission
+            # request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
+            # storage_path = primary_external_storage_path()
+            from android.storage import app_storage_path
+            storage_path = app_storage_path()
+            SoundLoader.register(SoundAndroidPlayer)
+        else:
+            storage_path = ''
+            Window.size = (330, 650)
+
+        songs_path = join(storage_path, 'songs')
+        if not os.path.isdir(songs_path):
+            os.mkdir(songs_path)
+            Logger.info('created songs directory')
+        app.songs_path = songs_path
+
         self.load_first_page()
         return self.nav_layout
 
