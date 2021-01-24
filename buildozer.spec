@@ -13,7 +13,7 @@ package.domain = org.allerter
 source.dir = geniustmusicplayer
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,gif
+source.include_exts = py,png,jpg,kv,atlas,gif,json
 
 # (list) List of inclusions using pattern matching
 source.include_patterns = images/*
@@ -28,7 +28,7 @@ source.exclude_dirs = tests, bin
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 0.1
+version = 0.2
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -55,7 +55,7 @@ icon.filename = %(source.dir)s/images/icon.png
 orientation = portrait
 
 # (list) List of service to declare
-#services = NAME:ENTRYPOINT_TO_PY,NAME2:ENTRYPOINT2_TO_PY
+services = myservice:%(source.dir)s/service.py
 
 #
 # OSX Specific
@@ -156,7 +156,7 @@ android.accept_sdk_license = True
 
 # (list) Gradle dependencies to add (currently works only with sdl2_gradle
 # bootstrap)
-#android.gradle_dependencies =
+android.gradle_dependencies = "com.android.support:support-compat:28.0.0"
 
 # (list) add java compile options
 # this can for example be necessary when importing certain java libraries using the 'android.gradle_dependencies' option
@@ -245,7 +245,7 @@ android.arch = armeabi-v7a
 #p4a.hook =
 
 # (str) Bootstrap to use for android builds
-# p4a.bootstrap = sdl2
+p4a.bootstrap = sdl2
 
 # (int) port number to specify an explicit --port= p4a argument (eg for bootstrap flask)
 #p4a.port =
@@ -288,7 +288,7 @@ warn_on_root = 1
 # build_dir = ./.buildozer
 
 # (str) Path to build output (i.e. .apk, .ipa) storage
-# bin_dir = ./bin
+bin_dir = /mnt/hgfs/Python
 
 #    -----------------------------------------------------------------------------
 #    List as sections

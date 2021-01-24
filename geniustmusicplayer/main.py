@@ -6,6 +6,8 @@ from time import time
 # os.environ['KIVY_AUDIO'] = 'android'
 os.environ['KIVY_IMAGE'] = 'pil,sdl2,gif'
 
+from kivy.loader import Loader
+Loader.num_workers = 4
 import kivymd.material_resources as m_res
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
@@ -32,7 +34,6 @@ from kivy.storage.jsonstore import JsonStore
 from kivy.core.audio import SoundLoader
 from kivy.logger import Logger, LOG_LEVELS
 from kivy.utils import platform
-from kivy.loader import Loader
 from kivy.utils import rgba
 from kivy.metrics import dp
 
@@ -665,7 +666,6 @@ class MainApp(MDApp):
         self.theme_cls.primary_palette = "Indigo"
         self.theme_cls.accent_palette = "Amber"
         Loader.loading_image = 'images/loading_coverart.gif'
-        Loader.num_workers = 4
 
         self.nav_layout = Factory.NavLayout()
         self.screen_manager = self.nav_layout.screen_manager
@@ -677,8 +677,16 @@ class MainApp(MDApp):
             # request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
             # storage_path = primary_external_storage_path()
             from android.storage import app_storage_path
+            from jnius import autoclass
             storage_path = app_storage_path()
             SoundLoader.register(SoundAndroidPlayer)
+            Logger.debug('SERVICE: Starting service.')
+            service = autoclass('org.allerter.geniustmusicplayer.ServiceMyservice')
+            mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
+            argument = ''
+            service.start(mActivity, argument)
+            Logger.debug('SERVICE: Service started.')
+            import service
         else:
             storage_path = ''
             Window.size = (330, 650)
@@ -690,6 +698,7 @@ class MainApp(MDApp):
         app.songs_path = songs_path
 
         self.load_first_page()
+
         return self.nav_layout
 
     @log
