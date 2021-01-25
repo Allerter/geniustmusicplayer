@@ -6,6 +6,9 @@ from kivy.logger import Logger
 
 MediaPlayer = autoclass("android.media.MediaPlayer")
 AudioManager = autoclass("android.media.AudioManager")
+PowerManager = autoclass("android.os.PowerManager")
+service = autoclass('org.allerter.geniustmusicplayer.ServiceMyService').mService
+app_context = service.getApplication().getApplicationContext()
 if api_version >= 21:
     AudioAttributesBuilder = autoclass("android.media.AudioAttributes$Builder")
 
@@ -22,7 +25,6 @@ class OnCompleteListener(PythonJavaClass):
     @java_method("(Landroid/media/MediaPlayer;)V")
     def onCompletion(self, mp):
         Logger.info('AUDIO: Playback completed.')
-        self.audio_player._mediaplayer.stop()
         self.audio_player.is_complete = True
         self.audio_player.state = 'stop'
         self.audio_player.unload()
@@ -43,6 +45,7 @@ class SoundAndroidPlayer(Sound):
     def load(self):
         self.unload()
         self._mediaplayer = MediaPlayer()
+        self._mediaplayer.setWakeMode(app_context, PowerManager.PARTIAL_WAKE_LOCK)
         if api_version >= 21:
             self._mediaplayer.setAudioAttributes(
                 AudioAttributesBuilder()

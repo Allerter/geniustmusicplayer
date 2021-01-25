@@ -55,7 +55,7 @@ icon.filename = %(source.dir)s/images/icon.png
 orientation = portrait
 
 # (list) List of service to declare
-services = myservice:%(source.dir)s/service.py
+# services = myservice:%(source.dir)s/services/service.py
 
 #
 # OSX Specific
@@ -230,10 +230,10 @@ android.arch = armeabi-v7a
 #
 
 # (str) python-for-android fork to use, defaults to upstream (kivy)
-#p4a.fork = kivy
+p4a.fork = allerter
 
 # (str) python-for-android branch to use, defaults to master
-#p4a.branch = master
+p4a.branch = enable_androidx
 
 # (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
 #p4a.source_dir =

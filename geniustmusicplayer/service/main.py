@@ -14,9 +14,9 @@ Logger.debug('SERVICE: Execution started.')
 # Get the session's metadata
 RDrawable = autoclass('android.R$drawable')
 RString = autoclass('android.R$string')
-# MediaButtonReceiverBuilder = autoclass('androidx.media.session.MediaButtonReceiver$buildMediaButtonPendingIntent')
-MediaSession = autoclass('android.media.session.MediaSession')
 NotificationCompat = autoclass("androidx.core.app.NotificationCompat")
+MediaButtonReceiverBuilder = autoclass('androidx.media.session.MediaButtonReceiver$buildMediaButtonPendingIntent')
+MediaSession = autoclass('android.media.session.MediaSession')
 NotificationCompatAction = autoclass("androidx.core.app.NotificationCompat$Action")
 NotificationCompatBuilder = autoclass("androidx.core.app.NotificationCompat$Builder")
 PlaybackStateCompat = autoclass("android.support.v4.media.session.PlaybackStateCompat")
@@ -95,3 +95,4 @@ builder.addAction(action)
 
 # Display the notification and place the service in the foreground
 service.startForeground(1, builder.build())
+Logger.debug('SERIVCE: Execution finished.')

@@ -180,7 +180,7 @@ class PlaybackSlider(MDSlider):
         song_pos = app.song.get_pos()
         if abs(value - song_pos) > 1:
             app.song.seek(value)
-            play_button.update_track_current(value)
+            play_button.update_track_current(current=value)
         elif app.song.length - song_pos < 20:
             def save_preview(*args):
                 if req.status_code == 200:
@@ -261,6 +261,7 @@ class PlayButton(MDIconButton):
         if app.song:
             self.stop_song()
 
+        self.update_track_current(current=seek)
         if app.song is None or app.song.song_object != song:
             app.main_page.edit_ui_for_song(song)
 
@@ -392,23 +393,24 @@ class PlayButton(MDIconButton):
     def stop_song(self):
         if app.song and app.song.state == 'play':
             app.song.stop()
-            # app.song.unload() TODO: why does it make app crash?
+            if platform == 'android':
+                app.song.unload()
+            else:
+                Logger.debug('SONG UNLOAD: Skipped because of ffpyplayer crash.')
 
             # if app.song.song_object not in app.history:
             #    app.history.append(app.song.song_object)
 
-    def update_track_current(self, *args):
+    def update_track_current(self, *args, **kwargs):
         track_current = app.main_page.ids.track_current
         slider = app.main_page.ids.playback_slider
-
-        if app.song:
-            slider.value = app.song.get_pos()
-            track_current.text = str(timedelta(
-                seconds=slider.value
-            ))[3:7]
-        else:
-            slider.value = 0
-            track_current.text = '0:00'
+        current = kwargs.get('current')
+        if current is None:
+            current = app.song.get_pos()
+        slider.value = current
+        track_current.text = str(timedelta(
+            seconds=slider.value
+        ))[3:7]
 
 
 class FavoriteButton(MDIconButton):
@@ -512,6 +514,7 @@ class MainPage(FloatLayout):
         app = MDApp.get_running_app()
         self.song = app.song
         self.playlist_menu = None
+        self.song = None
 
     @log
     def edit_ui_for_song(self, song=None):
@@ -520,10 +523,12 @@ class MainPage(FloatLayout):
                 seconds=app.song.length)
             )[3:7]
             self.ids.playback_slider.max = app.song.length
-        app.play_button.update_track_current(0)
-        self.update_playlist_menu(song=song)
-        self.update_cover_art(song)
-        self.update_song_info(song)
+        app.play_button.update_track_current(current=0)
+        if song != self.song:
+            self.update_playlist_menu(song=song)
+            self.update_cover_art(song)
+            self.update_song_info(song)
+            self.song = song
 
     @log
     def update_playlist_menu(self, *args, song=None):
@@ -677,16 +682,20 @@ class MainApp(MDApp):
             # request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
             # storage_path = primary_external_storage_path()
             from android.storage import app_storage_path
+            import android
             from jnius import autoclass
             storage_path = app_storage_path()
             SoundLoader.register(SoundAndroidPlayer)
             Logger.debug('SERVICE: Starting service.')
-            service = autoclass('org.allerter.geniustmusicplayer.ServiceMyservice')
-            mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
-            argument = ''
-            service.start(mActivity, argument)
+            # service = autoclass('org.allerter.geniustmusicplayer.ServiceMyservice')
+            # mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
+            # argument = ''
+            # service.start(mActivity, argument)
+            android.start_service(
+                title='GTPlayer',
+                description='GeniusT Music Player Song',
+                arg='')
             Logger.debug('SERVICE: Service started.')
-            import service
         else:
             storage_path = ''
             Window.size = (330, 650)
@@ -698,8 +707,49 @@ class MainApp(MDApp):
         app.songs_path = songs_path
 
         self.load_first_page()
-
+        Logger.debug('DISPLAY: Loaded first page.')
         return self.nav_layout
+
+    def complete_ui(self, song):
+        favorites_screen = Screen(name='favorites_page')
+        app.favorites_page = favorites_page.FavoritesPage()
+        favorites_screen.add_widget(app.favorites_page)
+        self.screen_manager.add_widget(favorites_screen)
+
+        settings_screen = Screen(name='settings_page')
+        app.settings_page = settings_page.SettingsPage()
+        settings_screen.add_widget(app.settings_page)
+        self.screen_manager.add_widget(settings_screen)
+
+        def edit_ui():
+            user = self.store['user']
+            app.song.last_pos = user['playlist'].get('last_pos', 0)
+            # update track current
+            slider = app.main_page.ids.playback_slider
+            slider.value = app.song.last_pos
+            app.main_page.ids.track_current.text = str(timedelta(
+                seconds=slider.value
+            ))[3:7]
+
+        if song.preview_file is None or song.preview_file == 'downloading':
+            def get_preview(*args):
+                if req.status_code == 200:
+                    song.preview_file = save_song(song, req.response)
+                    Logger.debug('SONG LOAD: download successful')
+                    self.play_button.load_song(song)
+                    edit_ui()
+                else:
+                    song._tried_downloading = True
+                    toast('Failed to download song.')
+                    song.preview_file = None
+                    Logger.debug('SONG LOAD: download failed')
+            song.preview_file = None
+            trigger = Clock.create_trigger(get_preview)
+            req = self.api.download_preview(song, trigger=trigger)
+            return
+        elif song.preview_file:
+            self.play_button.load_song(song)
+            edit_ui()
 
     @log
     def load_first_page(self, *args):
@@ -727,46 +777,7 @@ class MainApp(MDApp):
             main_screen.add_widget(page)
             self.screen_manager.add_widget(main_screen)
             self.screen_manager.switch_to(main_screen)
-
-            favorites_screen = Screen(name='favorites_page')
-            app.favorites_page = favorites_page.FavoritesPage()
-            favorites_screen.add_widget(app.favorites_page)
-            self.screen_manager.add_widget(favorites_screen)
-
-            settings_screen = Screen(name='settings_page')
-            app.settings_page = settings_page.SettingsPage()
-            settings_screen.add_widget(app.settings_page)
-            self.screen_manager.add_widget(settings_screen)
-
-            def edit_ui():
-                app.song.last_pos = user['playlist'].get('last_pos', 0)
-                # update track current
-                slider = app.main_page.ids.playback_slider
-                slider.value = app.song.last_pos
-                app.main_page.ids.track_current.text = str(timedelta(
-                    seconds=slider.value
-                ))[3:7]
-
-            if song.preview_file is None or song.preview_file == 'downloading':
-                def get_preview(*args):
-                    if req.status_code == 200:
-                        song.preview_file = save_song(song, req.response)
-                        Logger.debug('SONG LOAD: download successful')
-                        self.play_button.load_song(song)
-                        edit_ui()
-                    else:
-                        song._tried_downloading = True
-                        toast('Failed to download song.')
-                        song.preview_file = None
-                        Logger.debug('SONG LOAD: download failed')
-                song.preview_file = None
-                trigger = Clock.create_trigger(get_preview)
-                req = self.api.download_preview(song, trigger=trigger)
-                return
-            elif song.preview_file:
-                self.play_button.load_song(song)
-                edit_ui()
-
+            Clock.schedule_once(lambda *args, song=song: self.complete_ui(song))
         else:
             import start_page
             self.nav_drawer.type = 'standard'
