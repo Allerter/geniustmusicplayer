@@ -1,51 +1,41 @@
-from kivy.properties import StringProperty
 from kivymd.app import MDApp
 from kivy.uix.floatlayout import FloatLayout
 from kivymd.uix.list import TwoLineAvatarIconListItem
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.list import IRightBodyTouch
-from kivymd.uix.button import MDIconButton
+from kivymd.uix.bottomsheet import MDListBottomSheet
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.toast import toast
-from kivy.utils import rgba
 
-from utils import create_snackbar, save_favorites
+from utils import save_favorites
 
 
-class CustomOneLineIconListItem(TwoLineAvatarIconListItem):
+class FavoriteSongListItem(TwoLineAvatarIconListItem):
     def __init__(self, **kwargs):
         song = kwargs.pop('song')
+        app = MDApp.get_running_app()
         super().__init__(**kwargs)
         self.text = song.name
         self.secondary_text = song.artist
-        self.right_content = FavoriteItemRightContent(song=song)
-        self.add_widget(self.right_content)
         self._txt_left_pad = '10dp'
+        self.song_menu = MDListBottomSheet()
 
+        # Add to playlist
+        self.song_menu.add_item(
+            text="Add to playlist",
+            callback=lambda *args, song=song: app.favorites_page.playlist_add(song),
+            icon='playlist-plus')
 
-class FavoriteItemRightContent(IRightBodyTouch, MDBoxLayout):
-    def __init__(self, **kwargs):
-        app = MDApp.get_running_app()
-        song = kwargs.pop('song')
-        super().__init__(**kwargs)
-        self.adaptive_width = True
+        # Spotify
+        if song.id_spotify:
+            self.song_menu.add_item(
+                text="Listen on Spotify",
+                callback=lambda x, song=song: toast(repr(song)),
+                icon="spotify")
 
-        add_button = MDIconButton(
-            size_hint=(None, None),
-            user_font_size='20sp',
-            pos_hint={'center_y': 0.5},
-            icon='playlist-plus',
-            on_release=lambda *args: app.favorites_page.playlist_add(song)
-        )
-        self.add_widget(add_button)
-
-        remove_button = MDIconButton(
-            icon='close',
-            user_font_size="20sp",
-            pos_hint={"center_y": .5},
-            on_release=lambda *args: app.favorites_page.remove_song(song),
-        )
-        self.add_widget(remove_button)
+        # Remove from favorites
+        self.song_menu.add_item(
+            text="Remove from favorites",
+            callback=lambda *args, song=song: app.favorites_page.remove_song(song),
+            icon='close')
 
 
 class SortMenu(MDDropdownMenu):
@@ -98,7 +88,7 @@ class FavoritesPage(FloatLayout):
         self.ids.favorites_list.clear_widgets()
         for song in songs:
             self.ids.favorites_list.add_widget(
-                CustomOneLineIconListItem(song=song, size_hint=(1, None))
+                FavoriteSongListItem(song=song, size_hint=(1, None))
             )
 
     def playlist_add(self, song):
