@@ -295,7 +295,7 @@ class PlayButton(ButtonBehavior, Image):
         # TODO: fix: volume 0 plays at full volume
         app.song.volume = float(str(app.volume)[:4])
         Logger.info('VOLUME %s', app.song.volume)
-        self.source = f'images/stop_{app.theme_cls.theme_style}'
+        self.source = f'images/stop_{app.theme_cls.theme_style}.png'
         if self.event:
             self.event.cancel()
         self.event = Clock.schedule_interval(self.update_track_current, 0.1)
@@ -360,7 +360,7 @@ class PlayButton(ButtonBehavior, Image):
             app.song.stop()
             Logger.debug('control: stopped at %s (state: %s)',
                          app.song.last_pos, app.song.state)
-            self.source = f'images/play_{app.theme_cls.theme_style}'
+            self.source = f'images/play_{app.theme_cls.theme_style}.png'
             self.event.cancel()
 
     @log
