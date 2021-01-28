@@ -533,8 +533,10 @@ class MainPage(FloatLayout):
     @log
     def update_download_button(self, song):
         if song.download_url or song.isrc:
-            self.download_button.text_color = app.theme_cls.icon_color
+            Logger.debug('DOWNLOAD: Available.')
+            self.download_button.text_color = app.theme_cls.text_color
         else:
+            Logger.debug('DOWNLOAD: Unavailable.')
             self.download_button.text_color = app.theme_cls.disabled_hint_text_color
 
     @log
