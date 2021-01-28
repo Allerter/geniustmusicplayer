@@ -14,7 +14,7 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.slider import MDSlider
 from kivymd.uix.menu import MDDropdownMenu, RightContent
 from kivymd.uix.button import MDIconButton
-from kivymd.uix.bottomsheet import MDCustomBottomSheet
+from kivymd.uix.bottomsheet import MDCustomBottomSheet, MDListBottomSheet
 from kivymd.uix.list import OneLineAvatarIconListItem, OneLineListItem, OneLineIconListItem
 from kivymd.uix.list import IconLeftWidget, MDList
 from kivymd.theming import ThemableBehavior
@@ -549,14 +549,35 @@ class MainPage(FloatLayout):
                 on_release=lambda *args, song=i: self.play_from_playlist(song),
             )
             # adding right-side icons
+            item.song_menu = MDListBottomSheet()
+            # Spotify
+            if i.id_spotify:
+                item.song_menu.add_item(
+                    text="Listen on Spotify",
+                    callback=lambda x, song=i: toast(song),
+                    icon="spotify")
+
+            # Favorited
+            favorited = i in app.favorites
+            item.song_menu.add_item(
+                text="Favorite" if not favorited else "Unfavorite",
+                callback=lambda *args, song=i: app.main_page.favorite_playlist_item(
+                    self, song),
+                icon='heart' if favorited else 'heart-outline')
+
+            # Remove
             removable = (
                 is_removable(i)
                 or i != app.playlist.current_track
                 or (song is not None and i != song)
             )
-            item.add_widget(RightContentCls(
-                song=i,
-                is_removable=removable))
+            if removable:
+                item.song_menu.add_item(
+                    text="Remove from playlist",
+                    callback=lambda *args, song=i: app.main_page.remove_playlist_item(
+                        self, song),
+                    icon='close')
+
             # different background for current song
             if not removable:
                 item.bg_color = app.theme_cls.primary_color  # rgba('#cbcbcb')
@@ -576,6 +597,7 @@ class MainPage(FloatLayout):
     def remove_playlist_item(self, instance, song):
         self.playlist_menu.screen.songs_grid.remove_widget(instance.parent.parent)
         app.playlist.remove(song)
+        self.playlist_menu.dismiss()
 
     @log
     def favorite_playlist_item(self, instance, song):
@@ -600,6 +622,7 @@ class MainPage(FloatLayout):
                 icon_button.icon = icon
                 break
 
+        self.playlist_menu.dismiss()
         save_favorites(app.favorites)
 
     @log
