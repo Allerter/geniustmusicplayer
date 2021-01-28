@@ -514,7 +514,6 @@ class MainPage(FloatLayout):
         app = MDApp.get_running_app()
         self.song = app.song
         self.playlist_menu = None
-        self.song = None
 
     @log
     def edit_ui_for_song(self, song=None):
@@ -598,6 +597,7 @@ class MainPage(FloatLayout):
         self.playlist_menu.screen.songs_grid.remove_widget(instance.parent.parent)
         app.playlist.remove(song)
         self.playlist_menu.dismiss()
+        toast('Removed from playlist')
 
     @log
     def favorite_playlist_item(self, instance, song):
@@ -606,11 +606,13 @@ class MainPage(FloatLayout):
             song.date_favorited = None
             app.favorites.remove(song)
             icon = 'heart-outline'
+            msg = 'Song unfavorited'
         else:
             favorited = True
             song.date_favorited = time()
             app.favorites.append(song)
             icon = 'heart'
+            msg = 'Song favorited'
 
         # Correct main favorite button if user (un)favorited item == current song
         if app.song.song_object == song:
@@ -623,6 +625,7 @@ class MainPage(FloatLayout):
                 break
 
         self.playlist_menu.dismiss()
+        toast(msg)
         save_favorites(app.favorites)
 
     @log
