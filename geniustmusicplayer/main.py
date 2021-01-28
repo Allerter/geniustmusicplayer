@@ -553,7 +553,7 @@ class MainPage(FloatLayout):
             if i.id_spotify:
                 item.song_menu.add_item(
                     text="Listen on Spotify",
-                    callback=lambda x, song=i: toast(song),
+                    callback=lambda x, song=i: toast(repr(song)),
                     icon="spotify")
 
             # Favorited
