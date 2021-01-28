@@ -528,7 +528,15 @@ class MainPage(FloatLayout):
             self.update_playlist_menu(song=song)
             self.update_cover_art(song)
             self.update_song_info(song)
+            self.update_download_button(song)
             self.song = song
+
+    @log
+    def update_download_button(self, song):
+        if song.download_url or song.isrc:
+            self.download_button.text_color = app.theme_cls.icon_color
+        else:
+            self.download_button.text_color = app.theme_cls.disabled_hint_text_color
 
     @log
     def update_playlist_menu(self, *args, song=None):
@@ -602,6 +610,10 @@ class MainPage(FloatLayout):
     def update_song_info(self, song):
         self.ids.title.text = song.name
         self.ids.artist.text = song.artist
+
+    @log
+    def download_song(self, song):
+        print(song)
 
 # -------------------- App --------------------
 
