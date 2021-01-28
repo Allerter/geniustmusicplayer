@@ -16,7 +16,7 @@ class FavoriteSongListItem(TwoLineAvatarIconListItem):
         self.text = song.name
         self.secondary_text = song.artist
         self._txt_left_pad = '10dp'
-        self.song_menu = MDListBottomSheet()
+        self.song_menu = MDListBottomSheet(radius_from='top')
 
         # Add to playlist
         self.song_menu.add_item(

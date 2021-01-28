@@ -548,7 +548,7 @@ class MainPage(FloatLayout):
                 on_release=lambda *args, song=i: self.play_from_playlist(song),
             )
             # adding right-side icons
-            item.song_menu = MDListBottomSheet()
+            item.song_menu = MDListBottomSheet(radius_from='top')
             # Spotify
             if i.id_spotify:
                 item.song_menu.add_item(
