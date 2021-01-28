@@ -686,16 +686,16 @@ class MainApp(MDApp):
             from jnius import autoclass
             storage_path = app_storage_path()
             SoundLoader.register(SoundAndroidPlayer)
-            Logger.debug('SERVICE: Starting service.')
+            # Logger.debug('SERVICE: Starting service.')
             # service = autoclass('org.allerter.geniustmusicplayer.ServiceMyservice')
             # mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
             # argument = ''
             # service.start(mActivity, argument)
-            android.start_service(
-                title='GTPlayer',
-                description='GeniusT Music Player Song',
-                arg='')
-            Logger.debug('SERVICE: Service started.')
+            # android.start_service(
+            #    title='GTPlayer',
+            #    description='GeniusT Music Player Song',
+            #    arg='')
+            # Logger.debug('SERVICE: Service started.')
         else:
             storage_path = ''
             Window.size = (330, 650)

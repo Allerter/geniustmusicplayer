@@ -28,7 +28,7 @@ source.exclude_dirs = tests, bin
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 0.2
+version = 0.22
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -156,7 +156,7 @@ android.accept_sdk_license = True
 
 # (list) Gradle dependencies to add (currently works only with sdl2_gradle
 # bootstrap)
-android.gradle_dependencies = "com.android.support:support-compat:28.0.0"
+# android.gradle_dependencies = "com.android.support:support-compat:28.0.0"
 
 # (list) add java compile options
 # this can for example be necessary when importing certain java libraries using the 'android.gradle_dependencies' option
@@ -230,10 +230,10 @@ android.arch = armeabi-v7a
 #
 
 # (str) python-for-android fork to use, defaults to upstream (kivy)
-p4a.fork = allerter
+# p4a.fork = allerter
 
 # (str) python-for-android branch to use, defaults to master
-p4a.branch = enable_androidx
+# p4a.branch =
 
 # (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
 #p4a.source_dir =

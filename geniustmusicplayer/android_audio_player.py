@@ -7,8 +7,10 @@ from kivy.logger import Logger
 MediaPlayer = autoclass("android.media.MediaPlayer")
 AudioManager = autoclass("android.media.AudioManager")
 PowerManager = autoclass("android.os.PowerManager")
-service = autoclass('org.allerter.geniustmusicplayer.ServiceMyService').mService
-app_context = service.getApplication().getApplicationContext()
+# service = autoclass('org.allerter.geniustmusicplayer.ServiceMyService').mService
+PythonActivity = autoclass('org.kivy.android.PythonActivity')
+currentActivity = cast('android.app.Activity', PythonActivity.mActivity)
+app_context = cast('android.content.Context', currentActivity.getApplicationContext())
 if api_version >= 21:
     AudioAttributesBuilder = autoclass("android.media.AudioAttributes$Builder")
 

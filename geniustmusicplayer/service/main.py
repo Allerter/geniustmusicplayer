@@ -15,7 +15,7 @@ Logger.debug('SERVICE: Execution started.')
 RDrawable = autoclass('android.R$drawable')
 RString = autoclass('android.R$string')
 NotificationCompat = autoclass("androidx.core.app.NotificationCompat")
-MediaButtonReceiverBuilder = autoclass('androidx.media.session.MediaButtonReceiver$buildMediaButtonPendingIntent')
+MediaButtonReceiver = autoclass('androidx.media.session.MediaButtonReceiver')
 MediaSession = autoclass('android.media.session.MediaSession')
 NotificationCompatAction = autoclass("androidx.core.app.NotificationCompat$Action")
 NotificationCompatBuilder = autoclass("androidx.core.app.NotificationCompat$Builder")
@@ -72,7 +72,7 @@ icon = getattr(IconDrawable, 'icon')
     # .setColor(ContextCompat.getColor(context, R.color.primaryDark))
  )
 # Add a pause button
-pause_intent = MediaButtonReceiverBuilder(
+pause_intent = MediaButtonReceiver.buildMediaButtonPendingIntent(
     app_context,
     PlaybackStateCompat.ACTION_PLAY_PAUSE
 )
