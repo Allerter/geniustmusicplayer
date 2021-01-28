@@ -214,7 +214,7 @@ class VolumeSlider(MDSlider):
             app.song.volume = app.volume
 
 
-class PlayButton(MDIconButton):
+class PlayButton(ButtonBehavior, Image):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -295,7 +295,7 @@ class PlayButton(MDIconButton):
         # TODO: fix: volume 0 plays at full volume
         app.song.volume = float(str(app.volume)[:4])
         Logger.info('VOLUME %s', app.song.volume)
-        self.icon = 'pause'
+        self.source = f'images/stop_{app.theme_cls.theme_style}'
         if self.event:
             self.event.cancel()
         self.event = Clock.schedule_interval(self.update_track_current, 0.1)
@@ -360,7 +360,7 @@ class PlayButton(MDIconButton):
             app.song.stop()
             Logger.debug('control: stopped at %s (state: %s)',
                          app.song.last_pos, app.song.state)
-            self.icon = 'play'
+            self.source = f'images/play_{app.theme_cls.theme_style}'
             self.event.cancel()
 
     @log
@@ -683,6 +683,8 @@ class MainApp(MDApp):
         self.theme_cls.primary_palette = "Indigo"
         self.theme_cls.accent_palette = "Amber"
         Loader.loading_image = 'images/loading_coverart.gif'
+        print(self.theme_cls.primary_color)
+        print(self.theme_cls.primary_dark)
 
         self.nav_layout = Factory.NavLayout()
         self.screen_manager = self.nav_layout.screen_manager
@@ -694,8 +696,8 @@ class MainApp(MDApp):
             # request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
             # storage_path = primary_external_storage_path()
             from android.storage import app_storage_path
-            import android
-            from jnius import autoclass
+            # import android
+            # from jnius import autoclass
             storage_path = app_storage_path()
             SoundLoader.register(SoundAndroidPlayer)
             # Logger.debug('SERVICE: Starting service.')

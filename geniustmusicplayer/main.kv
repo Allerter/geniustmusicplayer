@@ -204,10 +204,12 @@
         pos: root.playback_slider.pos[0] + root.playback_slider.size[0], self.pos[1]
 
     # Playlist
-    MDIconButton:
+    ImageButton:
         id: playlist_button
-        icon: 'playlist-music'
-        user_font_size: '35sp'
+        allow_stretch: True
+        size_hint: None, None
+        size: sp(20), sp(20)
+        source: f"images/playlist_{app.theme_cls.theme_style}.png"
         pos_hint: {'center_x': 0.1, 'center_y': 0.1}
         on_release:
             root.update_playlist_menu()
@@ -219,26 +221,30 @@
     #    spacing: "5dp"
     #    pos_hint: {"center_x": .5, "center_y": .1}
 
-    MDIconButton:
+    ImageButton:
         id: previous_button
-        icon: 'skip-previous'
-        user_font_size: '35sp'
+        allow_stretch: True
         ripple_scale: 0
+        size_hint: None, None
+        size: sp(20), sp(20)
+        source: f"images/previous_{app.theme_cls.theme_style}.png" 
         on_release: play_button.play_previous(self)
         pos_hint: {"center_x": .3, "center_y": .1}
     PlayButton:
         id: play_button
-        icon: 'play-outline'
-        user_font_size: '50sp'
+        allow_stretch: True
         ripple_scale: 0
-        theme_text_color: "Custom"
-        text_color: app.theme_cls.primary_color if app.theme_cls.theme_style == 'Light' else app.theme_cls.accent_color
+        size_hint: None, None
+        size: sp(20), sp(20)
+        source: f"images/play_{app.theme_cls.theme_style}.png"
         pos_hint: {"center_x": .5, "center_y": .1}
-    MDIconButton:
+    ImageButton:
         id: next_button
-        icon: 'skip-next'
+        allow_stretch: True
         ripple_scale: 0
-        user_font_size: '35sp'
+        size_hint: None, None
+        size: sp(20), sp(20)
+        source: f"images/next_{app.theme_cls.theme_style}.png"
         pos_hint: {"center_x": .7, "center_y": .1}
         on_release: play_button.play_next(self)
     FavoriteButton:
@@ -263,11 +269,7 @@
     hint: False
     orientation: 'horizontal'
 
-<PlayButton>
-
-<ImageButton@MDIconButton>
-
-<FavoriteButton>
+<ImageButton@ButtonBehavior+Image>
 
 <PlaylistLayout@BoxLayout>:
     songs_grid: songs_grid
