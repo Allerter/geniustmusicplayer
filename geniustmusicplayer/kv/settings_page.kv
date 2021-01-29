@@ -46,7 +46,7 @@
                     MDDropDownItem:
                         pos_hint: {"center_y": .5}
                         id: drop_item
-                        text: app.play_mode.replace('_', ' ').capitalize()
+                        text: root.get_play_mode_text(app.play_mode)
                         on_release: root.menu.open()
 
             CustomOneLineIconListItem:

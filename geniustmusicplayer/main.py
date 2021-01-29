@@ -196,12 +196,15 @@ class PlaybackSlider(MDSlider):
                     Logger.debug('SONG PRELOAD: download failed')
             # pre-download next song
             next_song = app.playlist.preview_next()
-            if next_song.preview_file is None:
+            if app.play_mode in ('any_file', 'preview') and next_song.preview_file is None:
                 next_song.preview_file = 'downloading'
-                Logger.info('SONG PRELOAD: downloading next song')
+                Logger.info('SONG PRELOAD: downloading next song preview')
                 trigger = Clock.create_trigger(save_preview)
                 req = app.api.download_preview(next_song, trigger=trigger)
-
+            elif app.play_mode == 'download' and next_song.download_file is None:
+                next_song.download_file = 'downloading'
+                Logger.info('SONG PRELOAD: downloading next song')
+                app.main_page.download_song(next_song, show_progress=False)
 
 class VolumeSlider(MDSlider):
 
@@ -339,16 +342,10 @@ class PlayButton(ButtonBehavior, Image):
                         self.snackbar.open()
 
                 trigger = Clock.create_trigger(get_tracks)
-                if app.play_mode == 'any':
-                    song_type = 'any_file'
-                elif app.play_mode == 'previews':
-                    song_type = 'preview'
-                else:
-                    song_type = 'full'
                 req = app.api.get_recommendations(
                     app.genres,
                     app.artists,
-                    song_type=song_type,
+                    song_type=app.play_mode,
                     trigger=trigger,
                     async_request=True,
                 )
@@ -760,8 +757,8 @@ class LoadingPage(Screen):
             pos=(logo.pos[0] + logo.size[0] + 5, logo.pos[1]))
         self.add_widget(logo)
         self.add_widget(label)
-        animation = Animation(x=0, y=0, d=2)
-        animation.start(logo)
+        # animation = Animation(x=0, y=0, d=2)
+        # animation.start(logo)
 
 
 class MainApp(MDApp):
@@ -775,7 +772,7 @@ class MainApp(MDApp):
     favorites = ([Song(**x) for x in store['user']['favorites']]
                  if store.exists('user') else [])
     volume = store['user']['volume'] if store.exists('user') else 0.5
-    play_mode = store['user']['play_mode'] if store.exists('user') else 'any'
+    play_mode = store['user']['play_mode'] if store.exists('user') else 'any_file'
     song = None
     main_page = None
     api = API()

@@ -47,7 +47,6 @@ class SongModeMenu(MDDropdownMenu):
         self.screen.ids.drop_item.set_item(instance_menu_item.text)
         self.menu.dismiss()
 
-
 class SettingsPage(FloatLayout):
 
     def __init__(self, **kwargs):
@@ -71,16 +70,30 @@ class SettingsPage(FloatLayout):
         )
         self.menu.bind(
             on_release=unavailable
-            # self.set_song_mode
+            # self.set_play_mode
         )
 
-    def set_song_mode(self, instance_menu, instance_menu_item):
+    def set_play_mode(self, instance_menu, instance_menu_item):
         self.ids.drop_item.set_item(instance_menu_item.text)
         self.menu.dismiss()
         mode = self.ids.drop_item.current_item
-        mode = mode.lower().replace(' ', '_')
+        if mode == 'Any':
+            mode = 'any_file'
+        elif mode == 'Previews':
+            mode = 'preview'
+        else:
+            mode = 'download'
         save_keys(play_mode=mode)
         Logger.info('PLAY MODE: %s', mode)
+
+    def get_play_mode_text(self, mode):
+        if mode == 'any_file':
+            mode = 'Any'
+        elif mode == 'preview':
+            mode = 'Previews'
+        else:
+            mode = 'Full Songs'
+        return mode
 
     def disable_dark_mode(self):
         # self.app.theme_cls.primary_palette = "Indigo"
