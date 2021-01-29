@@ -1,6 +1,7 @@
 from typing import Optional, List
 from urllib import parse
 
+import requests
 from kivy.logger import Logger
 from kivy.network.urlrequest import UrlRequest
 
@@ -113,6 +114,7 @@ class Sender:
         async_request: bool = True,
         api: bool = True,
         timeout=None,
+        use_requests=False,
         **kwargs
     ):
         """Makes a request to Genius."""
@@ -134,25 +136,28 @@ class Sender:
         url_parse = url_parse._replace(query=url_new_query)
         new_url = parse.urlunparse(url_parse)
 
-        # Make the request
-        response = Response(trigger, context=kwargs)
-        req = UrlRequest(new_url,
-                         on_success=response.on_finish,
-                         on_failure=response.on_finish,
-                         on_error=response.on_finish,
-                         req_headers=self.headers,
-                         timeout=timeout or self.timeout,
-                         debug=True,
-                         verify=False,
-                         )
-        response.is_finished = req.is_finished
-        # #Logger.debug('request to %s', new_url)
+        if use_requests:
+            response = requests.get(url).json()
+        else:
+            # Make the request
+            response = Response(trigger, context=kwargs)
+            req = UrlRequest(new_url,
+                             on_success=response.on_finish,
+                             on_failure=response.on_finish,
+                             on_error=response.on_finish,
+                             req_headers=self.headers,
+                             timeout=timeout or self.timeout,
+                             debug=True,
+                             verify=False,
+                             )
+            response.is_finished = req.is_finished
+            # #Logger.debug('request to %s', new_url)
 
-        # Enforce rate limiting
-        # time.sleep(self.sleep_time)
+            # Enforce rate limiting
+            # time.sleep(self.sleep_time)
 
-        if not async_request:
-            req.wait()
+            if not async_request:
+                req.wait()
 
         return response
 

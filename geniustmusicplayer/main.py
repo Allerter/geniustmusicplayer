@@ -1,11 +1,14 @@
 import os
+import threading
 from datetime import timedelta
 from os.path import join
 from time import time
+from io import BytesIO
 
 # os.environ['KIVY_AUDIO'] = 'android'
 os.environ['KIVY_IMAGE'] = 'pil,sdl2,gif'
 
+import requests
 from kivy.loader import Loader
 Loader.num_workers = 4
 import kivymd.material_resources as m_res
@@ -18,6 +21,7 @@ from kivymd.uix.bottomsheet import MDCustomBottomSheet, MDListBottomSheet
 from kivymd.uix.list import OneLineAvatarIconListItem, OneLineListItem, OneLineIconListItem
 from kivymd.uix.list import IconLeftWidget, MDList
 from kivymd.theming import ThemableBehavior
+from kivymd.uix.progressbar import MDProgressBar
 from kivymd.uix.list import BaseListItem, ContainerSupport
 from kivymd.toast import toast
 from kivy.factory import Factory
@@ -41,6 +45,7 @@ import settings_page
 import favorites_page
 from utils import log, switch_screen, create_snackbar, save_favorites, save_keys
 from api import API, Song
+from get_song_file import get_download_info, get_file_from_encrypted
 
 
 class Playlist:
@@ -116,10 +121,10 @@ class Playlist:
         return f'Playlist({len(self.tracks)} Tracks, current={self._current})'
 
 
-def save_song(song, data):
+def save_song(song, data, preview=True):
     song_name = "".join(
         i
-        for i in f'{song.artist} - {song.name} preview'
+        for i in f'{song.artist} - {song.name}' + ('preview' if preview else '')
         if i not in r"\/:*?<>|"
     )
     filename = join(app.songs_path, f'{song_name}.mp3')
@@ -640,8 +645,45 @@ class MainPage(FloatLayout):
         self.ids.artist.text = song.artist
 
     @log
-    def download_song(self, song):
-        print(song)
+    def download_song(self, song, show_progress=True):
+        def get_song(self, song, progress_bar=None):
+            if song.download_url:
+                url = song.download_url
+                encrypted = False
+            else:
+                data = get_download_info(song.isrc)
+                url = data['url']
+                encrypted = True
+
+            req = requests.get(url, stream=True)
+            song_bytes = b''
+            chunk_size = 500000
+            chunk_progress = int(req.headers['Content-Length']) // chunk_size // 5
+            for i, chunk in enumerate(req.iter_content(chunk_size)):
+                song_bytes += chunk
+                if progress_bar:
+                    progress_bar.value += chunk_progress
+                Logger.debug('DOWNLOAD: Received chunk %s', i)
+
+            bio = BytesIO(song_bytes)
+            if encrypted:
+                bio = get_file_from_encrypted(bio, data, BytesIO())
+            filename = save_song(song, bio.getbuffer(), preview=False)
+            song.download_file = filename
+            toast('Download finished.')
+            if progress_bar:
+                self.remove_widget(progress_bar)
+
+        if show_progress:
+            progress_bar = MDProgressBar()
+            progress_bar.pos = progress_bar.pos[0], self.ids.cover_art.pos[1] + dp(5)
+            self.add_widget(progress_bar)
+        else:
+            progress_bar = None
+        t = threading.Thread(target=get_song, args=(self, song, progress_bar))
+        t.daemon = True
+        t.start()
+        toast('Download started.')
 
 # -------------------- App --------------------
 

@@ -304,7 +304,7 @@ def get_download_info(isrc):
     return datas
 
 
-def get_file_from_crypted(crypted_audio, datas, output):
+def get_file_from_encrypted(crypted_audio, datas, output):
     file_format = datas['file_format']
     ids = datas['ids']
 
