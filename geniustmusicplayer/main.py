@@ -554,42 +554,61 @@ class MainPage(FloatLayout):
                 text=i.name,
                 on_release=lambda *args, song=i: self.play_from_playlist(song),
             )
-            # adding right-side icons
-            item.song_menu = MDListBottomSheet(radius_from='top')
-            # Spotify
-            if i.id_spotify:
-                item.song_menu.add_item(
-                    text="Listen on Spotify",
-                    callback=lambda x, song=i: toast(repr(song)),
-                    icon="spotify")
-
-            # Favorited
-            favorited = i in app.favorites
-            item.song_menu.add_item(
-                text="Favorite" if not favorited else "Unfavorite",
-                callback=lambda *args, song=i: app.main_page.favorite_playlist_item(
-                    self, song),
-                icon='heart' if favorited else 'heart-outline')
-
-            # Remove
+            item.song = i
+            item.open_song_menu = self.open_song_menu
             removable = (
                 is_removable(i)
                 or i != app.playlist.current_track
                 or (song is not None and i != song)
             )
-            if removable:
-                item.song_menu.add_item(
-                    text="Remove from playlist",
-                    callback=lambda *args, song=i: app.main_page.remove_playlist_item(
-                        self, song),
-                    icon='close')
-
             # different background for current song
             if not removable:
                 item.bg_color = app.theme_cls.primary_color  # rgba('#cbcbcb')
                 item.theme_text_color = 'Custom'
                 item.text_color = (1, 1, 1, 1)
             self.playlist_menu.screen.songs_grid.add_widget(item)
+
+    def open_song_menu(self, i):
+        # adding right-side icons
+        song_menu = MDListBottomSheet(radius_from='top')
+        if i.download_file:
+            song_menu.add_item(
+                text="Song Downloaded",
+                callback=lambda *args: None,
+                icon='check')
+        elif i.download_url or i.isrc:
+            song_menu.add_item(
+                text="Download Full Song",
+                callback=lambda *args, song=i: self.download_song(
+                    song, show_progress=False),
+                icon='download')
+        # Spotify
+        if i.id_spotify:
+            song_menu.add_item(
+                text="Listen on Spotify",
+                callback=lambda x, song=i: toast(repr(song)),
+                icon="spotify")
+
+        # Favorited
+        favorited = i in app.favorites
+        song_menu.add_item(
+            text="Favorite" if not favorited else "Unfavorite",
+            callback=lambda *args, song=i: app.main_page.favorite_playlist_item(
+                self, song),
+            icon='heart' if favorited else 'heart-outline')
+
+        # Remove
+        removable = (
+            is_removable(i)
+            or i != app.playlist.current_track
+        )
+        if removable:
+            song_menu.add_item(
+                text="Remove from playlist",
+                callback=lambda *args, song=i: app.main_page.remove_playlist_item(
+                    self, song),
+                icon='close')
+        song_menu.open()
 
     @log
     def play_from_playlist(self, track):
@@ -659,31 +678,45 @@ class MainPage(FloatLayout):
             song_bytes = b''
             chunk_size = 500000
             chunk_progress = int(req.headers['Content-Length']) // chunk_size // 5
-            for i, chunk in enumerate(req.iter_content(chunk_size)):
-                song_bytes += chunk
+            try:
+                for i, chunk in enumerate(req.iter_content(chunk_size)):
+                    song_bytes += chunk
+                    if progress_bar:
+                        progress_bar.value += chunk_progress
+                    Logger.debug('DOWNLOAD: Received chunk %s', i)
+            except Exception as e:
+                Logger.error(e)
                 if progress_bar:
-                    progress_bar.value += chunk_progress
-                Logger.debug('DOWNLOAD: Received chunk %s', i)
-
+                    toast('Download failed.')
+                song.download_file = None
+                return
             bio = BytesIO(song_bytes)
             if encrypted:
                 bio = get_file_from_encrypted(bio, data, BytesIO())
             filename = save_song(song, bio.getbuffer(), preview=False)
             song.download_file = filename
-            toast('Download finished.')
+
             if progress_bar:
+                toast('Download finished.')
                 self.remove_widget(progress_bar)
+
+        if song.download_file == 'downloading':
+            if show_progress:
+                toast('Download in progress...')
+            return
 
         if show_progress:
             progress_bar = MDProgressBar()
             progress_bar.pos = progress_bar.pos[0], self.ids.cover_art.pos[1] + dp(5)
             self.add_widget(progress_bar)
+            toast('Download started.')
         else:
             progress_bar = None
+        song.download_file = 'downloading'
         t = threading.Thread(target=get_song, args=(self, song, progress_bar))
         t.daemon = True
         t.start()
-        toast('Download started.')
+
 
 # -------------------- App --------------------
 
