@@ -82,7 +82,7 @@ class SettingsPage(FloatLayout):
         elif mode == 'Previews':
             mode = 'preview'
         else:
-            mode = 'download'
+            mode = 'full'
         save_keys(play_mode=mode)
         Logger.info('PLAY MODE: %s', mode)
 

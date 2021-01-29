@@ -196,15 +196,19 @@ class PlaybackSlider(MDSlider):
                     Logger.debug('SONG PRELOAD: download failed')
             # pre-download next song
             next_song = app.playlist.preview_next()
-            if app.play_mode in ('any_file', 'preview') and next_song.preview_file is None:
+            # if play mode is on download and the next song has a download url,
+            # download it, otherwise fall back to the song's preview.
+            # this happens when user changes play mode mid playlist.
+            if app.play_mode == 'full' and next_song.download_url:
+                if next_song.download_file is None:
+                    next_song.download_file = 'downloading'
+                    Logger.info('SONG PRELOAD: downloading next song')
+                    app.main_page.download_song(next_song, show_progress=False)
+            elif next_song.preview_file is None:
                 next_song.preview_file = 'downloading'
                 Logger.info('SONG PRELOAD: downloading next song preview')
                 trigger = Clock.create_trigger(save_preview)
                 req = app.api.download_preview(next_song, trigger=trigger)
-            elif app.play_mode == 'download' and next_song.download_file is None:
-                next_song.download_file = 'downloading'
-                Logger.info('SONG PRELOAD: downloading next song')
-                app.main_page.download_song(next_song, show_progress=False)
 
 class VolumeSlider(MDSlider):
 
