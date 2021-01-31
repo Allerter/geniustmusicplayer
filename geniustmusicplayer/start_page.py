@@ -241,16 +241,11 @@ class ArtistsPage(FloatLayout):
             self.selected_artists.add_widget(artist_chip)
 
     def save_preferences(self, playlist):
-        self.app.store.put(
-            'user',
-            genres=self.app.genres,
-            artists=self.app.artists,
-            volume=self.app.volume,
-            favorites=[],
-            playlist=playlist.to_dict(),
-            play_mode='any_file',
-            dark_mode=False,
-        )
+        self.app.db.initialize(
+            self.app.genres,
+            self.app.artists,
+            self.app.songs_path,
+            playlist)
 
     def finish(self):
         import main

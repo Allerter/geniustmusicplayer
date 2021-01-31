@@ -5,8 +5,6 @@ from kivymd.uix.bottomsheet import MDListBottomSheet
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.toast import toast
 
-from utils import save_favorites
-
 
 class FavoriteSongListItem(TwoLineAvatarIconListItem):
     def __init__(self, **kwargs):
@@ -75,7 +73,7 @@ class FavoritesPage(FloatLayout):
             descending = True
         else:
             descending = False
-        songs = self.app.favorites
+        songs = self.app.db.get_favorites()
 
         def sort_by(song):
             if sort == 'Date Added':
@@ -94,6 +92,7 @@ class FavoritesPage(FloatLayout):
     def playlist_add(self, song):
         if song not in self.app.playlist.tracks:
             self.app.playlist.tracks.append(song)
+            self.app.db.add_favorites_track(song)
             toast('Song added to playlist')
         else:
             toast('Song already in playlist')
@@ -102,5 +101,5 @@ class FavoritesPage(FloatLayout):
         if song == self.app.song.song_object:
             self.app.main_page.favorite_button.favorited = False
         self.app.favorites.remove(song)
-        save_favorites(self.app.favorites)
+        self.app.db.remove_favorites_track(song.id)
         self.set_songs()

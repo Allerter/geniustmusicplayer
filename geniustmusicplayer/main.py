@@ -34,7 +34,6 @@ from kivy.core.window import Window
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.uix.image import Image
-from kivy.storage.jsonstore import JsonStore
 from kivy.core.audio import SoundLoader
 from kivy.logger import Logger, LOG_LEVELS
 from kivy.utils import platform
@@ -46,6 +45,7 @@ import favorites_page
 from utils import log, switch_screen, create_snackbar, save_favorites, save_keys
 from api import API, Song
 from get_song_file import get_download_info, get_file_from_encrypted
+from db import Database
 
 
 class Playlist:
@@ -275,7 +275,7 @@ class PlayButton(ButtonBehavior, Image):
 
         self.update_track_current(current=seek)
         if app.song is None or app.song.song_object != song:
-            app.main_page.edit_ui_for_song(song)
+            app.main_page.edit_ui_for_song(song, playing=True)
 
             def call_load_song(*args):
                 if self.snackbar:
@@ -522,13 +522,15 @@ class MainPage(FloatLayout):
         self.playlist_menu = None
 
     @log
-    def edit_ui_for_song(self, song=None):
+    def edit_ui_for_song(self, song=None, playing=False):
         if app.song:
             self.ids.track_length.text = str(timedelta(
                 seconds=app.song.length)
             )[3:7]
             self.ids.playback_slider.max = app.song.length
         app.play_button.update_track_current(current=0)
+        if playing:
+            app.play_button.source = f'images/stop_{app.theme_cls.theme_style}.png'
         if song != self.song:
             self.update_playlist_menu(song=song)
             self.update_cover_art(song)
@@ -768,15 +770,9 @@ class LoadingPage(Screen):
 class MainApp(MDApp):
     artists = ListProperty([])
     genres = ListProperty([])
-    store = JsonStore('preferences.json')
-    playlist = Playlist(
-        [Song(**x) for x in store['user']['playlist']['tracks']],
-        current=store['user']['playlist']['current']
-    ) if store.exists('user') else Playlist([])
-    favorites = ([Song(**x) for x in store['user']['favorites']]
-                 if store.exists('user') else [])
-    volume = store['user']['volume'] if store.exists('user') else 0.5
-    play_mode = store['user']['play_mode'] if store.exists('user') else 'any_file'
+    db = Database()
+    playlist = db.get_playlist()
+    favorites = db.get_favorites()
     song = None
     main_page = None
     api = API()
@@ -840,8 +836,7 @@ class MainApp(MDApp):
         self.screen_manager.add_widget(settings_screen)
 
         def edit_ui():
-            user = self.store['user']
-            app.song.last_pos = user['playlist'].get('last_pos', 0)
+            app.song.last_pos = self.user['last_pos']
             # update track current
             slider = app.main_page.ids.playback_slider
             slider.value = app.song.last_pos
@@ -871,19 +866,21 @@ class MainApp(MDApp):
 
     @log
     def load_first_page(self, *args):
-        if 'user' in self.store and self.store['user'].get('genres'):
+        if self.db.get_user():
             app.main_page = page = MainPage()
             page_name = 'main_page'
             self.nav_drawer.type = 'modal'
-            user = self.store['user']
+
+            self.user = user = self.db.get_user()
             if user['dark_mode']:
                 self.theme_cls.theme_style = "Dark"
             else:
                 self.theme_cls.theme_style = "Light"
-
             app.genres = user['genres']
             app.artists = user['artists']
             app.volume = user['volume']
+            app.play_mode = user['play_mode']
+
             volume_slider = app.main_page.ids.volume_slider
             volume_slider.value = volume_slider.last_value = app.volume * 100
             # load song
@@ -903,12 +900,21 @@ class MainApp(MDApp):
             page_name = 'start_page'
             switch_screen(page, page_name)
 
+    def on_pause(self):
+        self.on_stop()
+        return True
+
     def on_stop(self):
-        if app.song and self.store.exists('user'):
-            song_pos = app.song.get_pos()
-            playlist = app.playlist.to_dict()
-            playlist.update({'last_pos': song_pos})
-            save_keys(playlist=playlist, volume=app.volume)
+        if app.song and self.db.get_user():
+            # song_pos = app.song.get_pos()
+            # self.db.update_last_pos(song_pos)
+            self.db.update_volume(self.volume)
+
+    def on_resume(self):
+        # update playback slider
+        if app.song and self.db.get_user():
+            self.playlist = self.db.get_playlist()
+            self.main_page.edit_ui_for_song(self.playlist.current_track, playing=True)
 
 
 if __name__ == '__main__':
