@@ -10,6 +10,125 @@ from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.button import MDFlatButton
 
 
+class Song:
+    def __init__(self, id, name, artist, genres=None,
+                 id_spotify=None, isrc=None, cover_art=None,
+                 preview_url=None, download_url=None, preview_file=None,
+                 download_file=None, date_favorited=None,):
+        self.id = id
+        self.name = name
+        self.artist = artist
+        self.genres = genres if genres else []
+        self.id_spotify = id_spotify
+        self.isrc = isrc
+        self.cover_art = (cover_art
+                          if cover_art is not None
+                          else 'images/empty_coverart.png'
+                          )
+        self.preview_url = preview_url
+        self.download_url = download_url
+        self.preview_file = preview_file
+        self.download_file = download_file
+        self.date_favorited = date_favorited
+
+    def to_dict(self):
+        return dict(
+            id=self.id,
+            name=self.name,
+            artist=self.artist,
+            id_spotify=self.id_spotify,
+            isrc=self.isrc,
+            cover_art=self.cover_art,
+            preview_url=self.preview_url,
+            download_url=self.download_url,
+            preview_file=self.preview_file,
+            download_file=self.download_file,
+            date_favorited=self.date_favorited,
+        )
+
+    def __eq__(self, other):
+        if isinstance(other, Song) and self.id == other.id:
+            return True
+        else:
+            return False
+
+    def __repr__(self):
+        return f'Song(artist={self.artist!r}, song={self.name!r})'
+
+
+class Playlist:
+    def __init__(self, tracks: list, current=-1) -> None:
+        self.tracks = tracks
+        self._current = current
+
+    @property
+    def track_names(self):
+        return [track.name for track in self.tracks]
+
+    @property
+    def is_first(self):
+        return True if self._current == 0 else False
+
+    @property
+    def is_last(self):
+        return True if self._current == len(self.tracks) - 1 else False
+
+    @property
+    def current_track(self):
+        if self._current == -1:
+            return None
+        try:
+            return self.tracks[self._current]
+        except IndexError:
+            return None
+
+    def preview_next(self):
+        if not self.is_last:
+            track = self.tracks[self._current + 1]
+        else:
+            track = self.tracks[self._current]
+
+        return track
+
+    def next(self):
+        if not self.is_last:
+            self._current += 1
+
+        return self.tracks[self._current]
+
+    def previous(self):
+        if self._current == -1:
+            self._current += 1
+        elif not self.is_first:
+            self._current -= 1
+
+        Logger.debug(
+            'PLAYLIST: current: %s | track: %s, tracks: %s',
+            self._current,
+            self.tracks[self._current],
+            self.tracks)
+        return self.tracks[self._current]
+
+    def remove(self, track):
+        self.tracks.remove(track)
+
+    def set_current(self, track):
+        self._current = self.tracks.index(track)
+
+    def track_by_name(self, track_name):
+        for track in self.tracks:
+            if track.name == track_name:
+                return track
+
+    def to_dict(self):
+        tracks = [track.to_dict() for track in self.tracks]
+        current = self._current if self._current != -1 else 0
+        return dict(tracks=tracks, current=current)
+
+    def __repr__(self):
+        return f'Playlist({len(self.tracks)} Tracks, current={self._current})'
+
+
 def create_snackbar(text, callback):
     snackbar = Snackbar(
         text=text,

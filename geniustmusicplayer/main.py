@@ -6,20 +6,20 @@ from time import time
 from io import BytesIO
 
 # os.environ['KIVY_AUDIO'] = 'android'
-os.environ['KIVY_IMAGE'] = 'pil,sdl2,gif'
+# os.environ['KIVY_IMAGE'] = 'pil,sdl2,gif'
 
 import requests
 from kivy.loader import Loader
-Loader.num_workers = 4
+# Loader.num_workers = 4
 import kivymd.material_resources as m_res
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
 from kivymd.uix.slider import MDSlider
-from kivymd.uix.menu import MDDropdownMenu, RightContent
+from kivymd.uix.menu import RightContent
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.bottomsheet import MDCustomBottomSheet, MDListBottomSheet
-from kivymd.uix.list import OneLineAvatarIconListItem, OneLineListItem, OneLineIconListItem
-from kivymd.uix.list import IconLeftWidget, MDList
+from kivymd.uix.list import OneLineIconListItem
+from kivymd.uix.list import MDList
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.progressbar import MDProgressBar
 from kivymd.uix.list import BaseListItem, ContainerSupport
@@ -28,10 +28,10 @@ from kivy.factory import Factory
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.properties import ListProperty, BooleanProperty, NumericProperty, ObjectProperty, StringProperty
+from kivy.uix.screenmanager import Screen
+from kivy.properties import (ListProperty, BooleanProperty, NumericProperty,
+                             ObjectProperty, StringProperty)
 from kivy.core.window import Window
-from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.uix.image import Image
 from kivy.core.audio import SoundLoader
@@ -42,83 +42,10 @@ from kivy.metrics import dp
 
 import settings_page
 import favorites_page
-from utils import log, switch_screen, create_snackbar, save_favorites, save_keys
-from api import API, Song
+from utils import log, switch_screen, create_snackbar
+from api import API
 from get_song_file import get_download_info, get_file_from_encrypted
 from db import Database
-
-
-class Playlist:
-    def __init__(self, tracks: list, current=-1) -> None:
-        self.tracks = tracks
-        self._current = current
-
-    @property
-    def track_names(self):
-        return [track.name for track in self.tracks]
-
-    @property
-    def is_first(self):
-        return True if self._current == 0 else False
-
-    @property
-    def is_last(self):
-        return True if self._current == len(self.tracks) - 1 else False
-
-    @property
-    def current_track(self):
-        if self._current == -1:
-            return None
-        try:
-            return self.tracks[self._current]
-        except IndexError:
-            return None
-
-    def preview_next(self):
-        if not self.is_last:
-            track = self.tracks[self._current + 1]
-        else:
-            track = self.tracks[self._current]
-
-        return track
-
-    def next(self):
-        if not self.is_last:
-            self._current += 1
-
-        return self.tracks[self._current]
-
-    def previous(self):
-        if self._current == -1:
-            self._current += 1
-        elif not self.is_first:
-            self._current -= 1
-
-        Logger.debug(
-            'PLAYLIST: current: %s | track: %s, tracks: %s',
-            self._current,
-            self.tracks[self._current],
-            self.tracks)
-        return self.tracks[self._current]
-
-    def remove(self, track):
-        self.tracks.remove(track)
-
-    def set_current(self, track):
-        self._current = self.tracks.index(track)
-
-    def track_by_name(self, track_name):
-        for track in self.tracks:
-            if track.name == track_name:
-                return track
-
-    def to_dict(self):
-        tracks = [track.to_dict() for track in self.tracks]
-        current = self._current if self._current != -1 else 0
-        return dict(tracks=tracks, current=current)
-
-    def __repr__(self):
-        return f'Playlist({len(self.tracks)} Tracks, current={self._current})'
 
 
 def save_song(song, data, preview=True):
@@ -335,9 +262,7 @@ class PlayButton(ButtonBehavior, Image):
                              for song in app.playlist.tracks
                              if song not in app.favorites and song.preview_file]
                         )
-                        tracks = req.response
-                        app.playlist = Playlist(tracks)
-                        save_keys(playlist=app.playlist.to_dict())
+                        app.playlist = app.db.get_playlist()
                         self.control(instance, play_next=True)
                     else:
                         msg = "Failed to get playlist.\nRetrying in 3 seconds."
@@ -438,12 +363,12 @@ class FavoriteButton(MDIconButton):
             app.song.song_object.date_favorited = time()
             self.favorited = True
             app.favorites.append(app.song.song_object)
+            app.db.add_favorites_track(app.song.song_object)
         else:
             app.song.song_object.date_favorited = None
             self.favorited = False
             app.favorites.remove(app.song.song_object)
-
-        save_favorites(app.favorites)
+            app.db.remove_favorites_track(app.song.song_object.id)
 
 
 class MyBaseListItem(ContainerSupport, BaseListItem):
@@ -634,12 +559,14 @@ class MainPage(FloatLayout):
             favorited = False
             song.date_favorited = None
             app.favorites.remove(song)
+            app.db.remove_favorites_track(song.id)
             icon = 'heart-outline'
             msg = 'Song unfavorited'
         else:
             favorited = True
             song.date_favorited = time()
             app.favorites.append(song)
+            app.db.add_favorites_track(song)
             icon = 'heart'
             msg = 'Song favorited'
 
@@ -655,7 +582,6 @@ class MainPage(FloatLayout):
 
         self.playlist_menu.dismiss()
         toast(msg)
-        save_favorites(app.favorites)
 
     @log
     def update_cover_art(self, song):

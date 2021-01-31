@@ -5,51 +5,8 @@ import requests
 from kivy.logger import Logger
 from kivy.network.urlrequest import UrlRequest
 
+from utils import Song
 
-class Song:
-    def __init__(self, id, name, artist, genres=None,
-                 id_spotify=None, isrc=None, cover_art=None,
-                 preview_url=None, download_url=None, preview_file=None,
-                 download_file=None, date_favorited=None,):
-        self.id = id
-        self.name = name
-        self.artist = artist
-        self.genres = genres if genres else []
-        self.id_spotify = id_spotify
-        self.isrc = isrc
-        self.cover_art = (cover_art
-                          if cover_art is not None
-                          else 'images/empty_coverart.png'
-                          )
-        self.preview_url = preview_url
-        self.download_url = download_url
-        self.preview_file = preview_file
-        self.download_file = download_file
-        self.date_favorited = date_favorited
-
-    def to_dict(self):
-        return dict(
-            id=self.id,
-            name=self.name,
-            artist=self.artist,
-            id_spotify=self.id_spotify,
-            isrc=self.isrc,
-            cover_art=self.cover_art,
-            preview_url=self.preview_url,
-            download_url=self.download_url,
-            preview_file=self.preview_file,
-            download_file=self.download_file,
-            date_favorited=self.date_favorited,
-        )
-
-    def __eq__(self, other):
-        if isinstance(other, Song) and self.id == other.id:
-            return True
-        else:
-            return False
-
-    def __repr__(self):
-        return f'Song(artist={self.artist!r}, song={self.name!r})'
 
 class Response:
 
