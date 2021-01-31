@@ -84,7 +84,7 @@ class SettingsPage(FloatLayout):
         else:
             mode = 'full'
         self.app.db.update_play_mode(mode)
-        self.app.app.play_mode = mode
+        self.app.play_mode = mode
         Logger.info('PLAY MODE: %s', mode)
 
     def get_play_mode_text(self, mode):
@@ -101,7 +101,7 @@ class SettingsPage(FloatLayout):
         # self.app.theme_cls.accent_palette = "Amber"
         self.app.theme_cls.theme_style = "Light"
         self.app.db.update_dark_mode(False)
-        self.app.app.dark_mode = False
+        self.app.dark_mode = False
 
     def enable_dark_mode(self):
         # self.app.theme_cls.primary_palette = "Amber"
@@ -109,7 +109,7 @@ class SettingsPage(FloatLayout):
         self.app.theme_cls.theme_style = "Dark"
         # self.ids.dark_mode_checkbox.selected_color = self.app.theme_cls.primary_light
         self.app.db.update_dark_mode(True)
-        self.app.app.dark_mode = True
+        self.app.dark_mode = True
 
     def open_genres(self, *args):
         import start_page
@@ -121,10 +121,10 @@ class SettingsPage(FloatLayout):
 
     def submit_genres(self, genres):
         Logger.info('GENRES: %s', genres)
-        if len(genres) > 1:
+        if genres:
             self.genres_dialog.genres_dialog.dismiss()
             self.app.genres = genres
-            self.app.update_genres(genres)
+            self.app.db.update_genres(genres)
             toast('Updated Favorite genres.')
         else:
             toast('You must at least choose one genre.')
@@ -146,7 +146,7 @@ class SettingsPage(FloatLayout):
 
     def submit_artists(self):
         Logger.info('ARTISTS: %s', self.app.artists)
-        self.app.update_artists(self.app.artists)
+        self.app.db.update_artists(self.app.artists)
         self.app.screen_manager.current = 'settings_page'
         self.app.screen_manager.remove_widget(self.artists_screen)
         toast('Updated favorite artists.')

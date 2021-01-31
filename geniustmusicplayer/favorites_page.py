@@ -92,7 +92,7 @@ class FavoritesPage(FloatLayout):
     def playlist_add(self, song):
         if song not in self.app.playlist.tracks:
             self.app.playlist.tracks.append(song)
-            self.app.db.add_favorites_track(song)
+            self.app.db.add_playlist_track(song)
             toast('Song added to playlist')
         else:
             toast('Song already in playlist')
@@ -101,5 +101,5 @@ class FavoritesPage(FloatLayout):
         if song == self.app.song.song_object:
             self.app.main_page.favorite_button.favorited = False
         self.app.favorites.remove(song)
-        self.app.db.remove_favorites_track(song.id)
+        self.app.db.remove_favorites_track(song)
         self.set_songs()

@@ -14,8 +14,9 @@ def get_cursor(func: Callable[..., RT]) -> Callable[..., RT]:
 
     @wraps(func)
     def wrapper(self, *args, **kwargs) -> RT:
-
-        con = sqlite3.connect('user.db', isolation_level=None)
+        sqlite3.register_adapter(bool, int)
+        sqlite3.register_converter("BOOLEAN", lambda v: bool(int(v)))
+        con = sqlite3.connect('user.db', isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES)
         with closing(con.cursor()) as cursor:
             return func(self, *args, **kwargs, cursor=cursor)
 
@@ -116,11 +117,11 @@ class Database:
 
     def _track_to_db(self, track, current=None):
         track = [
-            track['id'], track['name'], track['artist'], track['id_spotify'],
-            track['isrc'], track['cover_art'], track['preview_url'],
-            track['download_url'], track['preview_file'],
-            track['download_file'],
-            track['date_favorited']
+            track.id, track.name, track.artist, track.id_spotify,
+            track.isrc, track.cover_art, track.preview_url,
+            track.download_url, track.preview_file,
+            track.download_file,
+            track.date_favorited
         ]
         if current is not None:
             track.append(current)
@@ -143,28 +144,28 @@ class Database:
     def update_playlist(self, playlist, cursor):
         cursor.execute("""DELETE FROM playlist;""")
         query = """INSERT INTO playlist VALUES (?,?,?,?,?,?,?,?,?,?,?,?);"""
-        values = [self._track_to_db(track, current=1 if i == 0 else 0)
+        values = [self._track_to_db(track, current=True if i == 0 else False)
                   for i, track in enumerate(playlist.tracks)]
         cursor.executemany(query, values)
 
     @get_cursor
-    def remove_playlist_track(self, id, cursor):
-        cursor.execute(f"""DELETE FROM playlist where id =  {id};""")
+    def remove_playlist_track(self, track, cursor):
+        cursor.execute(f"""DELETE FROM playlist where id =  {track.id};""")
 
     @get_cursor
-    def remove_favorites_track(self, id, cursor):
-        cursor.execute(f"""DELETE FROM favorites where id = {id};""")
+    def remove_favorites_track(self, track, cursor):
+        cursor.execute(f"""DELETE FROM favorites where id = {track.id};""")
 
     @get_cursor
     def add_playlist_track(self, track, cursor):
         query = """INSERT INTO playlist VALUES (?,?,?,?,?,?,?,?,?,?,?,?);"""
-        values = (self._track_to_db(track, current=False),)
+        values = self._track_to_db(track, current=False)
         cursor.execute(query, values)
 
     @get_cursor
     def add_favorites_track(self, track, cursor):
         query = """INSERT INTO favorites VALUES (?,?,?,?,?,?,?,?,?,?,?);"""
-        values = (self._track_to_db(track, current=None),)
+        values = self._track_to_db(track, current=None)
         cursor.execute(query, values)
 
     @get_cursor
@@ -174,7 +175,7 @@ class Database:
 
     @get_cursor
     def get_playlist(self, cursor):
-        query = """SELECT * FROM playlist"""
+        query = """SELECT * FROM playlist ORDER BY rowid"""
         cursor.execute(query)
         tracks = cursor.fetchall()
         for i, track in enumerate(tracks):
@@ -196,15 +197,20 @@ class Database:
     @get_cursor
     def get_user(self, cursor):
         query = """SELECT * FROM user"""
-        cursor.execute(query)
-        user = cursor.fetchone()
+        try:
+            cursor.execute(query)
+            user = cursor.fetchone()
+        except sqlite3.OperationalError as e:
+            # TODO: Log e
+            return None
         return dict(
-            genres=user[1],
-            artists=user[2],
+            genres=user[1].split(','),
+            artists=user[2].split(','),
             dark_mode=user[3],
             play_mode=user[4],
             songs_path=user[5],
             volume=user[6],
+            last_pos=user[7],
         )
 
     @get_cursor
@@ -225,8 +231,9 @@ class Database:
                       play_mode TEXT DEFAULT 'any_file'
                         CHECK(play_mode in ('any_file', 'preview', 'full')),
                       songs_path TEXT,
-                      last_pos INTEGER DEFAULT 0 CHECK(last_pos > 0),
-                      volume REAL DEFAULT 0.50 CHECK(volume > 0))
+                      volume REAL DEFAULT 0.50 CHECK(volume >= 0 AND volume <= 1),
+                      last_pos INTEGER DEFAULT 0 CHECK(last_pos >= 0)
+                      )
                  ''')
         user = (0, ",".join(genres), ",".join(artists), songs_path)
         query = 'INSERT INTO user (id, genres, artists, songs_path) VALUES (?,?,?,?)'
@@ -234,7 +241,7 @@ class Database:
 
         # Favorites
         cursor.execute('''CREATE TABLE favorites
-                     (id integer primary key,
+                     (id integer UNIQUE,
                       name TEXT,
                       artist TEXT,
                       id_spotify TEXT unique,
@@ -249,7 +256,7 @@ class Database:
 
         # Playlist
         cursor.execute('''CREATE TABLE playlist
-                     (id integer primary key,
+                     (id integer UNIQUE,
                       name TEXT,
                       artist TEXT,
                       id_spotify TEXT unique,
@@ -260,6 +267,7 @@ class Database:
                      preview_file TEXT,
                      download_file TEXT,
                      date_favorited real,
-                     current boolean DEFAULT 0)
+                     current boolean DEFAULT 0
+                     )
                      ''')
         self.update_playlist(playlist)

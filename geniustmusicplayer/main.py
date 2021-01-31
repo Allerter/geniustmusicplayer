@@ -368,7 +368,7 @@ class FavoriteButton(MDIconButton):
             app.song.song_object.date_favorited = None
             self.favorited = False
             app.favorites.remove(app.song.song_object)
-            app.db.remove_favorites_track(app.song.song_object.id)
+            app.db.remove_favorites_track(app.song.song_object)
 
 
 class MyBaseListItem(ContainerSupport, BaseListItem):
@@ -550,6 +550,7 @@ class MainPage(FloatLayout):
     def remove_playlist_item(self, instance, song):
         self.playlist_menu.screen.songs_grid.remove_widget(instance.parent.parent)
         app.playlist.remove(song)
+        app.db.remove_playlist_track(song)
         self.playlist_menu.dismiss()
         toast('Removed from playlist')
 
@@ -559,7 +560,7 @@ class MainPage(FloatLayout):
             favorited = False
             song.date_favorited = None
             app.favorites.remove(song)
-            app.db.remove_favorites_track(song.id)
+            app.db.remove_favorites_track(song)
             icon = 'heart-outline'
             msg = 'Song unfavorited'
         else:
@@ -697,10 +698,9 @@ class MainApp(MDApp):
     artists = ListProperty([])
     genres = ListProperty([])
     db = Database()
-    playlist = db.get_playlist()
-    favorites = db.get_favorites()
     song = None
     main_page = None
+    volume = 0.5
     api = API()
 
     @log
@@ -709,8 +709,6 @@ class MainApp(MDApp):
         self.theme_cls.primary_palette = "Indigo"
         self.theme_cls.accent_palette = "Amber"
         Loader.loading_image = 'images/loading_coverart.gif'
-        print(self.theme_cls.primary_color)
-        print(self.theme_cls.primary_dark)
 
         self.nav_layout = Factory.NavLayout()
         self.screen_manager = self.nav_layout.screen_manager
@@ -798,6 +796,8 @@ class MainApp(MDApp):
             self.nav_drawer.type = 'modal'
 
             self.user = user = self.db.get_user()
+            self.playlist = self.db.get_playlist()
+            self.favorites = self.db.get_favorites()
             if user['dark_mode']:
                 self.theme_cls.theme_style = "Dark"
             else:
@@ -832,8 +832,8 @@ class MainApp(MDApp):
 
     def on_stop(self):
         if app.song and self.db.get_user():
-            # song_pos = app.song.get_pos()
-            # self.db.update_last_pos(song_pos)
+            song_pos = app.song.get_pos()
+            self.db.update_last_pos(song_pos)
             self.db.update_volume(self.volume)
 
     def on_resume(self):

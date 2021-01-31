@@ -22,7 +22,7 @@ from kivymd.uix.list import OneLineAvatarIconListItem
 from kivymd.uix.chip import MDChip
 from kivymd.toast import toast
 
-from utils import log, switch_screen, create_snackbar
+from utils import log, switch_screen, create_snackbar, Playlist
 
 
 class AgeDialogContent(BoxLayout):
@@ -248,8 +248,6 @@ class ArtistsPage(FloatLayout):
             playlist)
 
     def finish(self):
-        import main
-
         def retry(*args):
             self.snackbar.dismiss()
             self.retry_event.cancel()
@@ -258,7 +256,7 @@ class ArtistsPage(FloatLayout):
         def get_tracks(*args):
             if req.status_code == 200:
                 tracks = req.response
-                self.app.playlist = main.Playlist(tracks, current=0)
+                self.app.playlist = Playlist(tracks, current=0)
                 self.save_preferences(self.app.playlist)
                 self.app.load_first_page()
             else:
