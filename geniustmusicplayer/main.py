@@ -1,4 +1,5 @@
 import os
+import socket
 import threading
 from datetime import timedelta
 from os.path import join
@@ -11,6 +12,7 @@ from io import BytesIO
 import requests
 from kivy.loader import Loader
 # Loader.num_workers = 4
+from oscpy.server import OSCThreadServer
 import kivymd.material_resources as m_res
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
@@ -42,22 +44,109 @@ from kivy.metrics import dp
 
 import settings_page
 import favorites_page
-from utils import log, switch_screen, create_snackbar
+from utils import log, save_song, switch_screen, create_snackbar, Song
 from api import API
 from get_song_file import get_download_info, get_file_from_encrypted
 from db import Database
+from server import OSCSever
 
 
-def save_song(song, data, preview=True):
-    song_name = "".join(
-        i
-        for i in f'{song.artist} - {song.name}' + ('preview' if preview else '')
-        if i not in r"\/:*?<>|"
-    )
-    filename = join(app.songs_path, f'{song_name}.mp3')
-    with open(filename, 'wb') as f:
-        f.write(data)
-    return filename
+def get_open_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        s.listen(1)
+        return s.getsockname()[1]
+
+
+class ServerSong():
+
+    def __init__(self, app, pos_callback, state_callback, port):
+        self.app = app
+        self.pos_callback = pos_callback
+        self.state_callback = state_callback
+        self.state = 'stop'
+        self.length = 30
+        self.is_complete = False
+
+        self.osc = OSCThreadServer()
+        self.osc.listen(port=port, default=True)
+        self.osc.bind(b'/pos', self._get_pos)
+        self.osc.bind(b'/set_state', self.set_state)
+        self.osc.bind(b'/set_length', self.set_length)
+        self.osc.bind(b'/set_complete', self.set_complete)
+        self.osc.bind(b'/playing', self.playing)
+
+    def playing(self, song, pos):
+        Logger.debug('ACTIVITY: Playing.')
+        self.state = 'play'
+        self.last_pos = pos
+        song = Song.bytes_to_song(song)
+        if self.song_object != song:
+            self.app.play_button.load_song(song, playing=True)
+
+    def set_state(self, value):
+        Logger.debug('ACTIVITY: State %s', value)
+        self.state = value.decode()
+
+    def set_length(self, value):
+        Logger.debug('ACTIVITY: Length %s', value)
+        self.length = value
+
+    def set_complete(self, value):
+        Logger.debug('ACTIVITY: Song is_complete=%s', value)
+        self.is_complete = value
+
+    def set_volume(self, value):
+        Logger.debug('ACTIVITY -> Service: Set volume %s', value)
+        self.osc.send_message(b'/set_volume', [value], *self.server_address)
+
+    def getaddress(self):
+        return self.osc.getaddress()
+
+    def load(self, song):
+        Logger.debug('ACTIVITY -> SERVER: /load')
+        self.osc.send_message(b'/load', [song.to_json().encode()], *self.server_address)
+
+    def unload(self):
+        Logger.debug('ACTIVITY -> SERVER: /unload')
+        self.osc.send_message(b'/unload', [], *self.server_address)
+
+    def play(self, seek, volume):
+        Logger.debug('ACTIVITY -> SERVER: /play')
+        self.osc.send_message(b'/play', [seek, volume], *self.server_address)
+
+    def play_new_playlist(self, seek, volume):
+        Logger.debug('ACTIVITY -> SERVER: /play_new_playlist')
+        self.osc.send_message(b'/play_new_playlist', [], *self.server_address)
+
+    def load_play(self, song, volume):
+        Logger.debug('ACTIVITY -> SERVER: /load_play')
+        self.osc.send_message(b'/load_play',
+                              [song.to_json().encode(), volume],
+                              *self.server_address)
+
+    def stop(self):
+        Logger.debug('ACTIVITY -> SERVER: /stop')
+        self.osc.send_message(b'/stop', [], *self.server_address)
+
+    def seek(self, position):
+        Logger.debug('ACTIVITY -> SERVER: /seek %s', position)
+        self.osc.send_message(b'/seek', [position], *self.server_address)
+
+    def save_pos(self, callback):
+        Logger.debug('ACTIVITY -> SERVER: /get_pos')
+        self.pos_callback = callback
+        self.osc.send_message(b'/get_pos', [], *self.server_address)
+        return 5
+
+    def get_pos(self, callback):
+        Logger.debug('ACTIVITY -> SERVER: get pos and call %s', callback)
+        self.pos_callback = callback
+        self.osc.send_message(b'/get_pos', [], *self.server_address)
+
+    def _get_pos(self, value):
+        Logger.debug('ACTIVITY: pos received %s', value)
+        self.pos_callback(value)
 
 
 def remove_songs(files):
@@ -74,11 +163,12 @@ class PlaybackSlider(MDSlider):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.bind(value=self.on_value)
+        # self.bind(value=self.on_value)
         # TODO: by using these, slider value won't update automatically
         # how do I set it myself?
         # self.bind(on_touch_down=self.stop_slider_update)
-        #  self.bind(on_touch_up=self.start_slider_update)
+        # self.bind(on_touch_up=self.seek)
+        self.bind(value=self.seek)
 
     def stop_slider_update(self, slider, motion, *args):
         touch = motion.pos
@@ -106,52 +196,28 @@ class PlaybackSlider(MDSlider):
             return True
         return False
 
-    def on_value(self, instance, value):
-        play_button = app.main_page.ids.play_button
-        app.song.last_pos = self.value
-        song_pos = app.song.get_pos()
-        if abs(value - song_pos) > 1:
-            app.song.seek(value)
+    def seek(self, slider, touch, *args):
+        if abs(slider.value - app.song.last_pos) > 1.5:
+            play_button = app.play_button
+            app.song.last_pos = value = self.value
             play_button.update_track_current(current=value)
-        elif app.song.length - song_pos < 20:
-            def save_preview(*args):
-                if req.status_code == 200:
-                    next_song.preview_file = save_song(next_song, req.response)
-                    Logger.debug('SONG PRELOAD: download successful')
-                else:
-                    next_song.preview_file = None
-                    Logger.debug('SONG PRELOAD: download failed')
-            # pre-download next song
-            next_song = app.playlist.preview_next()
-            # if play mode is on download and the next song has a download url,
-            # download it, otherwise fall back to the song's preview.
-            # this happens when user changes play mode mid playlist.
-            if app.play_mode == 'full' and next_song.download_url:
-                if next_song.download_file is None:
-                    next_song.download_file = 'downloading'
-                    Logger.info('SONG PRELOAD: downloading next song')
-                    app.main_page.download_song(next_song, show_progress=False)
-            elif next_song.preview_file is None:
-                next_song.preview_file = 'downloading'
-                Logger.info('SONG PRELOAD: downloading next song preview')
-                trigger = Clock.create_trigger(save_preview)
-                req = app.api.download_preview(next_song, trigger=trigger)
+            if app.song.state == 'play':
+                Logger.info('SEEK: %s', value)
+                app.song.seek(value)
 
 class VolumeSlider(MDSlider):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.last_value = 0
-        self.bind(value=self.on_value)
+        self.bind(value=self.set_volume)
 
-    @log
-    def on_value(self, instance, value):
+    def set_volume(self, slider, value):
+        value = slider.value
         if value != 0:
             self.last_value = value
-        app.volume = instance.value_normalized
-        if app.song:
-            app.song.volume = app.volume
-
+        app.volume = slider.value_normalized
+        app.song.set_volume(app.volume)
 
 class PlayButton(ButtonBehavior, Image):
 
@@ -163,132 +229,59 @@ class PlayButton(ButtonBehavior, Image):
         app.play_button = self
 
     @log
-    def check_end(self, *args):
-        is_complete = app.song.is_complete
-        song_pos = app.song.get_pos()
-        song_length = app.song.length
-        Logger.debug(
-            'check_end: is_complete: %s - length: %s - pos: %s',
-            is_complete,
-            song_length,
-            song_pos)
-        if is_complete or song_length - song_pos < 0.2:
-            self.play_next(self)
-
-    @log
-    def load_song(self, song, data=None):
-        if data:
-            song.preview_file = save_song(song, data)
-
+    def load_song(self, song, playing=False):
         Logger.debug('load_song: %s', song.preview_file)
-        app.song = SoundLoader.load(song.preview_file)
-        app.song.bind(state=self.check_end)
         app.song.song_object = song
         app.song.is_complete = False
-        app.song.volume = app.volume
-        if song in app.favorites:
-            app.main_page.favorite_button.favorited = True
-        else:
-            app.main_page.favorite_button.favorited = False
-        app.song.cover_art = song.cover_art
         app.song.last_pos = 0
-        app.main_page.edit_ui_for_song(song)
+        if playing:
+            app.song.state = 'play'
+        app.main_page.edit_ui_for_song(song, playing=playing)
         app.playlist.set_current(song)
 
     @log
     def play_track(self, song, seek=0):
-        if app.song:
-            self.stop_song()
-
         self.update_track_current(current=seek)
         if app.song is None or app.song.song_object != song:
-            app.main_page.edit_ui_for_song(song, playing=True)
-
-            def call_load_song(*args):
-                if self.snackbar:
-                    self.snackbar.dismiss()
-                if res.status_code == 200:
-                    self.load_song(song, res.response)
-                    self.play_track(song)
-                else:
-                    song.preview_file = None
-                    msg = 'Dowloading Song Failed. Retrying...'
-                    self.snackbar = create_snackbar(
-                        msg,
-                        lambda *args, song=song: self.play_track(song)
-                    )
-                    Clock.schedule_once(lambda *args, y=song: self.play_track(y), 1)
-                    self.snackbar.open()
-
-            if song.preview_file and song.preview_file != 'downloading':
-                self.load_song(song)
-            else:
-                Logger.debug('play_track: downloading preview')
-                app.main_page.ids.cover_art.source = 'images/loading_coverart.gif'
-                trigger = Clock.create_trigger(call_load_song)
-                res = app.api.download_preview(song, trigger=trigger)
-                return
-
-        app.song.play()
-        app.song.seek(seek)
-        # TODO: fix: volume 0 plays at full volume
-        app.song.volume = float(str(app.volume)[:4])
-        Logger.info('VOLUME %s', app.song.volume)
+            self.load_song(song, playing=True)
+            app.song.load_play(song, app.volume)
+            Logger.info('SONG: Playing new song.')
+        else:
+            Logger.info('SONG: reuming song.')
+            app.song.play(seek, app.volume)
+        # app.song.song_object = song
+        # app.playlist.set_current(song)
+        app.song.state = 'play'
         self.source = f'images/stop_{app.theme_cls.theme_style}.png'
         if self.event:
             self.event.cancel()
-        self.event = Clock.schedule_interval(self.update_track_current, 0.1)
+        self.event = Clock.schedule_interval(self.update_track_current, 1)
         Logger.info('play_track: playing %s | seek: %s', song.name, seek)
 
     @log
     def control(self, instance, **kwargs):
         play_next = kwargs.get('play_next')
-        Logger.debug('control: play_next: %s | song_state: %s | app.song: %s',
+        Logger.debug('control: current: %s, play_next: %s | song_state: %s',
+                     app.playlist.current_track,
                      play_next,
-                     app.song.state if app.song else None,
-                     True if app.song else False)
+                     app.song.state)
 
         if play_next or app.song is None or app.song.state == 'stop':
             if (play_next and app.playlist.is_last) or app.playlist.tracks == []:
-                def retry(*args):
-                    self.snackbar.dismiss()
-                    self.retry_event.cancel()
-                    self.control(instance, play_next=True)
-
-                def get_tracks(*args):
-                    if req.status_code == 200:
-                        remove_songs(
-                            [song.preview_file
-                             for song in app.playlist.tracks
-                             if song not in app.favorites and song.preview_file]
-                        )
-                        app.playlist = app.db.get_playlist()
-                        self.control(instance, play_next=True)
-                    else:
-                        msg = "Failed to get playlist.\nRetrying in 3 seconds."
-                        self.snackbar = create_snackbar(msg, retry)
-                        self.retry_event = Clock.schedule_once(retry, 3)
-                        self.snackbar.open()
-
-                trigger = Clock.create_trigger(get_tracks)
-                req = app.api.get_recommendations(
-                    app.genres,
-                    app.artists,
-                    song_type=app.play_mode,
-                    trigger=trigger,
-                    async_request=True,
-                )
+                app.song.play_new_playlist()
             elif play_next or app.song is None:
-                self.stop_song()
                 song = app.playlist.next()
                 Logger.debug('playing %s', song.name)
                 self.play_track(song)
             else:
-                Logger.debug('control: resuming song %s', app.song.song_object)
+                Logger.debug('control: resuming song %s', app.song.last_pos)
                 self.play_track(app.song.song_object, seek=app.song.last_pos)
         else:
-            app.song.last_pos = app.song.get_pos()
+            def save_pos(pos):
+                app.song.last_pos = pos
+            app.song.save_pos(callback=save_pos)
             app.song.stop()
+            app.song.state = 'stop'
             Logger.debug('control: stopped at %s (state: %s)',
                          app.song.last_pos, app.song.state)
             self.source = f'images/play_{app.theme_cls.theme_style}.png'
@@ -302,7 +295,6 @@ class PlayButton(ButtonBehavior, Image):
             app.playlist.is_first
         )
         if not app.playlist.is_first:
-            self.stop_song()
             song = app.playlist.previous()
             self.play_track(song)
 
@@ -313,32 +305,32 @@ class PlayButton(ButtonBehavior, Image):
             app.playlist.current_track,
             app.playlist.is_first
         )
-        self.stop_song()
         if app.playlist.is_last:
-            app.play_button.control(instance, play_next=True)
+            app.song.play_new_playlist()
         else:
             song = app.playlist.next()
             self.play_track(song)
 
     @log
     def stop_song(self):
-        if app.song and app.song.state == 'play':
+        if app.song.state == 'play':
             app.song.stop()
             if platform == 'android':
                 app.song.unload()
             else:
                 Logger.debug('SONG UNLOAD: Skipped because of ffpyplayer crash.')
 
-            # if app.song.song_object not in app.history:
-            #    app.history.append(app.song.song_object)
-
     def update_track_current(self, *args, **kwargs):
         track_current = app.main_page.ids.track_current
         slider = app.main_page.ids.playback_slider
         current = kwargs.get('current')
         if current is None:
-            current = app.song.get_pos()
-        slider.value = current
+            new_value = slider.value + 1
+            if new_value <= slider.max:
+                slider.value = new_value
+                app.song.last_pos = new_value
+        else:
+            slider.value = current
         track_current.text = str(timedelta(
             seconds=slider.value
         ))[3:7]
@@ -443,7 +435,8 @@ class MainPage(FloatLayout):
         super().__init__(**kwargs)
         global app
         app = MDApp.get_running_app()
-        self.song = app.song
+        self.app = app
+        self.song = self.app.song
         self.playlist_menu = None
 
     @log
@@ -456,6 +449,10 @@ class MainPage(FloatLayout):
         app.play_button.update_track_current(current=0)
         if playing:
             app.play_button.source = f'images/stop_{app.theme_cls.theme_style}.png'
+        if song in app.favorites:
+            self.favorite_button.favorited = True
+        else:
+            self.favorite_button.favorited = False
         if song != self.song:
             self.update_playlist_menu(song=song)
             self.update_cover_art(song)
@@ -584,9 +581,31 @@ class MainPage(FloatLayout):
         self.playlist_menu.dismiss()
         toast(msg)
 
+    def _get_cover_art_path(self, song):
+        filename = str(song.id) + ".png"
+        return os.path.join(self.app.images_path, filename)
+
+    def _get_cover_art(self, song):
+        cover_art = self._get_cover_art_path(song)
+        if not os.path.isfile(cover_art):
+            if song.cover_art is not None:
+                cover_art = song.cover_art
+            else:
+                cover_art = 'images/empty_coverart.png'
+        return cover_art
+
     @log
     def update_cover_art(self, song):
-        self.ids.cover_art.source = song.cover_art
+        cover_art = self._get_cover_art(song)
+        self.ids.cover_art.source = cover_art
+
+    def save_cover_art(self, image):
+        if (image.texture != Loader.loading_image.texture
+                and image.source != 'images/empty_coverart'):
+            cover_art = self._get_cover_art_path(self.app.song.song_object)
+            if not os.path.isfile(cover_art):
+                image.texture.save(cover_art, flipped=False)
+                Logger.debug('CACHE: Saved %s', cover_art)
 
     @log
     def update_song_info(self, song):
@@ -623,7 +642,12 @@ class MainPage(FloatLayout):
             bio = BytesIO(song_bytes)
             if encrypted:
                 bio = get_file_from_encrypted(bio, data, BytesIO())
-            filename = save_song(song, bio.getbuffer(), preview=False)
+            filename = save_song(
+                self.app.songs_path,
+                song,
+                bio.getbuffer(),
+                preview=False
+            )
             song.download_file = filename
 
             if progress_bar:
@@ -720,20 +744,8 @@ class MainApp(MDApp):
             # request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
             # storage_path = primary_external_storage_path()
             from android.storage import app_storage_path
-            # import android
-            # from jnius import autoclass
             storage_path = app_storage_path()
             SoundLoader.register(SoundAndroidPlayer)
-            # Logger.debug('SERVICE: Starting service.')
-            # service = autoclass('org.allerter.geniustmusicplayer.ServiceMyservice')
-            # mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
-            # argument = ''
-            # service.start(mActivity, argument)
-            # android.start_service(
-            #    title='GTPlayer',
-            #    description='GeniusT Music Player Song',
-            #    arg='')
-            # Logger.debug('SERVICE: Service started.')
         else:
             storage_path = ''
             Window.size = (330, 650)
@@ -741,14 +753,19 @@ class MainApp(MDApp):
         songs_path = join(storage_path, 'songs')
         if not os.path.isdir(songs_path):
             os.mkdir(songs_path)
-            Logger.info('created songs directory')
-        app.songs_path = songs_path
+            Logger.info('DIR: created songs directory')
+        self.songs_path = songs_path
+        images_path = join(storage_path, 'images', 'temp')
+        if not os.path.isdir(images_path):
+            os.mkdir(images_path)
+            Logger.info('DIR: created images temp directory')
+        self.images_path = images_path
 
         self.load_first_page()
         Logger.debug('DISPLAY: Loaded first page.')
         return self.nav_layout
 
-    def complete_ui(self, song):
+    def complete_ui(self):
         favorites_screen = Screen(name='favorites_page')
         app.favorites_page = favorites_page.FavoritesPage()
         favorites_screen.add_widget(app.favorites_page)
@@ -759,56 +776,24 @@ class MainApp(MDApp):
         settings_screen.add_widget(app.settings_page)
         self.screen_manager.add_widget(settings_screen)
 
-        def edit_ui():
-            app.song.last_pos = self.user['last_pos']
-            # update track current
-            slider = app.main_page.ids.playback_slider
-            slider.value = app.song.last_pos
-            app.main_page.ids.track_current.text = str(timedelta(
-                seconds=slider.value
-            ))[3:7]
-
-        if song.preview_file is None or song.preview_file == 'downloading':
-            def get_preview(*args):
-                if req.status_code == 200:
-                    song.preview_file = save_song(song, req.response)
-                    Logger.debug('SONG LOAD: download successful')
-                    self.play_button.load_song(song)
-                    edit_ui()
-                else:
-                    song._tried_downloading = True
-                    toast('Failed to download song.')
-                    song.preview_file = None
-                    Logger.debug('SONG LOAD: download failed')
-            song.preview_file = None
-            trigger = Clock.create_trigger(get_preview)
-            req = self.api.download_preview(song, trigger=trigger)
-            return
-        elif song.preview_file:
-            self.play_button.load_song(song)
-            edit_ui()
-
     @log
     def load_first_page(self, *args):
-        if self.db.get_user():
-            app.main_page = page = MainPage()
+        if user := self.db.get_user():
+            self.main_page = page = MainPage()
             page_name = 'main_page'
             self.nav_drawer.type = 'modal'
 
-            self.user = user = self.db.get_user()
             self.playlist = self.db.get_playlist()
             self.favorites = self.db.get_favorites()
             if user['dark_mode']:
                 self.theme_cls.theme_style = "Dark"
             else:
                 self.theme_cls.theme_style = "Light"
-            app.genres = user['genres']
-            app.artists = user['artists']
-            app.volume = user['volume']
-            app.play_mode = user['play_mode']
+            self.genres = user['genres']
+            self.artists = user['artists']
+            self.volume = user['volume']
+            self.play_mode = user['play_mode']
 
-            volume_slider = app.main_page.ids.volume_slider
-            volume_slider.value = volume_slider.last_value = app.volume * 100
             # load song
             song = self.playlist.current_track
             self.main_page.edit_ui_for_song(song)
@@ -818,7 +803,65 @@ class MainApp(MDApp):
             main_screen.add_widget(page)
             self.screen_manager.add_widget(main_screen)
             self.screen_manager.switch_to(main_screen)
-            Clock.schedule_once(lambda *args, song=song: self.complete_ui(song))
+
+            Logger.debug('SERVER: Starting.')
+
+            def set_pos(value):
+                Logger.debug('SONG: pos %s', value)
+                app.song.last_pos = value
+
+            def set_state(value):
+                Logger.debug('SONG: state %s', value)
+                app.main_page.play_button.check_end()
+
+            # Activity OSC Server
+            try:
+                activity_port = get_open_port()
+            except Exception as e:
+                Logger.error(
+                    ("OSC: Couldn't get open port for activity."
+                     "Setting 4999 instead. %s"),
+                    e)
+                activity_port = 4999
+            self.song = ServerSong(self, pos_callback=set_pos,
+                                   state_callback=set_state,
+                                   port=activity_port)
+
+            # Start service
+            try:
+                service_port = get_open_port()
+            except Exception as e:
+                Logger.error(
+                    ("OSC: Couldn't get open port for service."
+                     "Setting 5000 instead. %s"),
+                    e)
+                service_port = 5000
+
+            if platform == 'android':
+                from jnius import autoclass
+                Logger.debug('SERVICE: Starting service.')
+                service = autoclass('org.allerter.geniustmusicplayer.ServiceGTPlayer')
+                mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
+                argument = ",".join(self.song.getaddress()) + "," + service_port
+                service.start(mActivity, argument)
+                Logger.debug('SERVICE: Service started.')
+            else:
+                OSCSever(self.song.getaddress(), service_port)
+            self.song.server_address = [self.song.getaddress()[0], service_port]
+
+            # Update UI
+            self.play_button.load_song(song)
+            self.song.last_pos = user['last_pos']
+            slider = self.main_page.ids.playback_slider
+            slider.value = self.song.last_pos
+            self.main_page.ids.track_current.text = str(timedelta(
+                seconds=slider.value
+            ))[3:7]
+
+            volume_slider = self.main_page.ids.volume_slider
+            volume_slider.value = volume_slider.last_value = self.volume * 100
+
+            Clock.schedule_once(lambda *args, song=song: self.complete_ui())
         else:
             import start_page
             self.nav_drawer.type = 'standard'
@@ -832,15 +875,26 @@ class MainApp(MDApp):
 
     def on_stop(self):
         if app.song and self.db.get_user():
-            song_pos = app.song.get_pos()
+            song_pos = self.main_page.playback_slider.value
             self.db.update_last_pos(song_pos)
             self.db.update_volume(self.volume)
+            # Clean up cached cover arts
+            images = [f
+                      for f in os.listdir(self.images_path)
+                      if os.path.isfile(os.path.join(self.images_path, f))]
+            cached = [song.id for song in self.playlist.tracks]
+            cached.extend([song.id for song in self.favorites])
+            for image in images:
+                id = int(image[:-4])
+                if id not in cached:
+                    os.remove(os.path.join(self.images_path, image))
+                    Logger.debug('CACHE: Removed %s', image)
 
     def on_resume(self):
         # update playback slider
         if app.song and self.db.get_user():
             self.playlist = self.db.get_playlist()
-            self.main_page.edit_ui_for_song(self.playlist.current_track, playing=True)
+            self.load_song(self.playlist.current_track)
 
 
 if __name__ == '__main__':

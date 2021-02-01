@@ -30,6 +30,7 @@ class OnCompleteListener(PythonJavaClass):
         self.audio_player.is_complete = True
         self.audio_player.state = 'stop'
         self.audio_player.unload()
+        self.audio_player.on_complete_callback()
         self.audio_player = None
 
 
@@ -42,6 +43,7 @@ class SoundAndroidPlayer(Sound):
     def __init__(self, **kwargs):
         self._mediaplayer = None
         self._completion_listener = None
+        self.on_complete_callback = kwargs.pop('on_complete_callback')
         super(SoundAndroidPlayer, self).__init__(**kwargs)
 
     def load(self):

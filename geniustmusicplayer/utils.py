@@ -1,6 +1,8 @@
 import functools
 import inspect
+import json
 from functools import wraps
+from os.path import join
 
 from kivy.uix.screenmanager import Screen
 from kivy.logger import Logger
@@ -45,6 +47,15 @@ class Song:
             download_file=self.download_file,
             date_favorited=self.date_favorited,
         )
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+    @classmethod
+    def bytes_to_song(cls, song):
+        if isinstance(song, bytes):
+            song = cls(**json.loads(song.decode()))
+        return song
 
     def __eq__(self, other):
         if isinstance(other, Song) and self.id == other.id:
@@ -125,6 +136,9 @@ class Playlist:
         current = self._current if self._current != -1 else 0
         return dict(tracks=tracks, current=current)
 
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
     def __repr__(self):
         return f'Playlist({len(self.tracks)} Tracks, current={self._current})'
 
@@ -198,9 +212,26 @@ def save_keys(**kwargs):
     app.store.put('user', **app.store['user'])
 
 
+def save_song(songs_path, song, data, preview=True):
+    song_name = clean_filename(
+        f'{song.artist} - {song.name}' + ('preview' if preview else '')
+    )
+    filename = join(songs_path, f'{song_name}.mp3')
+    with open(filename, 'wb') as f:
+        f.write(data)
+    return filename
+
+
+def clean_filename(s):
+    return "".join(
+        i
+        for i in s
+        if i not in r"\/:*?<>|"
+    )
+
+
 @log
 def switch_screen(page, name):
     screen = Screen(name=name)
     screen.add_widget(page)
     MDApp.get_running_app().screen_manager.switch_to(screen)
-

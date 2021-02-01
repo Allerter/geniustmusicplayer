@@ -134,6 +134,7 @@ songs/
 *.mp3
 *.ogg
 preferences*.json
+temp
 user.db
 *.psd
 .buildozer

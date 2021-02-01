@@ -1,3 +1,4 @@
+import json
 from typing import Optional, List
 from urllib import parse
 
@@ -92,9 +93,13 @@ class Sender:
         url_new_query = parse.urlencode(url_dict)
         url_parse = url_parse._replace(query=url_new_query)
         new_url = parse.urlunparse(url_parse)
-
+        use_requests = use_requests or trigger is None
         if use_requests:
-            response = requests.get(url).json()
+            req = requests.get(url)
+            try:
+                response = req.json()
+            except json.JSONDecodeError:
+                response = req.content
         else:
             # Make the request
             response = Response(trigger, context=kwargs)
@@ -191,7 +196,6 @@ class API():
     ) -> List[str]:
         res = self.sender.make_request(
             song.preview_url,
-            # song=song,
             trigger=trigger,
             async_request=async_request,
             api=False,

@@ -111,9 +111,10 @@ class Database:
     def update_last_pos(self, value):
         self._update_user('last_pos', value)
 
-    def set_current_song(self, id, cursor):
-        self._execute("""UPDATE playlist SET current = 0 WHERE current = 1;""")
-        self._update_playlist('current', id, True)
+    @get_cursor
+    def update_current_track(self, track, cursor):
+        cursor.execute("""UPDATE playlist SET current = 0 WHERE current = 1;""")
+        self._update_playlist('current', track.id, True)
 
     def _track_to_db(self, track, current=None):
         track = [
@@ -170,8 +171,9 @@ class Database:
 
     @get_cursor
     def delete_user(self, cursor):
-        query = """DROP TABLE user; DROP TABLE favorites; DROP TABLE playlist;"""
-        cursor.execute(query)
+        for table in ('user', 'favorites', 'playlist'):
+            query = f"""DROP TABLE {table};"""
+            cursor.execute(query)
 
     @get_cursor
     def get_playlist(self, cursor):
@@ -214,11 +216,11 @@ class Database:
         )
 
     @get_cursor
-    def update_track(self, id, column, value, cursor):
-        values = (value, value)
-        query = (f"UPDATE playlist SET {column} = ? WHERE id = {id};"
-                 f"UPDATE favorites SET {column} = ? WHERE id = {id};")
-        cursor.execute(query, values)
+    def update_track(self, track, column, value, cursor):
+        values = (value,)
+        for table in ('playlist', 'favorites'):
+            query = f"UPDATE {table} SET {column} = ? WHERE id = {track.id};"
+            cursor.execute(query, values)
 
     @get_cursor
     def initialize(self, genres, artists, songs_path, playlist, cursor):

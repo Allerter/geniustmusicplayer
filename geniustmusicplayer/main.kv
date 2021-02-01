@@ -189,6 +189,7 @@
         anim_delay: 0
         allow_stretch: True
         size: root.size[0], root.size[1]
+        on_load: root.save_cover_art(*args)
 
     # Playback Slider
     MDLabel:
@@ -261,14 +262,13 @@
 <PlaybackSlider>:
     min: 0
     value: 0
-    hint: True
+    hint: False
     size_hint: 0.8, None
     pos_hint: {'center_x': 0.5, 'center_y': 0.25}
 
 <VolumeSlider>:
     min: 0
     max: 100
-    value: app.volume
     hint: False
     orientation: 'horizontal'
 
