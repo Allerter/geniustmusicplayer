@@ -1,16 +1,17 @@
 from os import environ
+from time import sleep
+import logging
+
+logging.basicConfig(format="%(levelname)s - %(message)s")
+Logger = logging.getLogger('gtplayer')
+Logger.setLevel(logging.DEBUG)
 
 from oscpy.server import OSCThreadServer
-from kivy.core.audio import SoundLoader
-from kivy.logger import Logger
-from kivy.utils import platform
-from kivy.clock import Clock
-from kivy.app import App
 
+from android_audio_player import SoundAndroidPlayer
 from utils import Song, save_song, Playlist
 from api import API
 from db import Database
-
 
 class OSCSever:
     def __init__(self, activity_server_address, port):
@@ -75,18 +76,19 @@ class OSCSever:
         return self.osc.getaddress()
 
     def load(self, song):
-        Logger.debug('SERVER: Loading song.')
+        Logger.debug('SERVICE: Loading song.')
         song = Song.bytes_to_song(song)
         if song.preview_file is None:
+            Logger.debug('SERVICE: Downlaoding song in load.')
             res = self.api.download_preview(song)
             song.preview_file = save_song(self.songs_path, song, res)
             self.db.update_track(song, 'preview_file', song.preview_file)
-        self.song = SoundLoader.load(song.preview_file)
+        self.song = SoundAndroidPlayer(song.preview_file, self.on_complete)
         self.song.song_object = song
-        self.song.on_complete_callback = self.on_complete
-        self.song.bind(state=self.on_state)
+        # self.song.bind(state=self.on_state)
         self.playlist.set_current(song)
         self.db.update_current_track(song)
+        Logger.debug('SERVICE: Song loaded.')
 
     def load_play(self, song, volume=None):
         Logger.debug('SERVICE: Loading and playing song.')
@@ -102,10 +104,10 @@ class OSCSever:
     def play(self, seek, volume):
         self.song.play()
         self.song.seek(seek)
-        self.song.volume = volume
+        self.song.set_volume(volume)
         if self.event:
             self.event.cancel()
-        self.event = Clock.schedule_interval(self.check_pos, .5)
+        # self.event = Clock.schedule_interval(self.check_pos, .5)
         Logger.debug('SERVICE: Playing song.')
 
     def stop(self, *values):
@@ -120,7 +122,8 @@ class OSCSever:
 
     def set_volume(self, value):
         Logger.debug('SERVER: setting song volume %s.', value)
-        self.song.volume = self.volume = value
+        self.volume = value
+        self.song.set_volume(value)
 
     def on_complete(self, *values):
         Logger.debug('SERVICE -> ACTIVITY: /set_complete')
@@ -159,19 +162,109 @@ class OSCSever:
         pass  # self.song.unload()
 
 
-class MyApp(App):
-    def build(self, *args):
-        if platform == 'android':
-            from android_audio_player import SoundAndroidPlayer
-            args = environ.get('PYTHON_SERVICE_ARGUMENT', '').split(',')
-            Logger.debug('SERVICE: received args: %s', args)
-            activity_address, port = args[:2], args[2]
-            OSCSever(activity_address, port)
-            SoundLoader.register(SoundAndroidPlayer)
-        else:
-            OSCSever(('127.0.0.1', 4999), 5000)
-        return ""
+"""
+import random
+import string
+from jnius import autoclass
+from android import api_version
+# Given a media session and its context (usually the component containing the session)
+# Create a NotificationCompat.Builder
 
+# Get the session's metadata
 
-if __name__ == '__main__':
-    MyApp().run()
+RDrawable = autoclass('android.R$drawable')
+RString = autoclass('android.R$string')
+NotificationCompat = autoclass("androidx.core.app.NotificationCompat")
+# MediaButtonReceiver = autoclass('androidx.media.session.MediaButtonReceiver')
+MediaSession = autoclass('android.media.session.MediaSession')
+NotificationCompatAction = autoclass("androidx.core.app.NotificationCompat$Action")
+NotificationCompatBuilder = autoclass("androidx.core.app.NotificationCompat$Builder")
+PlaybackStateCompat = autoclass("android.support.v4.media.session.PlaybackStateCompat")
+PythonActivity = autoclass('org.kivy.android.PythonActivity')
+
+mediaSession = MediaSession()
+controller = mediaSession.getController()
+mediaMetadata = controller.getMetadata()
+description = mediaMetadata.getDescription()
+
+service = autoclass('org.allerter.geniustmusicplayer.ServiceGtplayer').mService
+app_context = service.getApplication().getApplicationContext()
+Logger.debug("ANDROID: api version %s", api_version)
+if api_version >= 26:
+    NotificationChannel = autoclass('android.app.NotificationChannel')
+    NotificationManager = autoclass("android.app.NotificationManager")
+    channel_id = ''.join(random.choices(string.ascii_letters, k=10))
+    channel_name = 'GTPlayer'
+    channel_importance = NotificationManager.IMPORTANCE_DEFAULT
+    channel = NotificationChannel(channel_id, channel_name, channel_importance)
+    channel.setDescription('GeniusT Music Player')
+    NotificationManagerClass = autoclass('android.app.NotificationManager.class')
+    notificationManager = service.getSystemService(NotificationManagerClass)
+    notificationManager.createNotificationChannel(channel)
+    builder = NotificationCompatBuilder(app_context, channel_id)
+else:
+    builder = NotificationCompatBuilder(app_context)
+
+IconDrawable = autoclass("{}.R$drawable".format(service.getPackageName()))
+icon = getattr(IconDrawable, 'icon')
+(builder
+    # Add the metadata for the currently playing track
+    .setContentTitle('Lane Boy')
+    .setContentText('Twenty One Pilots')
+    .setSubText('Song')
+    .setLargeIcon(icon)
+
+    # Enable launching the player by clicking the notification
+    .setContentIntent(controller.getSessionActivity())
+
+    # Stop the service when the notification is swiped away
+    # .setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(
+    #    context,
+    #    PlaybackStateCompat.ACTION_STOP))
+
+    # Make the transport controls visible on the lockscreen
+    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+
+    # Add an app icon and set its accent color
+    # Be careful about the color
+    .setSmallIcon(icon)
+    # .setColor(ContextCompat.getColor(context, R.color.primaryDark))
+ )
+# Add a pause button
+# pause_intent = MediaButtonReceiver.buildMediaButtonPendingIntent(
+#    app_context,
+#    PlaybackStateCompat.ACTION_PLAY_PAUSE
+# )
+# action = NotificationCompatAction(
+#    RDrawable.pause, 'Pause',  # getString(R.string.pause),
+#    pause_intent
+# )
+# builder.addAction(action)
+
+# Take advantage of MediaStyle features
+# .setStyle(new MediaStyle()
+#          .setMediaSession(mediaSession.getSessionToken())
+#          .setShowActionsInCompactView(0)
+
+#          # Add a cancel button
+#          .setShowCancelButton(true)
+#          .setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(
+#          context,
+#          PlaybackStateCompat.ACTION_STOP)))
+
+# Display the notification and place the service in the foreground
+ service.startForeground(1, builder.build())
+"""
+Logger.debug('SERVICE: Starting %s', __name__)
+args = environ.get('PYTHON_SERVICE_ARGUMENT', '').split(',')
+Logger.debug('SERVICE: received args: %s', args)
+if args:
+    activity_ip, activity_port, service_port = args[0], int(args[1]), int(args[2])
+    activity_address = (activity_ip, activity_port)
+else:
+    activity_address = ('127.0.0.1', 4999)
+    service_port = 5000
+OSCSever(activity_address, service_port)
+Logger.debug('SERVICE: Started OSC server.')
+while True:
+    pass

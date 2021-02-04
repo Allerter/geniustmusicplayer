@@ -1,12 +1,15 @@
 import json
+import logging
 from typing import Optional, List
 from urllib import parse
 
 import requests
-from kivy.logger import Logger
-from kivy.network.urlrequest import UrlRequest
+# from kivy.logger import Logger
 
 from utils import Song
+
+Logger = logging.getLogger('gtplayer')
+Logger.setLevel(logging.DEBUG)
 
 
 class Response:
@@ -32,7 +35,6 @@ class Response:
             else:
                 self.response = result['response']
         else:
-            pass
             Logger.debug('request payload: %s', result)
 
         if self.trigger is not None:
@@ -101,6 +103,7 @@ class Sender:
             except json.JSONDecodeError:
                 response = req.content
         else:
+            from kivy.network.urlrequest import UrlRequest
             # Make the request
             response = Response(trigger, context=kwargs)
             req = UrlRequest(new_url,

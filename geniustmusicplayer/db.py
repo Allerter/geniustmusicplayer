@@ -1,10 +1,9 @@
-import logging
 import sqlite3
 from functools import wraps
 from contextlib import closing
 from typing import Any, List, TypeVar, Callable, Optional, Tuple, Union, Dict
 
-from utils import log, Song, Playlist
+from utils import Song, Playlist
 
 RT = TypeVar("RT")
 
@@ -31,7 +30,6 @@ class Database:
         self.favorites_table = 'favorites'
         self.user_table = 'user'
 
-    @log
     @get_cursor
     def insert(
         self,
@@ -56,38 +54,34 @@ class Database:
             query = f"""INSERT INTO playlist VALUES (?,?,?,?,?,?,?,?,?,?,?,?);"""
         else:
             raise ValueError(f"Unknown table {table}")
-            return
 
         cursor.execute(query, values)
 
-    @log
     @get_cursor
     def _update_playlist(
         self,
         column: str,
         id,
         data,
-        cursor: Any,
+        cursor = None,
     ):
         query = f"UPDATE playlist SET {column} = ? WHERE id == {id};"
         values = (data,)
         cursor.execute(query, values)
 
-    @log
     @get_cursor
     def _update_user(
         self,
         column: str,
         data,
-        cursor: Any,
+        cursor = None,
     ):
         query = f"UPDATE user SET {column} = ?"
         values = (data,)
         cursor.execute(query, values)
 
-    @log
     @get_cursor
-    def _execute(query, cursor):
+    def _execute(self, query, cursor=None):
         cursor.execute(query)
 
     def update_dark_mode(self, value):
@@ -112,7 +106,7 @@ class Database:
         self._update_user('last_pos', value)
 
     @get_cursor
-    def update_current_track(self, track, cursor):
+    def update_current_track(self, track, cursor=None):
         cursor.execute("""UPDATE playlist SET current = 0 WHERE current = 1;""")
         self._update_playlist('current', track.id, True)
 
@@ -142,7 +136,7 @@ class Database:
                     date_favorited=track[10],)
 
     @get_cursor
-    def update_playlist(self, playlist, cursor):
+    def update_playlist(self, playlist, cursor=None):
         cursor.execute("""DELETE FROM playlist;""")
         query = """INSERT INTO playlist VALUES (?,?,?,?,?,?,?,?,?,?,?,?);"""
         values = [self._track_to_db(track, current=True if i == 0 else False)
@@ -150,33 +144,33 @@ class Database:
         cursor.executemany(query, values)
 
     @get_cursor
-    def remove_playlist_track(self, track, cursor):
+    def remove_playlist_track(self, track, cursor=None):
         cursor.execute(f"""DELETE FROM playlist where id =  {track.id};""")
 
     @get_cursor
-    def remove_favorites_track(self, track, cursor):
+    def remove_favorites_track(self, track, cursor=None):
         cursor.execute(f"""DELETE FROM favorites where id = {track.id};""")
 
     @get_cursor
-    def add_playlist_track(self, track, cursor):
+    def add_playlist_track(self, track, cursor=None):
         query = """INSERT INTO playlist VALUES (?,?,?,?,?,?,?,?,?,?,?,?);"""
         values = self._track_to_db(track, current=False)
         cursor.execute(query, values)
 
     @get_cursor
-    def add_favorites_track(self, track, cursor):
+    def add_favorites_track(self, track, cursor=None):
         query = """INSERT INTO favorites VALUES (?,?,?,?,?,?,?,?,?,?,?);"""
         values = self._track_to_db(track, current=None)
         cursor.execute(query, values)
 
     @get_cursor
-    def delete_user(self, cursor):
+    def delete_user(self, cursor=None):
         for table in ('user', 'favorites', 'playlist'):
             query = f"""DROP TABLE {table};"""
             cursor.execute(query)
 
     @get_cursor
-    def get_playlist(self, cursor):
+    def get_playlist(self, cursor=None):
         query = """SELECT * FROM playlist ORDER BY rowid"""
         cursor.execute(query)
         tracks = cursor.fetchall()
@@ -190,14 +184,14 @@ class Database:
                         current=current)
 
     @get_cursor
-    def get_favorites(self, cursor):
+    def get_favorites(self, cursor=None):
         query = """SELECT * FROM favorites"""
         cursor.execute(query)
         tracks = cursor.fetchall()
         return [self._db_to_track(track) for track in tracks]
 
     @get_cursor
-    def get_user(self, cursor):
+    def get_user(self, cursor=None):
         query = """SELECT * FROM user"""
         try:
             cursor.execute(query)
@@ -216,14 +210,14 @@ class Database:
         )
 
     @get_cursor
-    def update_track(self, track, column, value, cursor):
+    def update_track(self, track, column, value, cursor=None):
         values = (value,)
         for table in ('playlist', 'favorites'):
             query = f"UPDATE {table} SET {column} = ? WHERE id = {track.id};"
             cursor.execute(query, values)
 
     @get_cursor
-    def initialize(self, genres, artists, songs_path, playlist, cursor):
+    def initialize(self, genres, artists, songs_path, playlist, cursor=None):
         # User
         cursor.execute('''CREATE TABLE user
                      (id INTEGER primary key,

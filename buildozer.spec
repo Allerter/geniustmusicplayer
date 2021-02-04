@@ -13,7 +13,7 @@ package.domain = org.allerter
 source.dir = geniustmusicplayer
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,gif,json
+source.include_exts = py,png,jpg,kv,atlas,gif
 
 # (list) List of inclusions using pattern matching
 source.include_patterns = images/*
@@ -36,7 +36,7 @@ version = 0.22
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy==2.0.0,https://github.com/kivymd/KivyMD/archive/master.zip,pillow,android,sdl2_ttf==2.0.15
+requirements = python3,kivy==2.0.0,https://github.com/kivymd/KivyMD/archive/master.zip,pillow,android,sdl2_ttf==2.0.15,requests,urllib3,idna,chardet,oscpy,pycryptodome,mutagen
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -55,7 +55,7 @@ icon.filename = %(source.dir)s/images/icon.png
 orientation = portrait
 
 # (list) List of service to declare
-# services = myservice:%(source.dir)s/services/service.py
+services = gtplayer:%(source.dir)s/service.py
 
 #
 # OSX Specific
@@ -85,7 +85,7 @@ fullscreen = 0
 android.presplash_color = #FFFFFF
 
 # (list) Permissions
-android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,FOREGROUND_SERVICE
 
 # (int) Target Android API, should be as high as possible.
 android.api = 29

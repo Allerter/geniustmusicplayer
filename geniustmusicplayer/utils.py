@@ -4,13 +4,6 @@ import json
 from functools import wraps
 from os.path import join
 
-from kivy.uix.screenmanager import Screen
-from kivy.logger import Logger
-from kivy.core.window import Window
-from kivymd.app import MDApp
-from kivymd.uix.snackbar import Snackbar
-from kivymd.uix.button import MDFlatButton
-
 
 class Song:
     def __init__(self, id, name, artist, genres=None,
@@ -58,10 +51,7 @@ class Song:
         return song
 
     def __eq__(self, other):
-        if isinstance(other, Song) and self.id == other.id:
-            return True
-        else:
-            return False
+        return bool(isinstance(other, Song) and self.id == other.id)
 
     def __repr__(self):
         return f'Song(artist={self.artist!r}, song={self.name!r})'
@@ -78,11 +68,11 @@ class Playlist:
 
     @property
     def is_first(self):
-        return True if self._current == 0 else False
+        return bool(self._current == 0)
 
     @property
     def is_last(self):
-        return True if self._current == len(self.tracks) - 1 else False
+        return bool(self._current == len(self.tracks) - 1)
 
     @property
     def current_track(self):
@@ -113,11 +103,6 @@ class Playlist:
         elif not self.is_first:
             self._current -= 1
 
-        Logger.debug(
-            'PLAYLIST: current: %s | track: %s, tracks: %s',
-            self._current,
-            self.tracks[self._current],
-            self.tracks)
         return self.tracks[self._current]
 
     def remove(self, track):
@@ -144,6 +129,9 @@ class Playlist:
 
 
 def create_snackbar(text, callback):
+    from kivy.core.window import Window
+    from kivymd.uix.snackbar import Snackbar
+    from kivymd.uix.button import MDFlatButton
     snackbar = Snackbar(
         text=text,
         snackbar_x="10dp",
@@ -184,6 +172,7 @@ def get_class_that_defined_method(meth):
 
 def log(func):
     """logs entering and exiting functions for debugging."""
+    # from kivy.logger import Logger
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -206,6 +195,7 @@ def save_favorites(favorites):
 
 @log
 def save_keys(**kwargs):
+    from kivymd.app import MDApp
     app = MDApp.get_running_app()
     for key, value in kwargs.items():
         app.store['user'][key] = value
@@ -232,6 +222,8 @@ def clean_filename(s):
 
 @log
 def switch_screen(page, name):
+    from kivymd.app import MDApp
+    from kivy.uix.screenmanager import Screen
     screen = Screen(name=name)
     screen.add_widget(page)
     MDApp.get_running_app().screen_manager.switch_to(screen)
