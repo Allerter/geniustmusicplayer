@@ -5,7 +5,7 @@ import logging
 # from kivy.logger import Logger
 Logger = logging.getLogger('gtplayer')
 
-
+NativeInvocationHandler = autoclass('org.jnius.NativeInvocationHandler')
 MediaPlayer = autoclass("android.media.MediaPlayer")
 AudioManager = autoclass("android.media.AudioManager")
 PowerManager = autoclass("android.os.PowerManager")
