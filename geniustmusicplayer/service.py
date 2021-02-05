@@ -4,7 +4,7 @@ import logging
 from oscpy.server import OSCThreadServer
 
 from android_audio_player import SoundAndroidPlayer
-from utils import Song, save_song, Playlist
+from utils import save_song, Playlist
 from api import API
 from db import Database
 
@@ -41,7 +41,6 @@ class OSCSever:
         self.load(self.playlist.current_track)
 
     def check_pos(self, *args):
-        Logger.debug('SERVICE: pos check.')
         if self.song.length - self.song.get_pos() < 20:
             next_song = self.playlist.preview_next()
             if next_song is None or next_song.preview_file is None:
@@ -88,9 +87,8 @@ class OSCSever:
             self.download_song(song)
         self.song = SoundAndroidPlayer(song.preview_file, self.on_complete)
         self.song.song_object = song
-        # self.song.bind(state=self.on_state)
-        self.playlist.set_current(song)
         self.db.update_current_track(song)
+        self.playlist = self.db.get_playlist()
         Logger.debug('SERVICE: Song loaded.')
 
     def load_play(self, id, volume=None):
@@ -264,7 +262,8 @@ if args:
 else:
     activity_address = ('127.0.0.1', 4999)
     service_port = 5000
-OSCSever(activity_address, service_port)
+osc = OSCSever(activity_address, service_port)
 Logger.debug('SERVICE: Started OSC server.')
 while True:
-    pass
+    osc.check_pos()
+    sleep(.1)
