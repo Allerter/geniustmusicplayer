@@ -111,9 +111,11 @@ class Playlist:
     def set_current(self, track):
         self._current = self.tracks.index(track)
 
-    def track_by_name(self, track_name):
+    def get_track(self, id=None, name=None):
+        if not any([id, name]):
+            raise AssertionError('You must supply id or name.')
         for track in self.tracks:
-            if track.name == track_name:
+            if (id and track.id == id) or (name and track.name == name):
                 return track
 
     def to_dict(self):

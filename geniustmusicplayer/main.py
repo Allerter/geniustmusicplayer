@@ -77,11 +77,11 @@ class ServerSong():
         self.osc.bind(b'/playing', self.playing)
         self.osb.bind(b'/update_playlist', self.update_playlist)
 
-    def playing(self, song, pos):
+    def playing(self, id, pos):
         Logger.debug('ACTIVITY: Playing.')
         self.state = 'play'
         self.last_pos = pos
-        song = Song.bytes_to_song(song)
+        song = self.playlist.get_track(id=id)
         if self.song_object != song:
             self.app.play_button.load_song(song, playing=True)
 
@@ -531,7 +531,7 @@ class MainPage(FloatLayout):
         song_menu.open()
 
     def play_from_playlist(self, track):
-        # track = app.playlist.track_by_name(selected_item.text)
+        # track = app.playlist.get_track(name=selected_item.text)
         if track == app.playlist.current_track:  # track is already playing
             return
         self.playlist_menu.dismiss()
