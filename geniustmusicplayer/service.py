@@ -253,7 +253,8 @@ icon = getattr(IconDrawable, 'icon')
  service.startForeground(1, builder.build())
 """
 Logger.debug('SERVICE: Starting %s', __name__)
-args = environ.get('PYTHON_SERVICE_ARGUMENT', '').split(',')
+args = environ.get('PYTHON_SERVICE_ARGUMENT', '')
+args = args.split(',') if args else []
 Logger.debug('SERVICE: received args: %s', args)
 if args:
     from android_audio_player import SoundAndroidPlayer
