@@ -47,6 +47,7 @@ class SoundAndroidPlayer:
         self.source = source
         self._completion_listener = None
         self.on_complete_callback = on_complete_callback
+        self._volume = 0
         self.load()
         # super(SoundAndroidPlayer, self).__init__(**kwargs)
 
@@ -95,10 +96,16 @@ class SoundAndroidPlayer:
             return self._mediaplayer.getCurrentPosition() / 1000.
         # return super(SoundAndroidPlayer, self).get_pos()
 
-    def set_volume(self, volume):
+    @property
+    def volume(self):
+        return self._volume
+
+    @volume.setter
+    def volume(self, volume):
         if self._mediaplayer:
             volume = float(volume)
             self._mediaplayer.setVolume(volume, volume)
+            self._volume = volume
 
     def _get_length(self):
         if self._mediaplayer:

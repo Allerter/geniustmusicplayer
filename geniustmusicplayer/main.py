@@ -261,7 +261,7 @@ class PlayButton(ButtonBehavior, Image):
             app.song.load_play(song, app.volume)
             Logger.info('SONG: Playing new song.')
         else:
-            Logger.info('SONG: reuming song.')
+            Logger.info('SONG: resume.')
             app.song.play(seek, app.volume)
         # app.song.song_object = song
         # app.playlist.set_current(song)
@@ -291,13 +291,15 @@ class PlayButton(ButtonBehavior, Image):
         else:
             def save_pos(pos):
                 app.song.last_pos = pos
+                self.update_track_current(current=pos)
             app.song.save_pos(callback=save_pos)
             app.song.stop()
             app.song.state = 'stop'
             Logger.debug('control: stopped at %s (state: %s)',
                          app.song.last_pos, app.song.state)
             self.source = f'images/play_{app.theme_cls.theme_style.lower()}.png'
-            self.event.cancel()
+            if self.event:
+                self.event.cancel()
 
     def play_previous(self, instance):
         Logger.debug(
@@ -723,8 +725,13 @@ def start_service(args):
     from jnius import autoclass
     service = autoclass('org.allerter.geniustmusicplayer.ServiceGtplayer')
     mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
-    print(dir(service))
     service.start(mActivity, args)
+
+
+def start_osc_server(a, b):
+    from os import environ
+    environ['DEBUG_SERVICE_ARGUMENT'] = ','.join([*[str(x) for x in a], str(b)])
+    import service
 
 
 class MainApp(MDApp):
@@ -826,6 +833,7 @@ class MainApp(MDApp):
                      "Setting 4999 instead. %s"),
                     e)
                 activity_port = 4999
+            Logger.debug('ACTIVITY PORT: %s', activity_port)
             self.song = ServerSong(self, pos_callback=set_pos,
                                    state_callback=set_state,
                                    port=activity_port)
@@ -839,7 +847,7 @@ class MainApp(MDApp):
                      "Setting 5000 instead. %s"),
                     e)
                 service_port = 5000
-
+            Logger.debug('SERVICE PORT: %s', service_port)
             if platform == 'android':
                 Logger.debug('ACTIVITY: Starting service.')
                 args = [str(x) for x in self.song.getaddress()]
@@ -848,8 +856,13 @@ class MainApp(MDApp):
                 start_service(argument)
                 Logger.debug('ACTIVITY: Service started.')
             else:
-                from service import OSCSever
-                OSCSever(self.song.getaddress(), service_port)
+                from threading import Thread
+                from time import sleep
+                t = Thread(target=start_osc_server,
+                            args=(self.song.getaddress(), service_port,))
+                t.daemon = True
+                t.start()
+                sleep(3)
             self.song.server_address = [self.song.getaddress()[0], service_port]
 
             # Update UI

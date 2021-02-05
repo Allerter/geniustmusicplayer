@@ -7,10 +7,6 @@ from utils import save_song, Playlist
 from api import API
 from db import Database
 
-logging.basicConfig(format="%(levelname)s - %(message)s")
-Logger = logging.getLogger('gtplayer')
-Logger.setLevel(logging.DEBUG)
-
 
 class OSCSever:
     def __init__(self, activity_server_address, port):
@@ -37,7 +33,7 @@ class OSCSever:
         self.playlist = self.db.get_playlist()
         self.event = None
 
-        self.load(self.playlist.current_track)
+        self.load(self.playlist.current_track.id)
 
     def check_pos(self, *args):
         if self.song.length - self.song.get_pos() < 20:
@@ -104,7 +100,7 @@ class OSCSever:
     def play(self, seek, volume):
         self.song.play()
         self.song.seek(seek)
-        self.song.set_volume(volume)
+        self.song.volume = volume
         if self.event:
             self.event.cancel()
         # self.event = Clock.schedule_interval(self.check_pos, .5)
@@ -123,7 +119,7 @@ class OSCSever:
     def set_volume(self, value):
         Logger.debug('SERVICE: setting song volume %s.', value)
         self.volume = value
-        self.song.set_volume(value)
+        self.song.volume = value
 
     def on_complete(self, *values):
         Logger.debug('SERVICE -> ACTIVITY: /set_complete')
@@ -252,17 +248,15 @@ icon = getattr(IconDrawable, 'icon')
 # Display the notification and place the service in the foreground
  service.startForeground(1, builder.build())
 """
-Logger.debug('SERVICE: Starting %s', __name__)
 args = environ.get('PYTHON_SERVICE_ARGUMENT', '')
-args = args.split(',') if args else []
-Logger.debug('SERVICE: received args: %s', args)
 if args:
+    logging.basicConfig(format="%(levelname)s - %(message)s")
+    Logger = logging.getLogger('gtplayer')
+    Logger.setLevel(logging.DEBUG)
     from android_audio_player import SoundAndroidPlayer
-    activity_ip, activity_port, service_port = args[0], int(args[1]), int(args[2])
-    activity_address = (activity_ip, activity_port)
 else:
-    # For debugging
     from kivy.core.audio import SoundLoader
+    from kivy.logger import Logger
     from threading import Thread
     on_complete = None
 
@@ -278,11 +272,15 @@ else:
                     and osc.song.state == 'stop'):
                 osc.play_next()
             sleep(.1)
-    activity_address = ('127.0.0.1', 4999)
-    service_port = 5000
+    args = environ.get('DEBUG_SERVICE_ARGUMENT')
+
+args = args.split(',') if args else []
+activity_ip, activity_port, service_port = args[0], int(args[1]), int(args[2])
+activity_address = (activity_ip, activity_port)
+Logger.debug('SERVICE: Activity server address: %s', activity_address)
 osc = OSCSever(activity_address, service_port)
 if not args:
-    t = Thread(check_end, args=(osc,))
+    t = Thread(target=check_end, args=(osc,))
     t.daemon = True
     t.start()
 Logger.debug('SERVICE: Started OSC server.')
