@@ -85,7 +85,7 @@ class ServerSong():
         self.osc.bind(b'/set_length', self.set_length)
         self.osc.bind(b'/set_complete', self.set_complete)
         self.osc.bind(b'/playing', self.playing)
-        self.osb.bind(b'/update_playlist', self.update_playlist)
+        self.osc.bind(b'/update_playlist', self.update_playlist)
 
     def playing(self, id, pos):
         Logger.debug('ACTIVITY: Playing.')
