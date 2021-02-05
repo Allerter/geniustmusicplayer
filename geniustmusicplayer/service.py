@@ -49,9 +49,14 @@ class OSCSever:
                     self.playlist = self.get_new_playlist()
                     next_song = self.playlist.preview_next()
                 Logger.debug('SERVICE: Preloading next song.')
-                res = self.api.download_preview(next_song)
-                next_song.preview_file = save_song(self.songs_path, next_song, res)
-                self.db.update_track(next_song, 'preview_file', next_song.preview_file)
+                self.download_song(next_song)
+
+    def download_song(self, song):
+        Logger.debug('SERVICE: Downloading song.')
+        res = self.api.download_preview(song)
+        song.preview_file = save_song(self.songs_path, song, res)
+        self.db.update_track(song, 'preview_file', song.preview_file)
+        Logger.debug('SERVICE: Downloading song finished.')
 
     def get_new_playlist(self):
         Logger.debug('SERVICE: getting new playlist.')
@@ -80,9 +85,7 @@ class OSCSever:
         song = Song.bytes_to_song(song)
         if song.preview_file is None:
             Logger.debug('SERVICE: Downlaoding song in load.')
-            res = self.api.download_preview(song)
-            song.preview_file = save_song(self.songs_path, song, res)
-            self.db.update_track(song, 'preview_file', song.preview_file)
+            self.download_song(song)
         self.song = SoundAndroidPlayer(song.preview_file, self.on_complete)
         self.song.song_object = song
         # self.song.bind(state=self.on_state)
@@ -121,7 +124,7 @@ class OSCSever:
         self.song.seek(value)
 
     def set_volume(self, value):
-        Logger.debug('SERVER: setting song volume %s.', value)
+        Logger.debug('SERVICE: setting song volume %s.', value)
         self.volume = value
         self.song.set_volume(value)
 
@@ -137,10 +140,7 @@ class OSCSever:
             self.playlist = self.get_new_playlist()
         song = self.playlist.next()
         if song.preview_file is None:
-            Logger.debug('SERVICE: Downloading song.')
-            res = self.api.download_preview(song)
-            song.preview_file = save_song(self.songs_path, song, res)
-            self.db.update_track(song, 'preview_file', song.preview_file)
+            self.download_song(song)
         self.load_play(song)
 
     def play_previous(self):
