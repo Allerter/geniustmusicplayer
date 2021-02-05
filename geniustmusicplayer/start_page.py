@@ -36,14 +36,18 @@ class GenreItem(OneLineAvatarIconListItem):
         instance_check.active = True if not instance_check.active else False
 
 
-def loading_spinner():
+def loading_spinner(pos_hint, active=False):
     loading = MDSpinner(
         size_hint=(None, None),
         size=('30dp', '30dp'),
-        pos_hint={'center_x': .5, 'center_y': .2},
+        pos_hint=pos_hint,
         size_hint_y=None,
     )
-    loading.active = False
+
+    def deactivate_loading(*args):
+        loading.active = False
+    if not active:
+        Clock.schedule_once(deactivate_loading)
     return loading
 
 class GenresDialog:
@@ -102,9 +106,9 @@ class GenresDialog:
             # Get genres from server
             trigger = Clock.create_trigger(create_genres_grid)
             req = self.app.api.get_genres(trigger=trigger)
-            self.loading = loading_spinner()
+            self.loading = loading_spinner(pos_hint={'center_x': .5, 'center_y': .2},
+                                           active=True)
             self.root.add_widget(self.loading)
-            self.loading.active = True
         else:
             self.genres_dialog.open()
 
@@ -167,7 +171,7 @@ class StartPage(FloatLayout):
                     ),
                 ],
             )
-            self.loading = loading_spinner()
+            self.loading = loading_spinner(pos_hint={'center_x': .5, 'center_y': .2})
             self.age_dialog.add_widget(self.loading)
         self.age_dialog.open()
 
@@ -221,14 +225,8 @@ class ArtistsPage(FloatLayout):
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
         self.app.artists_page = self
-        self.loading = MDSpinner(
-            size_hint=(None, None),
-            size=('30dp', '30dp'),
-            pos_hint={'center_x': .5, 'center_y': .5},
-            size_hint_y=None,
-        )
+        self.loading = loading_spinner(pos_hint={'center_x': .5, 'center_y': .5})
         self.finish = callback if callback is not None else self.finish
-        self.loading.active = False
         self.add_widget(self.loading)
         for artist in self.app.artists:
             artist_chip = MDChip(
@@ -315,13 +313,7 @@ class Search(FloatLayout):
         self.last_input = time()
         self.current_input = time()
         self.event = Clock.schedule_interval(self.search_artists, 0.01)
-        self.loading = MDSpinner(
-            size_hint=(None, None),
-            size=('30dp', '30dp'),
-            pos_hint={'center_x': .5, 'center_y': .5},
-            size_hint_y=None,
-        )
-        self.loading.active = False
+        self.loading = loading_spinner(pos_hint={'center_x': .5, 'center_y': .5})
         self.snackbar_retry = False
         self.add_widget(self.loading)
 
