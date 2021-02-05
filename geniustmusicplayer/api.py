@@ -12,31 +12,37 @@ Logger = logging.getLogger('gtplayer')
 
 class Response:
 
-    def __init__(self, trigger, context: dict = None):
+    def __init__(self, req, trigger, context: dict = None):
+        from kivy.clock import Clock
         self.response = None
         self.is_finished = False
         self.status_code = 0
         self.trigger = trigger
         self.context = context if context else {}
+        self.req = req
+        self.event = Clock.schedule_interval(lambda *args: self.on_finish(
+            self.req, self.req.result), .1)
         Logger.debug('Response: Response object with trigger %s', trigger)
 
-    def on_finish(self, req, result):
-        Logger.debug('%s status code for %s', req.resp_status, req.url)
-        self.is_finished = True
+    def on_finish(self, req, result=None, progress=None):
+        self.is_finished = req.is_finished
         self.status_code = req.resp_status
+        if not self.is_finished:
+            return
+        Logger.debug('%s status code', req.resp_status)
         if self.status_code == 200:
             if req.url.startswith('https://geniust.herokuapp.com/api/recommendations'):
                 self.response = [Song(**x) for x in result['response']['tracks']]
             elif not req.url.startswith(Sender.API_ROOT):
-                # self.context['song'].preview_raw = result.content
                 self.response = result
             else:
                 self.response = result['response']
         else:
-            Logger.debug('request payload: %s', result)
+            Logger.debug('Failed request with payload: %s', result)
 
         if self.trigger is not None:
             Logger.debug('Trigger: Activated for %s', req.url)
+            self.event.cancel()
             self.trigger()
 
     def __repr__(self):
@@ -102,19 +108,16 @@ class Sender:
                 response = req.content
         else:
             from kivy.network.urlrequest import UrlRequest
+
             # Make the request
-            response = Response(trigger, context=kwargs)
             req = UrlRequest(new_url,
-                             on_success=response.on_finish,
-                             on_failure=response.on_finish,
-                             on_error=response.on_finish,
                              req_headers=self.headers,
                              timeout=timeout or self.timeout,
                              debug=True,
                              verify=False,
                              )
+            response = Response(req, trigger, context=kwargs)
             response.is_finished = req.is_finished
-            # #Logger.debug('request to %s', new_url)
 
             # Enforce rate limiting
             # time.sleep(self.sleep_time)
