@@ -1,17 +1,17 @@
 from os import environ
 from time import sleep
 import logging
-
-logging.basicConfig(format="%(levelname)s - %(message)s")
-Logger = logging.getLogger('gtplayer')
-Logger.setLevel(logging.DEBUG)
-
 from oscpy.server import OSCThreadServer
 
 from android_audio_player import SoundAndroidPlayer
 from utils import Song, save_song, Playlist
 from api import API
 from db import Database
+
+logging.basicConfig(format="%(levelname)s - %(message)s")
+Logger = logging.getLogger('gtplayer')
+Logger.setLevel(logging.DEBUG)
+
 
 class OSCSever:
     def __init__(self, activity_server_address, port):
