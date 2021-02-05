@@ -477,7 +477,7 @@ class MainPage(FloatLayout):
             self.download_button.text_color = app.theme_cls.disabled_hint_text_color
 
     def update_playlist_menu(self, *args, song=None):
-        self.app.playlist = self.db.get_playlist()
+        self.app.playlist = self.app.db.get_playlist()
         self.playlist_menu = MDCustomBottomSheet(
             screen=Factory.PlaylistLayout(height=dp(65 * len(app.playlist.tracks))),
         )
