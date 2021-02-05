@@ -82,8 +82,10 @@ class ServerSong():
         self.state = 'play'
         self.last_pos = pos
         song = self.playlist.get_track(id=id)
+        play_button = self.app.play_button
         if self.song_object != song:
-            self.app.play_button.load_song(song, playing=True)
+            play_button.load_song(song, playing=True)
+        play_button.event = Clock.schedule_interval(self.update_track_current, 1)
 
     def set_state(self, value):
         Logger.debug('ACTIVITY: State %s', value)
@@ -195,7 +197,7 @@ class PlaybackSlider(MDSlider):
                 app.song.last_pos = slider.value
             elif app.song:
                 play_button.event = Clock.schedule_interval(
-                    play_button.update_track_current, 0.1
+                    play_button.update_track_current, 1
                 )
             return True
         return False
@@ -245,7 +247,7 @@ class PlayButton(ButtonBehavior, Image):
     def play_track(self, song, seek=0):
         self.update_track_current(current=seek)
         if app.song is None or app.song.song_object != song:
-            self.load_song(song, playing=True)
+            self.load_song(song)
             app.song.load_play(song, app.volume)
             Logger.info('SONG: Playing new song.')
         else:
@@ -257,7 +259,6 @@ class PlayButton(ButtonBehavior, Image):
         self.source = f'images/stop_{app.theme_cls.theme_style.lower()}.png'
         if self.event:
             self.event.cancel()
-        self.event = Clock.schedule_interval(self.update_track_current, 1)
         Logger.info('play_track: playing %s | seek: %s', song.name, seek)
 
     def control(self, instance, **kwargs):
