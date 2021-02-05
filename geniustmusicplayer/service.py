@@ -3,7 +3,6 @@ from time import sleep
 import logging
 from oscpy.server import OSCThreadServer
 
-from android_audio_player import SoundAndroidPlayer
 from utils import save_song, Playlist
 from api import API
 from db import Database
@@ -257,12 +256,34 @@ Logger.debug('SERVICE: Starting %s', __name__)
 args = environ.get('PYTHON_SERVICE_ARGUMENT', '').split(',')
 Logger.debug('SERVICE: received args: %s', args)
 if args:
+    from android_audio_player import SoundAndroidPlayer
     activity_ip, activity_port, service_port = args[0], int(args[1]), int(args[2])
     activity_address = (activity_ip, activity_port)
 else:
+    # For debugging
+    from kivy.core.audio import SoundLoader
+    from threading import Thread
+    on_complete = None
+
+    def SoundAndroidPlayer(filename, callback):
+        global on_complete
+        return SoundLoader.load(filename)
+        on_complete = callback
+
+    def check_end(osc):
+        while True:
+            if (osc.song
+                and osc.song.length - osc.song.get_pos() < .5
+                    and osc.song.state == 'stop'):
+                osc.play_next()
+            sleep(.1)
     activity_address = ('127.0.0.1', 4999)
     service_port = 5000
 osc = OSCSever(activity_address, service_port)
+if not args:
+    t = Thread(check_end, args=(osc,))
+    t.daemon = True
+    t.start()
 Logger.debug('SERVICE: Started OSC server.')
 while True:
     osc.check_pos()

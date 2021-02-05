@@ -736,14 +736,12 @@ class MainApp(MDApp):
         self.screen_manager = self.nav_layout.screen_manager
         self.nav_drawer = self.nav_layout.nav_drawer
         if platform == 'android':
-            from android_audio_player import SoundAndroidPlayer
             # from android.storage import primary_external_storage_path
             # from android.permissions import request_permissions, Permission
             # request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
             # storage_path = primary_external_storage_path()
             from android.storage import app_storage_path
             storage_path = app_storage_path()
-            SoundLoader.register(SoundAndroidPlayer)
         else:
             storage_path = ''
             Window.size = (330, 650)
