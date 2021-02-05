@@ -91,11 +91,12 @@ class ServerSong():
         Logger.debug('ACTIVITY: Playing.')
         self.state = 'play'
         self.last_pos = pos
-        song = self.playlist.get_track(id=id)
+        song = self.app.playlist.get_track(id=id)
         play_button = self.app.play_button
         if self.song_object != song:
             play_button.load_song(song, playing=True)
-        play_button.event = Clock.schedule_interval(self.update_track_current, 1)
+        play_button.update_track_current(current=pos)
+        play_button.event = Clock.schedule_interval(play_button.update_track_current, 1)
 
     def set_state(self, value):
         Logger.debug('ACTIVITY: State %s', value)
@@ -256,6 +257,8 @@ class PlayButton(ButtonBehavior, Image):
 
     def play_track(self, song, seek=0):
         self.update_track_current(current=seek)
+        if self.event:
+            self.event.cancel()
         if app.song is None or app.song.song_object != song:
             self.load_song(song)
             app.song.load_play(song, app.volume)
@@ -267,8 +270,7 @@ class PlayButton(ButtonBehavior, Image):
         # app.playlist.set_current(song)
         app.song.state = 'play'
         self.source = f'images/stop_{app.theme_cls.theme_style.lower()}.png'
-        if self.event:
-            self.event.cancel()
+
         Logger.info('play_track: playing %s | seek: %s', song.name, seek)
 
     def control(self, instance, **kwargs):
@@ -456,7 +458,7 @@ class MainPage(FloatLayout):
                 seconds=app.song.length)
             )[3:7]
             self.ids.playback_slider.max = app.song.length
-        app.play_button.update_track_current(current=0)
+        # app.play_button.update_track_current(current=0)
         if playing:
             app.play_button.source = f'images/stop_{app.theme_cls.theme_style.lower()}.png'
         if song in app.favorites:
@@ -862,7 +864,7 @@ class MainApp(MDApp):
                             args=(self.song.getaddress(), service_port,))
                 t.daemon = True
                 t.start()
-                sleep(3)
+                sleep(1)
             self.song.server_address = [self.song.getaddress()[0], service_port]
 
             # Update UI

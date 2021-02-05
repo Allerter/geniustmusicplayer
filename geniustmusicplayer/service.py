@@ -103,7 +103,12 @@ class OSCSever:
         self.song.volume = volume
         if self.event:
             self.event.cancel()
-        # self.event = Clock.schedule_interval(self.check_pos, .5)
+        pos = self.song.get_pos()
+        Logger.debug('SERVICE -> ACTIVITY: /playing %s.', pos)
+        values = [self.song.song_object.id, pos]
+        self.osc.send_message(b'/playing',
+                              values,
+                              *self.activity_server_address)
         Logger.debug('SERVICE: Playing song.')
 
     def stop(self, *values):
