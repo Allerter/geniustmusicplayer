@@ -67,8 +67,8 @@ class OSCSever:
         )
         playlist = Playlist(req)
         self.db.update_playlist(playlist)
-        self.osc.send_message(b'/set_playlist',
-                              [playlist.to_json().encode()],
+        self.osc.send_message(b'/update_playlist',
+                              [],
                               *self.activity_server_address)
         return playlist
 

@@ -75,6 +75,7 @@ class ServerSong():
         self.osc.bind(b'/set_length', self.set_length)
         self.osc.bind(b'/set_complete', self.set_complete)
         self.osc.bind(b'/playing', self.playing)
+        self.osb.bind(b'/update_playlist', self.update_playlist)
 
     def playing(self, song, pos):
         Logger.debug('ACTIVITY: Playing.')
@@ -105,7 +106,7 @@ class ServerSong():
 
     def load(self, song):
         Logger.debug('ACTIVITY -> SERVER: /load')
-        self.osc.send_message(b'/load', [song.to_json().encode()], *self.server_address)
+        self.osc.send_message(b'/load', [song.id], *self.server_address)
 
     def unload(self):
         Logger.debug('ACTIVITY -> SERVER: /unload')
@@ -122,7 +123,7 @@ class ServerSong():
     def load_play(self, song, volume):
         Logger.debug('ACTIVITY -> SERVER: /load_play')
         self.osc.send_message(b'/load_play',
-                              [song.to_json().encode(), volume],
+                              [song.id, volume],
                               *self.server_address)
 
     def stop(self):
@@ -137,7 +138,6 @@ class ServerSong():
         Logger.debug('ACTIVITY -> SERVER: /get_pos')
         self.pos_callback = callback
         self.osc.send_message(b'/get_pos', [], *self.server_address)
-        return 5
 
     def get_pos(self, callback):
         Logger.debug('ACTIVITY -> SERVER: get pos and call %s', callback)
@@ -147,6 +147,10 @@ class ServerSong():
     def _get_pos(self, value):
         Logger.debug('ACTIVITY: pos received %s', value)
         self.pos_callback(value)
+
+    def update_playlist(self):
+        self.app.playlist = self.db.get_playlist()
+        Logger.debug('ACTIVITY: Updated playlist.')
 
 
 def remove_songs(files):
@@ -228,7 +232,6 @@ class PlayButton(ButtonBehavior, Image):
         self.snackbar = None
         app.play_button = self
 
- 
     def load_song(self, song, playing=False):
         Logger.debug('load_song: %s', song.preview_file)
         app.song.song_object = song
@@ -239,7 +242,6 @@ class PlayButton(ButtonBehavior, Image):
         app.main_page.edit_ui_for_song(song, playing=playing)
         app.playlist.set_current(song)
 
- 
     def play_track(self, song, seek=0):
         self.update_track_current(current=seek)
         if app.song is None or app.song.song_object != song:
@@ -258,7 +260,6 @@ class PlayButton(ButtonBehavior, Image):
         self.event = Clock.schedule_interval(self.update_track_current, 1)
         Logger.info('play_track: playing %s | seek: %s', song.name, seek)
 
- 
     def control(self, instance, **kwargs):
         play_next = kwargs.get('play_next')
         Logger.debug('control: current: %s, play_next: %s | song_state: %s',
@@ -287,7 +288,6 @@ class PlayButton(ButtonBehavior, Image):
             self.source = f'images/play_{app.theme_cls.theme_style.lower()}.png'
             self.event.cancel()
 
- 
     def play_previous(self, instance):
         Logger.debug(
             'play_previous: PLAYLIST: current: %s | is_first: %s',
@@ -298,7 +298,6 @@ class PlayButton(ButtonBehavior, Image):
             song = app.playlist.previous()
             self.play_track(song)
 
- 
     def play_next(self, instance):
         Logger.debug(
             'play_next: PLAYLIST: current: %s | is_last: %s',
@@ -311,7 +310,6 @@ class PlayButton(ButtonBehavior, Image):
             song = app.playlist.next()
             self.play_track(song)
 
- 
     def stop_song(self):
         if app.song.state == 'play':
             app.song.stop()
@@ -439,7 +437,6 @@ class MainPage(FloatLayout):
         self.song = self.app.song
         self.playlist_menu = None
 
- 
     def edit_ui_for_song(self, song=None, playing=False):
         if app.song:
             self.ids.track_length.text = str(timedelta(
@@ -460,7 +457,6 @@ class MainPage(FloatLayout):
             self.update_download_button(song)
             self.song = song
 
- 
     def update_download_button(self, song):
         if song.download_url or song.isrc:
             Logger.debug('DOWNLOAD: Available.')
@@ -469,7 +465,6 @@ class MainPage(FloatLayout):
             Logger.debug('DOWNLOAD: Unavailable.')
             self.download_button.text_color = app.theme_cls.disabled_hint_text_color
 
- 
     def update_playlist_menu(self, *args, song=None):
         self.playlist_menu = MDCustomBottomSheet(
             screen=Factory.PlaylistLayout(height=dp(65 * len(app.playlist.tracks))),
@@ -535,7 +530,6 @@ class MainPage(FloatLayout):
                 icon='close')
         song_menu.open()
 
- 
     def play_from_playlist(self, track):
         # track = app.playlist.track_by_name(selected_item.text)
         if track == app.playlist.current_track:  # track is already playing
@@ -543,7 +537,6 @@ class MainPage(FloatLayout):
         self.playlist_menu.dismiss()
         app.play_button.play_track(track)
 
- 
     def remove_playlist_item(self, instance, song):
         self.playlist_menu.screen.songs_grid.remove_widget(instance.parent.parent)
         app.playlist.remove(song)
@@ -551,7 +544,6 @@ class MainPage(FloatLayout):
         self.playlist_menu.dismiss()
         toast('Removed from playlist')
 
- 
     def favorite_playlist_item(self, instance, song):
         if song in app.favorites:
             favorited = False
@@ -594,7 +586,6 @@ class MainPage(FloatLayout):
                 cover_art = 'images/empty_coverart.png'
         return cover_art
 
- 
     def update_cover_art(self, song):
         cover_art = self._get_cover_art(song)
         self.ids.cover_art.source = cover_art
@@ -607,12 +598,10 @@ class MainPage(FloatLayout):
                 image.texture.save(cover_art, flipped=False)
                 Logger.debug('CACHE: Saved %s', cover_art)
 
- 
     def update_song_info(self, song):
         self.ids.title.text = song.name
         self.ids.artist.text = song.artist
 
- 
     def download_song(self, song, show_progress=True):
         def get_song(self, song, progress_bar=None):
             if song.download_url:
@@ -735,7 +724,6 @@ class MainApp(MDApp):
     volume = 0.5
     api = API()
 
- 
     def build(self):
         Logger.setLevel(LOG_LEVELS['debug'])
         self.theme_cls.primary_palette = "Indigo"
@@ -784,7 +772,6 @@ class MainApp(MDApp):
         settings_screen.add_widget(app.settings_page)
         self.screen_manager.add_widget(settings_screen)
 
- 
     def load_first_page(self, *args):
         if user := self.db.get_user():
             self.main_page = page = MainPage()
