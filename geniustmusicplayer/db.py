@@ -210,6 +210,13 @@ class Database:
         )
 
     @get_cursor
+    def get_track(self, id, cursor=None):
+        values = (id,)
+        query = f"SELECT * FROM playlist where id = ?;"
+        cursor.execute(query, values)
+        return self._db_to_track(cursor.fetchone())
+
+    @get_cursor
     def update_track(self, track, column, value, cursor=None):
         values = (value,)
         for table in ('playlist', 'favorites'):

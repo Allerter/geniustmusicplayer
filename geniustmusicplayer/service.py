@@ -80,9 +80,9 @@ class OSCSever:
     def getaddress(self):
         return self.osc.getaddress()
 
-    def load(self, song):
+    def load(self, id):
         Logger.debug('SERVICE: Loading song.')
-        song = Song.bytes_to_song(song)
+        song = self.db.get_track(id)
         if song.preview_file is None:
             Logger.debug('SERVICE: Downlaoding song in load.')
             self.download_song(song)
@@ -93,12 +93,12 @@ class OSCSever:
         self.db.update_current_track(song)
         Logger.debug('SERVICE: Song loaded.')
 
-    def load_play(self, song, volume=None):
+    def load_play(self, id, volume=None):
         Logger.debug('SERVICE: Loading and playing song.')
         self.song.stop()
-        self.load(song)
+        self.load(id)
         Logger.debug('SERVICE -> ACTIVITY: /playing 0.')
-        values = [song.to_json().encode() if not isinstance(song, bytes) else song, 0]
+        values = [id]
         self.osc.send_message(b'/playing',
                               values,
                               *self.activity_server_address)
@@ -141,13 +141,13 @@ class OSCSever:
         song = self.playlist.next()
         if song.preview_file is None:
             self.download_song(song)
-        self.load_play(song)
+        self.load_play(song.id)
 
     def play_previous(self):
         Logger.debug('SERVICE: Playing previous.')
         if not self.playlist.is_first:
             self.stop()
-            self.load_play(self.playlist.previous())
+            self.load_play(self.playlist.previous().id)
 
     def on_state(self, instance, value):
         Logger.debug('SERVICE -> ACTIVITY: /set_state %s', value)
