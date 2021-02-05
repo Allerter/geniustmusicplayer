@@ -1,6 +1,7 @@
 import os
 import socket
 import threading
+import logging
 from datetime import timedelta
 from os.path import join
 from time import time
@@ -48,6 +49,15 @@ from utils import log, save_song, switch_screen, create_snackbar, Song
 from api import API
 from get_song_file import get_download_info, get_file_from_encrypted
 from db import Database
+
+
+my_logger = logging.getLogger('gtplayer')
+my_logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+my_logger.addHandler(ch)
 
 
 def get_open_port():

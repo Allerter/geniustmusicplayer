@@ -9,8 +9,6 @@ import requests
 from utils import Song
 
 Logger = logging.getLogger('gtplayer')
-Logger.setLevel(logging.DEBUG)
-
 
 class Response:
 
