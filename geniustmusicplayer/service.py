@@ -91,7 +91,7 @@ class OSCSever:
         self.song.stop()
         self.load(id)
         Logger.debug('SERVICE -> ACTIVITY: /playing 0.')
-        values = [id]
+        values = [id, 0]
         self.osc.send_message(b'/playing',
                               values,
                               *self.activity_server_address)
