@@ -860,8 +860,9 @@ class MainApp(MDApp):
             else:
                 from threading import Thread
                 from time import sleep
-                t = Thread(target=start_osc_server,
-                            args=(self.song.getaddress(), service_port,))
+                from service import start_debug_server
+                t = Thread(target=start_debug_server,
+                           args=(self.song.getaddress(), service_port,))
                 t.daemon = True
                 t.start()
                 sleep(1)

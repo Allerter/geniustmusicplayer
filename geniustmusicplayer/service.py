@@ -253,22 +253,17 @@ icon = getattr(IconDrawable, 'icon')
 # Display the notification and place the service in the foreground
  service.startForeground(1, builder.build())
 """
-args = environ.get('PYTHON_SERVICE_ARGUMENT', '')
-if args:
-    logging.basicConfig(format="%(levelname)s - %(message)s")
-    Logger = logging.getLogger('gtplayer')
-    Logger.setLevel(logging.DEBUG)
-    from android_audio_player import SoundAndroidPlayer
-else:
+
+
+def start_debug_server(activity_address, service_port):
     from kivy.core.audio import SoundLoader
     from kivy.logger import Logger
     from threading import Thread
-    on_complete = None
+    global Logger
+    global SoundAndroidPlayer
 
-    def SoundAndroidPlayer(filename, callback):
-        global on_complete
+    def SoundAndroidPlayer(filename, _):
         return SoundLoader.load(filename)
-        on_complete = callback
 
     def check_end(osc):
         while True:
@@ -277,18 +272,23 @@ else:
                     and osc.song.state == 'stop'):
                 osc.play_next()
             sleep(.1)
-    args = environ.get('DEBUG_SERVICE_ARGUMENT')
-
-args = args.split(',') if args else []
-activity_ip, activity_port, service_port = args[0], int(args[1]), int(args[2])
-activity_address = (activity_ip, activity_port)
-Logger.debug('SERVICE: Activity server address: %s', activity_address)
-osc = OSCSever(activity_address, service_port)
-if not args:
-    t = Thread(target=check_end, args=(osc,))
+    osc = OSCSever(activity_address, service_port)
+    t = Thread(target=check_end, args=(osc,))  # equivalent of OnCompletionListener
     t.daemon = True
     t.start()
-Logger.debug('SERVICE: Started OSC server.')
-while True:
-    osc.check_pos()
-    sleep(.1)
+
+
+if __name__ == '__main__':
+    from android_audio_player import SoundAndroidPlayer
+    args = environ.get('PYTHON_SERVICE_ARGUMENT', '')
+    logging.basicConfig(format="%(levelname)s - %(message)s")
+    Logger = logging.getLogger('gtplayer')
+    Logger.setLevel(logging.DEBUG)
+    args = args.split(',') if args else []
+    activity_ip, activity_port, service_port = args[0], int(args[1]), int(args[2])
+    activity_address = (activity_ip, activity_port)
+    osc = OSCSever(activity_address, service_port)
+    Logger.debug('SERVICE: Started OSC server.')
+    while True:
+        osc.check_pos()
+        sleep(.1)
