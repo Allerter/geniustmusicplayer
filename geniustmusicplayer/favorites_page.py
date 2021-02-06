@@ -1,13 +1,13 @@
 from kivymd.app import MDApp
 from kivy.uix.floatlayout import FloatLayout
 from kivymd.uix.list import TwoLineAvatarIconListItem
-from kivymd.uix.bottomsheet import MDListBottomSheet
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.toast import toast
 
 
 class FavoriteSongListItem(TwoLineAvatarIconListItem):
     def __init__(self, **kwargs):
+        from kivymd.uix.bottomsheet import MDListBottomSheet
         song = kwargs.pop('song')
         app = MDApp.get_running_app()
         super().__init__(**kwargs)
@@ -69,7 +69,8 @@ class FavoritesPage(FloatLayout):
 
     def set_songs(self):
         sort = self.ids.drop_item.current_item
-        if self.ids.sort_descending.text_color != self.app.theme_cls.disabled_hint_text_color:
+        disabled_hint_text_color = self.app.theme_cls.disabled_hint_text_color
+        if self.ids.sort_descending.text_color != disabled_hint_text_color:
             descending = True
         else:
             descending = False
