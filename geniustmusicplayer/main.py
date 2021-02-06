@@ -1,30 +1,19 @@
 import os
-import socket
-import threading
 import logging
 from datetime import timedelta
 from os.path import join
 from time import time
-from io import BytesIO
 
-# os.environ['KIVY_AUDIO'] = 'android'
 os.environ['KIVY_IMAGE'] = 'pil,sdl2,gif'
 
-import requests
 from kivy.loader import Loader
-# Loader.num_workers = 4
-from oscpy.server import OSCThreadServer
-import kivymd.material_resources as m_res
 from kivymd.app import MDApp
-from kivymd.uix.label import MDLabel
 from kivymd.uix.slider import MDSlider
 from kivymd.uix.menu import RightContent
 from kivymd.uix.button import MDIconButton
-from kivymd.uix.bottomsheet import MDCustomBottomSheet, MDListBottomSheet
 from kivymd.uix.list import OneLineIconListItem
 from kivymd.uix.list import MDList
 from kivymd.theming import ThemableBehavior
-from kivymd.uix.progressbar import MDProgressBar
 from kivymd.uix.list import BaseListItem, ContainerSupport
 from kivymd.toast import toast
 from kivy.factory import Factory
@@ -32,22 +21,15 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import Screen
-from kivy.properties import (ListProperty, BooleanProperty, NumericProperty,
+from kivy.properties import (BooleanProperty, NumericProperty,
                              ObjectProperty, StringProperty)
-from kivy.core.window import Window
 from kivy.clock import Clock
 from kivy.uix.image import Image
-from kivy.core.audio import SoundLoader
 from kivy.logger import Logger, LOG_LEVELS
 from kivy.utils import platform
-from kivy.utils import rgba
 from kivy.metrics import dp
 
-import settings_page
-import favorites_page
-from utils import log, save_song, switch_screen, create_snackbar, Song
 from api import API
-from get_song_file import get_download_info, get_file_from_encrypted
 from db import Database
 
 
@@ -61,6 +43,7 @@ my_logger.addHandler(ch)
 
 
 def get_open_port():
+    import socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("", 0))
         s.listen(1)
@@ -70,6 +53,7 @@ def get_open_port():
 class ServerSong():
 
     def __init__(self, app, pos_callback, state_callback, port):
+        from oscpy.server import OSCThreadServer
         self.app = app
         self.pos_callback = pos_callback
         self.state_callback = state_callback
@@ -393,12 +377,15 @@ class PlaylistSongItem(MyBaseListItem):
     _txt_right_pad = NumericProperty("40dp")
 
     def __init__(self, **kwargs):
+        import kivymd.material_resources as m_res
         super().__init__(**kwargs)
         self._txt_right_pad = dp(40) + m_res.HORIZ_MARGINS
 
 
 class RightContentCls(RightContent):
     def __init__(self, **kwargs):
+        from kivy.utils import rgba
+        from utils import create_snackbar
         song = kwargs.pop('song')
         is_removable = kwargs.pop('is_removable')
         super().__init__(**kwargs)
@@ -460,7 +447,8 @@ class MainPage(FloatLayout):
             self.ids.playback_slider.max = app.song.length
         # app.play_button.update_track_current(current=0)
         if playing:
-            app.play_button.source = f'images/stop_{app.theme_cls.theme_style.lower()}.png'
+            theme = app.theme_cls.theme_style.lower()
+            app.play_button.source = f'images/stop_{theme}.png'
         if song in app.favorites:
             self.favorite_button.favorited = True
         else:
@@ -481,6 +469,7 @@ class MainPage(FloatLayout):
             self.download_button.text_color = app.theme_cls.disabled_hint_text_color
 
     def update_playlist_menu(self, *args, song=None):
+        from kivymd.uix.bottomsheet import MDCustomBottomSheet
         self.app.playlist = self.app.db.get_playlist()
         self.playlist_menu = MDCustomBottomSheet(
             screen=Factory.PlaylistLayout(height=dp(65 * len(app.playlist.tracks))),
@@ -506,6 +495,7 @@ class MainPage(FloatLayout):
 
     def open_song_menu(self, i):
         # adding right-side icons
+        from kivymd.uix.bottomsheet import MDListBottomSheet
         song_menu = MDListBottomSheet(radius_from='top')
         if i.download_file:
             song_menu.add_item(
@@ -619,6 +609,13 @@ class MainPage(FloatLayout):
         self.ids.artist.text = song.artist
 
     def download_song(self, song, show_progress=True):
+        import threading
+        import requests
+        from io import BytesIO
+        from kivymd.uix.progressbar import MDProgressBar
+        from get_song_file import get_download_info, get_file_from_encrypted
+        from utils import save_song
+
         def get_song(self, song, progress_bar=None):
             if song.download_url:
                 url = song.download_url
@@ -712,6 +709,7 @@ class DrawerList(ThemableBehavior, MDList):
 
 class LoadingPage(Screen):
     def __init__(self, **kwargs):
+        from kivymd.uix.label import MDLabel
         super().__init__(**kwargs)
         logo = Image(source="images/icon.png", pos=(800, 800))
         label = MDLabel(
@@ -731,8 +729,8 @@ def start_service(args):
 
 
 class MainApp(MDApp):
-    artists = ListProperty([])
-    genres = ListProperty([])
+    artists = []
+    genres = []
     db = Database()
     song = None
     main_page = None
@@ -756,6 +754,7 @@ class MainApp(MDApp):
             from android.storage import app_storage_path
             storage_path = app_storage_path()
         else:
+            from kivy.core.window import Window
             storage_path = ''
             Window.size = (330, 650)
 
@@ -775,6 +774,8 @@ class MainApp(MDApp):
         return self.nav_layout
 
     def complete_ui(self):
+        import settings_page
+        import favorites_page
         favorites_screen = Screen(name='favorites_page')
         app.favorites_page = favorites_page.FavoritesPage()
         favorites_screen.add_widget(app.favorites_page)
@@ -859,7 +860,7 @@ class MainApp(MDApp):
                            args=(self.song.getaddress(), service_port,))
                 t.daemon = True
                 t.start()
-                sleep(1)
+                sleep(1)  # allow debug server to finish setting up
             self.song.server_address = [self.song.getaddress()[0], service_port]
 
             # Update UI
@@ -876,6 +877,7 @@ class MainApp(MDApp):
 
             Clock.schedule_once(lambda *args, song=song: self.complete_ui())
         else:
+            from utils import switch_screen
             import start_page
             self.nav_drawer.type = 'standard'
             page = start_page.StartPage()
