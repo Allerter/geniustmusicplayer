@@ -9,7 +9,6 @@ os.environ['KIVY_IMAGE'] = 'pil,sdl2,gif'
 from kivy.loader import Loader
 from kivymd.app import MDApp
 from kivymd.uix.slider import MDSlider
-from kivymd.uix.menu import RightContent
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.list import OneLineIconListItem
 from kivymd.uix.list import MDList
@@ -380,49 +379,6 @@ class PlaylistSongItem(MyBaseListItem):
         import kivymd.material_resources as m_res
         super().__init__(**kwargs)
         self._txt_right_pad = dp(40) + m_res.HORIZ_MARGINS
-
-
-class RightContentCls(RightContent):
-    def __init__(self, **kwargs):
-        from kivy.utils import rgba
-        from utils import create_snackbar
-        song = kwargs.pop('song')
-        is_removable = kwargs.pop('is_removable')
-        super().__init__(**kwargs)
-        if song.id_spotify:
-            spotify_button = MDIconButton(
-                icon='spotify',
-                user_font_size="20sp",
-                pos_hint={"center_y": .5},
-                theme_text_color="Custom",
-                text_color=rgba("#1DB954"),
-                on_release=lambda *args: create_snackbar(
-                    'Spotify',
-                    lambda *args: None).open(),
-            )
-            self.add_widget(spotify_button)
-
-        favorite_button = MDIconButton(
-            size_hint=(None, None),
-            user_font_size='16sp',
-            pos_hint={'center_y': 0.5},
-            theme_text_color="Custom",
-            text_color=((1, 1, 1, 0.87) if not is_removable
-                        else (rgba('#bd2828') if app.theme_cls.theme_style == 'Light'
-                              else rgba('#cc0000'))),
-            icon='heart' if song in app.favorites else 'heart-outline',
-            on_release=lambda *args: app.main_page.favorite_playlist_item(self, song)
-        )
-        self.add_widget(favorite_button)
-
-        if is_removable:
-            remove_button = MDIconButton(
-                icon='close',
-                user_font_size="16sp",
-                pos_hint={"center_y": .5},
-                on_release=lambda *args: app.main_page.remove_playlist_item(self, song),
-            )
-            self.add_widget(remove_button)
 
 
 def is_removable(song):
