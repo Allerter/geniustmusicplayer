@@ -572,17 +572,17 @@ class MainPage(FloatLayout):
                 data = get_download_info(song.isrc)
                 url = data['url']
                 encrypted = True
-
             req = requests.get(url, stream=True)
             song_bytes = b''
             chunk_size = 500000
-            chunk_progress = int(req.headers['Content-Length']) // chunk_size // 5
+            num_chunks = int(req.headers['Content-Length']) // chunk_size
+            chunk_progress = 100 // num_chunks
             try:
                 for i, chunk in enumerate(req.iter_content(chunk_size)):
                     song_bytes += chunk
                     if progress_bar:
                         progress_bar.value += chunk_progress
-                    Logger.debug('DOWNLOAD: Received chunk %s', i)
+                    Logger.debug('DOWNLOAD: Received chunk %s/%s', i, num_chunks)
             except Exception as e:
                 Logger.error(e)
                 if progress_bar:
