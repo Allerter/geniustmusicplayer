@@ -556,25 +556,17 @@ class MainPage(FloatLayout):
             song.date_favorited = None
             app.favorites.remove(song)
             app.db.remove_favorites_track(song)
-            icon = 'heart-outline'
             msg = 'Song unfavorited'
         else:
             favorited = True
             song.date_favorited = time()
             app.favorites.append(song)
             app.db.add_favorites_track(song)
-            icon = 'heart'
             msg = 'Song favorited'
 
         # Correct main favorite button if user (un)favorited item == current song
         if app.song.song_object == song:
             app.main_page.favorite_button.favorited = favorited
-
-        # change heart icon that was pressed
-        for icon_button in instance.children:
-            if 'heart' in icon_button.icon:
-                icon_button.icon = icon
-                break
 
         self.playlist_menu.dismiss()
         toast(msg)
