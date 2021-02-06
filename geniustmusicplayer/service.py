@@ -124,7 +124,8 @@ class OSCSever:
     def set_volume(self, value):
         Logger.debug('SERVICE: setting song volume %s.', value)
         self.volume = value
-        self.song.volume = value
+        if self.song:
+            self.song.volume = value
 
     def on_complete(self, *values):
         Logger.debug('SERVICE -> ACTIVITY: /set_complete')
