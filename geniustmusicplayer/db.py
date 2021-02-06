@@ -201,7 +201,7 @@ class Database:
             return None
         return dict(
             genres=user[1].split(','),
-            artists=user[2].split(','),
+            artists=user[2].split(',') if user[2] else [],
             dark_mode=user[3],
             play_mode=user[4],
             songs_path=user[5],
