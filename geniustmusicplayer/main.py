@@ -730,12 +730,6 @@ def start_service(args):
     service.start(mActivity, args)
 
 
-def start_osc_server(a, b):
-    from os import environ
-    environ['DEBUG_SERVICE_ARGUMENT'] = ','.join([*[str(x) for x in a], str(b)])
-    import service
-
-
 class MainApp(MDApp):
     artists = ListProperty([])
     genres = ListProperty([])
