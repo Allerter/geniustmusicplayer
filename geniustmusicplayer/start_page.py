@@ -1,6 +1,4 @@
 from time import time
-import secrets
-import webbrowser
 
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -118,7 +116,8 @@ class StartPage(FloatLayout):
 
     def select_choice(self, button):
         # self.ids.separator.canvas.clear()
-
+        import secrets
+        import webbrowser
         unique_value = secrets.token_urlsafe().replace("_", "-")
         if 'Genius' in button.text:
             state = f'genius_android_{unique_value}'
@@ -326,7 +325,8 @@ class Search(FloatLayout):
 
         text = self.ids.search_field.text
         # start the search when the user stops typing
-        if self.snackbar_retry or (len(text) > 2 and self.current_input - self.last_input > 0.3):
+        if (self.snackbar_retry
+                or (len(text) > 2 and self.current_input - self.last_input > 0.3)):
             if self.loading.active is False:
                 self.loading.active = True
             self.snackbar_retry = False
