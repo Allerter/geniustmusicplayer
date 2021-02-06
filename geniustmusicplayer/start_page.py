@@ -3,26 +3,17 @@ import secrets
 import webbrowser
 
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
-from kivy.properties import ListProperty, ObjectProperty
 from kivy.clock import Clock
 from kivy.logger import Logger
-from kivy.utils import rgba
 from kivymd.app import MDApp
-from kivymd.uix.button import (
-    MDRectangleFlatButton, MDRaisedButton, MDFillRoundFlatButton, MDFlatButton)
-from kivymd.uix.label import MDLabel
+from kivymd.uix.button import MDFlatButton
 from kivymd.uix.list import OneLineListItem
-from kivymd.uix.textfield import MDTextField
-from kivymd.uix.spinner import MDSpinner
 from kivymd.toast import toast
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import OneLineAvatarIconListItem
-from kivymd.uix.chip import MDChip
-from kivymd.toast import toast
 
-from utils import log, switch_screen, create_snackbar, Playlist
+from utils import switch_screen, create_snackbar
 
 
 class AgeDialogContent(BoxLayout):
@@ -37,6 +28,7 @@ class GenreItem(OneLineAvatarIconListItem):
 
 
 def loading_spinner(pos_hint, active=False):
+    from kivymd.uix.spinner import MDSpinner
     loading = MDSpinner(
         size_hint=(None, None),
         size=('30dp', '30dp'),
@@ -117,7 +109,6 @@ class GenresDialog:
 
 
 class StartPage(FloatLayout):
-    welcome_label = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -125,7 +116,6 @@ class StartPage(FloatLayout):
         self.age_dialog = None
         self.genres_dialog = None
 
-    @log
     def select_choice(self, button):
         # self.ids.separator.canvas.clear()
 
@@ -222,6 +212,7 @@ class ArtistsPage(FloatLayout):
     search_hits = None
 
     def __init__(self, callback=None, **kwargs):
+        from kivymd.uix.chip import MDChip
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
         self.app.artists_page = self
@@ -253,6 +244,7 @@ class ArtistsPage(FloatLayout):
 
         def get_tracks(*args):
             if req.status_code == 200:
+                from utils import Playlist
                 tracks = req.response
                 self.app.playlist = Playlist(tracks, current=0)
                 self.save_preferences(self.app.playlist)
@@ -284,8 +276,8 @@ class CustomOneLineListItem(OneLineListItem):
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
 
-    @log
     def add_artist(self, artist):
+        from kivymd.uix.chip import MDChip
         page = self.app.artists_page
         page.search_layout.ids.search_field.text = ''
         page.search_layout.ids.hits.clear_widgets()
