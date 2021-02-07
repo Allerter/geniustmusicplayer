@@ -676,6 +676,12 @@ def start_service(args):
     service.start(mActivity, args)
 
 
+def remove_splash_screen(*args):
+    from jnius import autoclass
+    activity = autoclass('org.kivy.android.PythonActivity').mActivity
+    activity.removeLoadingScreen()
+
+
 class MainApp(MDApp):
     artists = []
     genres = []
@@ -719,6 +725,8 @@ class MainApp(MDApp):
 
         self.load_first_page()
         Logger.debug('DISPLAY: Loaded first page.')
+        if platform == 'android':
+            Clock.schedule_once(remove_splash_screen)
         return self.nav_layout
 
     def complete_ui(self):
