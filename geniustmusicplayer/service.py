@@ -31,7 +31,7 @@ class OSCSever:
         self.volume = user['volume']
         self.songs_path = user['songs_path']
         self.playlist = self.db.get_playlist()
-        self.event = None
+        self.waiting_for_load = False
 
         self.load(self.playlist.current_track.id)
 
@@ -98,11 +98,14 @@ class OSCSever:
         self.play(0, volume if volume is not None else self.volume)
 
     def play(self, seek, volume):
+        if self.song is None:
+            self.waiting_for_load = True
+            return
+        else:
+            self.waiting_for_load = False
         self.song.play()
         self.song.seek(seek)
         self.song.volume = volume
-        if self.event:
-            self.event.cancel()
         pos = self.song.get_pos()
         Logger.debug('SERVICE -> ACTIVITY: /playing %s.', pos)
         values = [self.song.song_object.id, pos]
@@ -114,8 +117,6 @@ class OSCSever:
     def stop(self, *values):
         Logger.debug('SERVICE: stopping song.')
         self.song.stop()
-        if self.event:
-            self.event.cancel()
 
     def seek(self, value):
         Logger.debug('SERVICE: seeking %s.', value)
@@ -268,10 +269,11 @@ def start_debug_server(activity_address, service_port):
 
     def check_end(osc):
         while True:
-            if (osc.song
-                and osc.song.length - osc.song.get_pos() < .5
-                    and osc.song.state == 'stop'):
-                osc.play_next()
+            if osc.waiting_for_load:
+                osc.play()
+            if song := osc.song:
+                if song.length - song.get_pos() < .5 and song.state == 'stop':
+                    osc.play_next()
             sleep(.1)
     osc = OSCSever(activity_address, service_port)
     t = Thread(target=check_end, args=(osc,))  # equivalent of OnCompletionListener
@@ -291,5 +293,7 @@ if __name__ == '__main__':
     osc = OSCSever(activity_address, service_port)
     Logger.debug('SERVICE: Started OSC server.')
     while True:
+        if osc.waiting_for_load:
+            osc.play()
         osc.check_pos()
         sleep(.1)
