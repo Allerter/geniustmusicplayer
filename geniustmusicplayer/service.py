@@ -28,17 +28,16 @@ class OSCSever:
         user = self.db.get_user()
         self.genres = user['genres']
         self.artists = user['artists']
-        self.volume = user['volume']
+        self._volume = user['volume']
         self.songs_path = user['songs_path']
         self.playlist = self.db.get_playlist()
-        self.is_prepared = False
         self.waiting_for_load = False
-        self.seek = 0
+        self.seek_pos = 0
 
         self.load(self.playlist.current_track.id)
 
     def check_pos(self, *args):
-        if self.is_prepared and self.song.length - self.song.get_pos() < 20:
+        if self.song.is_prepared and self.song.length - self.song.get_pos() < 20:
             next_song = self.playlist.preview_next()
             if next_song is None or next_song.preview_file is None:
                 if next_song is None:
@@ -69,7 +68,7 @@ class OSCSever:
         return playlist
 
     def get_pos(self, *values):
-        pos = self.song.get_pos() if self.song and self.is_prepared else 0
+        pos = self.song.get_pos() if self.song and self.song.is_prepared else 0
         Logger.debug('SERVICE -> ACTIVITY: /pos %s', pos)
         self.osc.answer(b'/pos', [pos])
 
@@ -77,7 +76,7 @@ class OSCSever:
         return self.osc.getaddress()
 
     def load(self, id):
-        self.is_prepared = False
+        self.song.is_prepared = False
         Logger.debug('SERVICE: Loading song.')
         song = self.db.get_track(id)
         if song.preview_file is None:
@@ -87,7 +86,7 @@ class OSCSever:
         self.song.song_object = song
         self.db.update_current_track(song)
         self.playlist = self.db.get_playlist()
-        self.is_prepared = True
+        self.song.is_prepared = True
         Logger.debug('SERVICE: Song loaded.')
 
     def load_play(self, id, volume=None):
@@ -102,9 +101,9 @@ class OSCSever:
         self.play(0, volume if volume is not None else self.volume)
 
     def play(self, seek, volume):
-        if self.song is None or not self.is_prepared:
+        if self.song is None or not self.song.is_prepared:
             self.waiting_for_load = True
-            self.seek = seek
+            self.seek_pos = seek
             self.volume = volume
             return
         else:
@@ -123,18 +122,18 @@ class OSCSever:
     def stop(self, *values):
         Logger.debug('SERVICE: stopping song.')
         self.waiting_for_load = False
-        if self.is_prepared and self.song.state == 'play':
+        if self.song.is_prepared and self.song.state == 'play':
             self.song.stop()
 
     def seek(self, value):
         Logger.debug('SERVICE: seeking %s.', value)
-        if self.is_prepared:
+        if self.song.is_prepared:
             self.song.seek(value)
 
     def set_volume(self, value):
         Logger.debug('SERVICE: setting song volume %s.', value)
         self.volume = value
-        if self.song and self.is_prepared:
+        if self.song and self.song.is_prepared:
             self.song.volume = value
 
     def on_complete(self, *values):
@@ -162,7 +161,7 @@ class OSCSever:
             b'/set_state',
             [value.encode()],
             *self.activity_server_address)
-        if self.is_prepared and self.song.length - self.song.get_pos() < 0.2:
+        if self.song.is_prepared and self.song.length - self.song.get_pos() < 0.2:
             self.on_complete()
 
     def unload(self, *values):
@@ -299,6 +298,6 @@ if __name__ == '__main__':
     Logger.debug('SERVICE: Started OSC server.')
     while True:
         if osc.waiting_for_load:
-            osc.play(osc.seek, osc.volume)
+            osc.play(osc.seek_pos, osc.volume)
         osc.check_pos()
         sleep(.1)

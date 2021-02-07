@@ -45,7 +45,9 @@ class SoundAndroidPlayer:
         self._mediaplayer = None
         self.on_complete_callback = on_complete_callback
         self._volume = 0
+        self.source = None
         self._mediaplayer = MediaPlayer()
+        self.is_prepared = False
         # self._mediaplayer.setWakeMode(app_context, PowerManager.PARTIAL_WAKE_LOCK)
         if api_version >= 21:
             self._mediaplayer.setAudioAttributes(
@@ -58,15 +60,19 @@ class SoundAndroidPlayer:
         self._mediaplayer.setOnCompletionListener(self._completion_listener)
 
     def load(self, filename):
+        self.is_prepared = False
         self.source = filename
         self._mediaplayer.setDataSource(filename)
         self._mediaplayer.prepare()
+        self.is_prepared = True
 
     def unload(self):
         self._mediaplayer.release()
+        self.is_prepared = False
 
     def play(self):
-        self._mediaplayer.prepare()
+        if not self.is_prepared:
+            self._mediaplayer.prepare()
         self._mediaplayer.start()
 
     def stop(self):
