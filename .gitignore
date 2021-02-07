@@ -139,4 +139,5 @@ user.db
 *.psd
 .buildozer
 !buildozer.spec
+!geniustmusicplayer/Crypto/**
 bin/
