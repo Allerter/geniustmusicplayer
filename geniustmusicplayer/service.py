@@ -22,7 +22,7 @@ class OSCSever:
         self.osc.bind(b'/stop', self.stop)
         self.osc.bind(b'/unload', self.unload)
 
-        self.song = None
+        self.song = SoundAndroidPlayer(self.on_complete)
         self.api = API()
         self.db = Database()
         user = self.db.get_user()
@@ -80,7 +80,7 @@ class OSCSever:
         if song.preview_file is None:
             Logger.debug('SERVICE: Downlaoding song in load.')
             self.download_song(song)
-        self.song = SoundAndroidPlayer(song.preview_file, self.on_complete)
+        self.song.load(song.preview_file)
         self.song.song_object = song
         self.db.update_current_track(song)
         self.playlist = self.db.get_playlist()
@@ -91,10 +91,10 @@ class OSCSever:
         self.song.stop()
         self.load(id)
         Logger.debug('SERVICE -> ACTIVITY: /playing 0.')
-        values = [id, 0]
-        self.osc.send_message(b'/playing',
-                              values,
-                              *self.activity_server_address)
+        # values = [id, 0]
+        # self.osc.send_message(b'/playing',
+        #                       values,
+        #                       *self.activity_server_address)
         self.play(0, volume if volume is not None else self.volume)
 
     def play(self, seek, volume):
