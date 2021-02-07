@@ -32,6 +32,8 @@ class OSCSever:
         self.songs_path = user['songs_path']
         self.playlist = self.db.get_playlist()
         self.is_prepared = False
+        self.waiting_for_load = False
+        self.seek = 0
 
         self.load(self.playlist.current_track.id)
 
@@ -101,8 +103,12 @@ class OSCSever:
 
     def play(self, seek, volume):
         if self.song is None or not self.is_prepared:
-            self.play(seek, volume)
+            self.waiting_for_load = True
+            self.seek = seek
+            self.volume = volume
             return
+        else:
+            self.waiting_for_load = False
         self.song.play()
         self.song.seek(seek)
         self.song.volume = volume
@@ -291,5 +297,7 @@ if __name__ == '__main__':
     osc = OSCSever(activity_address, service_port)
     Logger.debug('SERVICE: Started OSC server.')
     while True:
+        if osc.waiting_for_load:
+            osc.play(osc.seek, osc.volume)
         osc.check_pos()
         sleep(.1)
