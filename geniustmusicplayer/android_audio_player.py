@@ -96,5 +96,9 @@ class SoundAndroidPlayer:
     def length(self):
         return self._get_length()
 
+    @property
+    def state(self):
+        return 'play' if self._mediaplayer.isPlaying() else 'stop'
+
     def on_loop(self, instance, loop):
         self._mediaplayer.setLooping(loop)

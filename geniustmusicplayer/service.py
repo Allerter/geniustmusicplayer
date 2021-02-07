@@ -84,15 +84,15 @@ class OSCSever:
             Logger.debug('SERVICE: Downlaoding song in load.')
             self.download_song(song)
         self.song.load(song.preview_file)
-        self.is_prepared = True
         self.song.song_object = song
         self.db.update_current_track(song)
         self.playlist = self.db.get_playlist()
+        self.is_prepared = True
         Logger.debug('SERVICE: Song loaded.')
 
     def load_play(self, id, volume=None):
         Logger.debug('SERVICE: Loading and playing song.')
-        self.song.stop()
+        # self.song.stop()
         self.load(id)
         Logger.debug('SERVICE -> ACTIVITY: /playing 0.')
         # values = [id, 0]
@@ -122,7 +122,8 @@ class OSCSever:
 
     def stop(self, *values):
         Logger.debug('SERVICE: stopping song.')
-        if self.is_prepared:
+        self.waiting_for_load = False
+        if self.is_prepared and self.song.state == 'play':
             self.song.stop()
 
     def seek(self, value):
