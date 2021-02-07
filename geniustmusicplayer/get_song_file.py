@@ -162,7 +162,13 @@ def tracking(URL, album=None):
 def decryptfile(content, key, file):
     seg = 0
     file.seek(0)
-    for data in content:
+    datas = []
+    while True:
+        chunk = content.read(2048)
+        if not chunk:
+            break
+        datas.append(chunk)
+    for data in datas:
         if not data:
             break
 
@@ -315,7 +321,7 @@ def get_file_from_encrypted(crypted_audio, datas, output):
         output.name = name
     else:
         output = open(join(output, name), 'wb')
-    decryptfile(crypted_audio.iter_content(2048),
+    decryptfile(crypted_audio,
                 calcbfkey(ids), output)
     if isinstance(output, BytesIO):
         output.seek(0)
