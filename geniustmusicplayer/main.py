@@ -109,15 +109,15 @@ class ServerSong():
         self.osc.send_message(b'/unload', [], *self.server_address)
 
     def play(self, seek, volume):
-        Logger.debug('ACTIVITY -> SERVER: /play')
+        Logger.debug('ACTIVITY -> SERVER: /play pos %s vol %s', seek, volume)
         self.osc.send_message(b'/play', [seek, volume], *self.server_address)
 
-    def play_new_playlist(self, seek, volume):
+    def play_new_playlist(self):
         Logger.debug('ACTIVITY -> SERVER: /play_new_playlist')
         self.osc.send_message(b'/play_new_playlist', [], *self.server_address)
 
     def load_play(self, song, volume):
-        Logger.debug('ACTIVITY -> SERVER: /load_play')
+        Logger.debug('ACTIVITY -> SERVER: /load_play %s vol %s', song.id, volume)
         self.osc.send_message(b'/load_play',
                               [song.id, volume],
                               *self.server_address)
