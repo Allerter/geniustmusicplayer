@@ -103,12 +103,14 @@ class OSCSever:
 
     def play(self, seek, volume):
         if self.song is None or not self.song.is_prepared:
+            Logger.debug('SERVICE: Song is not prepared.')
             self.waiting_for_load = True
             self.seek_pos = seek
             self.volume = volume
             return
         else:
             self.waiting_for_load = False
+            self.song.is_prepared = True
         self.song.play()
         self.song.seek(seek)
         self.song.volume = volume
