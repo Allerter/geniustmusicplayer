@@ -76,6 +76,7 @@ class OSCSever:
         return self.osc.getaddress()
 
     def load(self, id):
+        self.song.reset()
         self.song.is_prepared = False
         Logger.debug('SERVICE: Loading song.')
         song = self.db.get_track(id)

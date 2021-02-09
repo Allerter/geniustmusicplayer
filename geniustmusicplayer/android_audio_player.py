@@ -85,6 +85,9 @@ class SoundAndroidPlayer:
     def get_pos(self):
         return self._mediaplayer.getCurrentPosition() / 1000.
 
+    def reset(self):
+        self._mediaplayer.reset()
+        self.is_prepared = False
     @property
     def volume(self):
         return self._volume
