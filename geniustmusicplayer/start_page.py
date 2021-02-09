@@ -199,7 +199,7 @@ class StartPage(FloatLayout):
 
     def submit_genres(self, genres):
         Logger.info('GENRES: %s', genres)
-        if len(genres) > 1:
+        if len(genres) >= 1:
             self.genres_dialog.genres_dialog.dismiss()
             self.app.genres = genres
             switch_screen(ArtistsPage(), 'artists_page')
