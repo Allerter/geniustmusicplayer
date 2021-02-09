@@ -33,6 +33,8 @@ class OSCSever:
         self.playlist = self.db.get_playlist()
         self.waiting_for_load = False
         self.seek_pos = 0
+        self.downloading = None
+        self.waiting_for_download = False
 
         self.load(self.playlist.current_track.id)
 
@@ -47,11 +49,21 @@ class OSCSever:
                 self.download_song(next_song)
 
     def download_song(self, song):
-        Logger.debug('SERVICE: Downloading song.')
-        res = self.api.download_preview(song)
-        song.preview_file = save_song(self.songs_path, song, res)
-        self.db.update_track(song, 'preview_file', song.preview_file)
-        Logger.debug('SERVICE: Downloading song finished.')
+        if not self.downloading:
+            self.downloading = song.id
+            Logger.debug('SERVICE: Downloading song.')
+            try:
+                res = self.api.download_preview(song)
+            except Exception as e:
+                Logger.error("SERVICE: Failed download. Reason: %s", e)
+                self.downloading = None
+                return
+            song.preview_file = save_song(self.songs_path, song, res)
+            self.db.update_track(song, 'preview_file', song.preview_file)
+            Logger.debug('SERVICE: Downloading song finished.')
+            self.downloading = None
+        else:
+            Logger.debug('SERVICE: Skipped download. Already in progress.')
 
     def get_new_playlist(self):
         Logger.debug('SERVICE: getting new playlist.')
@@ -80,9 +92,14 @@ class OSCSever:
         self.song.is_prepared = False
         Logger.debug('SERVICE: Loading song.')
         song = self.db.get_track(id)
-        if song.preview_file is None:
+        if song.preview_file is None and self.downloading != song.id:
             Logger.debug('SERVICE: Downlaoding song in load.')
             self.download_song(song)
+        if self.downloading == song.id:
+            self.waiting_for_download = song.id
+            return
+        else:
+            self.waiting_for_download = None
         self.song.load(song.preview_file)
         self.song.song_object = song
         self.db.update_current_track(song)
@@ -300,6 +317,8 @@ if __name__ == '__main__':
     osc = OSCSever(activity_address, service_port)
     Logger.debug('SERVICE: Started OSC server.')
     while True:
+        if osc.waiting_for_download:
+            osc.load(osc.waiting_for_download)
         if osc.waiting_for_load:
             osc.play(osc.seek_pos, osc.volume)
         osc.check_pos()
