@@ -48,7 +48,6 @@ class SoundAndroidPlayer:
         self.source = None
         self._mediaplayer = MediaPlayer()
         self.is_prepared = False
-        self.unloaded = False
         # self._mediaplayer.setWakeMode(app_context, PowerManager.PARTIAL_WAKE_LOCK)
         if api_version >= 21:
             self._mediaplayer.setAudioAttributes(
@@ -62,7 +61,6 @@ class SoundAndroidPlayer:
 
     def load(self, filename):
         self.is_prepared = False
-        self.unloaded = False
         self.source = filename
         self._mediaplayer.setDataSource(filename)
         self._mediaplayer.prepare()
@@ -71,7 +69,6 @@ class SoundAndroidPlayer:
     def unload(self):
         self._mediaplayer.release()
         self.is_prepared = False
-        self.unloaded = True
 
     def play(self):
         if not self.is_prepared:
