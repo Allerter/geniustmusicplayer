@@ -48,6 +48,7 @@ class GenresDialog:
         self.genres = genres if genres is not None else []
         self.genres_dialog = None
         self.app = MDApp.get_running_app()
+        self.get_genres_trigger = None
         self.select_genres()
 
     def select_genres(self):
@@ -94,8 +95,9 @@ class GenresDialog:
                 self.genres_dialog.open()
 
             # Get genres from server
-            trigger = Clock.create_trigger(create_genres_grid)
-            req = self.app.api.get_genres(trigger=trigger)
+            if self.get_genres_trigger is None:
+                self.get_genres_trigger = Clock.create_trigger(create_genres_grid)
+            req = self.app.api.get_genres(trigger=self.get_genres_trigger)
             self.loading = loading_spinner(pos_hint={'center_x': .5, 'center_y': .2},
                                            active=True)
             self.root.add_widget(self.loading)
@@ -113,6 +115,7 @@ class StartPage(FloatLayout):
         self.app = MDApp.get_running_app()
         self.age_dialog = None
         self.genres_dialog = None
+        self.get_genres_trigger = None
 
     def select_choice(self, button):
         # self.ids.separator.canvas.clear()
@@ -191,8 +194,9 @@ class StartPage(FloatLayout):
                 self.snackbar.open()
 
         self.loading.active = True
-        trigger = Clock.create_trigger(get_and_save_genres)
-        req = self.app.api.get_genres(age=age, trigger=trigger)
+        if self.get_genres_trigger is None:
+            self.get_genres_trigger = Clock.create_trigger(get_and_save_genres)
+        req = self.app.api.get_genres(age=age, trigger=self.get_genres_trigger)
 
     def select_genres(self, *args):
         self.genres_dialog = GenresDialog(root=self, callback=self.submit_genres)
@@ -217,6 +221,7 @@ class ArtistsPage(FloatLayout):
         self.app.artists_page = self
         self.loading = loading_spinner(pos_hint={'center_x': .5, 'center_y': .5})
         self.finish = callback if callback is not None else self.finish
+        self.get_track_trigger = None
         self.add_widget(self.loading)
         for artist in self.app.artists:
             artist_chip = MDChip(
@@ -256,11 +261,12 @@ class ArtistsPage(FloatLayout):
 
         self.loading.active = True
         # get playlist
-        trigger = Clock.create_trigger(get_tracks)
+        if self.get_track_trigger is None:
+            self.get_track_trigger = Clock.create_trigger(get_tracks)
         req = self.app.api.get_recommendations(
             self.app.genres,
             self.app.artists,
-            trigger=trigger,
+            trigger=self.get_track_trigger,
             async_request=True,
         )
 

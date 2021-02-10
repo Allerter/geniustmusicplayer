@@ -43,7 +43,8 @@ class Response:
         if self.trigger is not None:
             Logger.debug('Trigger: Activated for %s', req.url)
             self.event.cancel()
-            self.trigger()
+            if not self.trigger.is_triggered:
+                self.trigger()
 
     def __repr__(self):
         return (f'Response(is_finished={self.is_finished},'
