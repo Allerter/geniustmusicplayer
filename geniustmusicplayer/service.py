@@ -19,7 +19,7 @@ class OSCSever:
         self.osc.bind(b'/load_play', self.load_play)
         self.osc.bind(b'/seek', self.seek)
         self.osc.bind(b'/set_volume', self.set_volume)
-        self.osc.bind(b'/stop', self.stop)
+        self.osc.bind(b'/stop', self.pause)
         self.osc.bind(b'/unload', self.unload)
 
         self.song = SoundAndroidPlayer(self.on_complete)
@@ -144,6 +144,12 @@ class OSCSever:
         if self.song.is_prepared and self.song.state == 'play':
             self.song.is_prepared = False
             self.song.stop()
+
+    def pause(self, *values):
+        Logger.debug('SERVICE: pausing song.')
+        self.waiting_for_load = False
+        if self.song.is_prepared and self.song.state == 'play':
+            self.song.pause()
 
     def seek(self, value):
         Logger.debug('SERVICE: seeking %s.', value)

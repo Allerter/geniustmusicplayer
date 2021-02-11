@@ -33,7 +33,7 @@ class OnCompleteListener(PythonJavaClass):
         Logger.info('SAP: Playback completed.')
         self.audio_player.is_complete = True
         self.audio_player.state = 'stop'
-        # self.audio_player.unload()
+        self.audio_player.reset()
         self.audio_player.on_complete_callback()
 
 
@@ -74,6 +74,9 @@ class SoundAndroidPlayer:
         if not self.is_prepared:
             self._mediaplayer.prepare()
         self._mediaplayer.start()
+
+    def pause(self):
+        self._mediaplayer.pause()
 
     def stop(self):
         self._mediaplayer.stop()
