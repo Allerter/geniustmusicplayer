@@ -60,15 +60,12 @@ class SoundAndroidPlayer:
         self._mediaplayer.setOnCompletionListener(self._completion_listener)
 
     def load(self, filename):
-        self.is_prepared = False
         self.source = filename
         self._mediaplayer.setDataSource(filename)
         self._mediaplayer.prepare()
-        self.is_prepared = True
 
     def unload(self):
         self._mediaplayer.release()
-        self.is_prepared = False
 
     def play(self):
         if not self.is_prepared:
@@ -87,7 +84,7 @@ class SoundAndroidPlayer:
 
     def reset(self):
         self._mediaplayer.reset()
-        self.is_prepared = False
+
     @property
     def volume(self):
         return self._volume
