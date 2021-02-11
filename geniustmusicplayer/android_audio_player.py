@@ -75,14 +75,18 @@ class SoundAndroidPlayer:
         self._mediaplayer.start()
 
     def stop(self):
-        self._mediaplayer.pause()
+        self._mediaplayer.stop()
         self.unload()
 
     def seek(self, position):
-        self._mediaplayer.seekTo(float(position) * 1000)
+        if self._mediaplayer.isPlaying():
+            self._mediaplayer.seekTo(float(position) * 1000)
 
     def get_pos(self):
-        return self._mediaplayer.getCurrentPosition() / 1000.
+        if self.is_prepared:
+            return self._mediaplayer.getCurrentPosition() / 1000.
+        else:
+            0
 
     def reset(self):
         try:
@@ -101,7 +105,10 @@ class SoundAndroidPlayer:
         self._volume = volume
 
     def _get_length(self):
-        return self._mediaplayer.getDuration() / 1000.
+        if self.is_prepared:
+            return self._mediaplayer.getDuration() / 1000.
+        else:
+            return 0
 
     @property
     def length(self):

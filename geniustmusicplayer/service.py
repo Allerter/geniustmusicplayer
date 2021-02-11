@@ -142,8 +142,8 @@ class OSCSever:
         Logger.debug('SERVICE: stopping song.')
         self.waiting_for_load = False
         if self.song.is_prepared and self.song.state == 'play':
-            self.song.stop()
             self.song.is_prepared = False
+            self.song.stop()
 
     def seek(self, value):
         Logger.debug('SERVICE: seeking %s.', value)
@@ -153,7 +153,7 @@ class OSCSever:
     def set_volume(self, value):
         Logger.debug('SERVICE: setting song volume %s.', value)
         self.volume = value
-        if self.song and self.song.is_prepared:
+        if self.song.is_prepared:
             self.song.volume = value
 
     def on_complete(self, *values):
