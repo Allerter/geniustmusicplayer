@@ -62,6 +62,7 @@ class SoundAndroidPlayer:
         self._mediaplayer.setOnCompletionListener(self._completion_listener)
 
     def load(self, filename):
+        self.reset()
         self.source = filename
         self._mediaplayer.setDataSource(filename)
         self._mediaplayer.prepare()
