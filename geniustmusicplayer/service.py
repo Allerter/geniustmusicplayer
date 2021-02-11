@@ -100,6 +100,7 @@ class OSCSever:
             self.waiting_for_download = song.id
             return
         else:
+            Logger.debug('SERVICE: Song file is available.')
             self.waiting_for_download = None
         self.song.load(song.preview_file)
         self.song.song_object = song

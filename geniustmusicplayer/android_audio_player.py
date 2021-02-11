@@ -26,10 +26,11 @@ class OnCompleteListener(PythonJavaClass):
         super().__init__(**kwargs)
         self.called = False
         self.audio_player = audio_player
+        Logger.debug('SAP: Initialized.')
 
     @java_method("(Landroid/media/MediaPlayer;)V")
     def onCompletion(self, mp):
-        Logger.info('AUDIO: Playback completed.')
+        Logger.info('SAP: Playback completed.')
         self.audio_player.is_complete = True
         self.audio_player.state = 'stop'
         # self.audio_player.unload()
@@ -87,7 +88,7 @@ class SoundAndroidPlayer:
         try:
             self._mediaplayer.reset()
         except jnius.jnius.JavaException as e:
-            Logger.error(e)
+            Logger.error('SAP: %s', e)
 
     @property
     def volume(self):
