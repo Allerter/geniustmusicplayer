@@ -93,9 +93,10 @@ class OSCSever:
         Logger.debug('SERVICE: Loading song.')
         song = self.db.get_track(id)
         if song.preview_file is None and self.downloading != song.id:
-            Logger.debug('SERVICE: Downlaoding song in load.')
+            Logger.debug('SERVICE: Song is not downloaded.')
             self.download_song(song)
         if self.downloading == song.id:
+            Logger.debug('SERVICE: Song is downloading. Returning.')
             self.waiting_for_download = song.id
             return
         else:
@@ -109,20 +110,14 @@ class OSCSever:
 
     def load_play(self, id, volume=None):
         Logger.debug('SERVICE: Loading and playing song.')
-        # self.song.stop()
         self.load(id)
-        Logger.debug('SERVICE -> ACTIVITY: /playing 0.')
-        # values = [id, 0]
-        # self.osc.send_message(b'/playing',
-        #                       values,
-        #                       *self.activity_server_address)
         self.play(0, volume if volume is not None else self.volume)
 
     def play(self, seek, volume):
-        if self.song is None or not self.song.is_prepared:
+        if not self.song.is_prepared:
             Logger.debug('SERVICE: Song is not prepared.')
             if not self.waiting_for_download:
-                self.load(self.db.get_playlist().current_track.id)
+                self.load(self.playlist.current_track.id)
             else:
                 self.waiting_for_load = True
                 self.seek_pos = seek
