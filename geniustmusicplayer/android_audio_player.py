@@ -1,3 +1,4 @@
+import jnius
 from jnius import cast, autoclass, java_method, PythonJavaClass
 from android import api_version
 import logging
@@ -83,7 +84,10 @@ class SoundAndroidPlayer:
         return self._mediaplayer.getCurrentPosition() / 1000.
 
     def reset(self):
-        self._mediaplayer.reset()
+        try:
+            self._mediaplayer.reset()
+        except jnius.jnius.JavaException as e:
+            Logger.error(e)
 
     @property
     def volume(self):
