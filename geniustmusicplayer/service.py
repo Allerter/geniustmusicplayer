@@ -147,6 +147,7 @@ class OSCSever:
         self.waiting_for_load = False
         if self.song.is_prepared and self.song.state == 'play':
             self.song.stop()
+            self.song.is_prepared = False
 
     def seek(self, value):
         Logger.debug('SERVICE: seeking %s.', value)
