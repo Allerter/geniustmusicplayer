@@ -62,9 +62,11 @@ class Sender:
         sleep_time=0.2,
         retries=0
     ):
+        self.session = requests.Session()
         self.headers = {
             'application': 'GeniusT Music Player',
         }
+        self.session.headers.update(self.headers)
         self.timeout = timeout
         self.sleep_time = sleep_time
         self.retries = retries
@@ -79,6 +81,7 @@ class Sender:
         async_request: bool = True,
         api: bool = True,
         timeout=None,
+        raw=False,
         use_requests=False,
         **kwargs
     ):
@@ -102,11 +105,8 @@ class Sender:
         new_url = parse.urlunparse(url_parse)
         use_requests = use_requests or trigger is None
         if use_requests:
-            req = requests.get(url)
-            try:
-                response = req.json()
-            except json.JSONDecodeError:
-                response = req.content
+            req = self.session.get(url)
+            response = req.content if raw else req.json()
         else:
             from kivy.network.urlrequest import UrlRequest
 
@@ -204,6 +204,7 @@ class API():
             trigger=trigger,
             async_request=async_request,
             api=False,
+            raw=True
         )
 
         return res
