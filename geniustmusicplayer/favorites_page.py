@@ -7,13 +7,17 @@ from kivymd.toast import toast
 
 class FavoriteSongListItem(TwoLineAvatarIconListItem):
     def __init__(self, **kwargs):
-        from kivymd.uix.bottomsheet import MDListBottomSheet
         song = kwargs.pop('song')
-        app = MDApp.get_running_app()
         super().__init__(**kwargs)
         self.text = song.name
         self.secondary_text = song.artist
         self._txt_left_pad = '10dp'
+        self.song = song
+
+    def create_song_menu(self):
+        from kivymd.uix.bottomsheet import MDListBottomSheet
+        song = self.song
+        app = MDApp.get_running_app()
         self.song_menu = MDListBottomSheet(radius_from='top')
 
         # Add to playlist
