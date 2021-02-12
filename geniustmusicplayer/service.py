@@ -18,6 +18,7 @@ class OSCSever:
         self.osc.bind(b'/play', self.play)
         self.osc.bind(b'/load_play', self.load_play)
         self.osc.bind(b'/seek', self.seek)
+        self.osc.bind(b'/play_new_playlist', self.play_next)
         self.osc.bind(b'/set_volume', self.set_volume)
         self.osc.bind(b'/stop', self.pause)
         self.osc.bind(b'/unload', self.unload)
