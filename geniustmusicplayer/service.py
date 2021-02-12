@@ -37,8 +37,6 @@ class OSCSever:
         self.downloading = None
         self.waiting_for_download = False
 
-        self.load(self.playlist.current_track.id)
-
     def check_pos(self, *args):
         if self.song.is_prepared and self.song.length - self.song.get_pos() < 20:
             next_song = self.playlist.preview_next()
