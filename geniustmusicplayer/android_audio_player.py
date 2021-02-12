@@ -31,8 +31,6 @@ class OnCompleteListener(PythonJavaClass):
     @java_method("(Landroid/media/MediaPlayer;)V")
     def onCompletion(self, mp):
         Logger.info('SAP: Playback completed.')
-        self.audio_player.is_complete = True
-        self.audio_player.state = 'stop'
         self.audio_player.reset()
         self.audio_player.on_complete_callback()
 
@@ -120,7 +118,7 @@ class SoundAndroidPlayer:
 
     @property
     def state(self):
-        return 'play' if self._mediaplayer.isPlaying() else 'stop'
+        return 'play' if self.is_prepared and self._mediaplayer.isPlaying() else 'stop'
 
     def on_loop(self, instance, loop):
         self._mediaplayer.setLooping(loop)
