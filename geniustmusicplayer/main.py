@@ -79,6 +79,8 @@ class ServerSong():
         if self.song_object != song:
             play_button.load_song(song, playing=True)
         play_button.update_track_current(current=pos)
+        if play_button.event:
+            play_button.event.cancel()
         play_button.event = Clock.schedule_interval(play_button.update_track_current, 1)
 
     def set_state(self, value):

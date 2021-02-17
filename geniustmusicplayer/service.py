@@ -1,3 +1,4 @@
+import threading
 from os import environ
 from time import sleep
 import logging
@@ -10,6 +11,7 @@ from db import Database
 
 class OSCSever:
     def __init__(self, activity_server_address, port):
+        self.song = SoundAndroidPlayer(self.on_complete)
         self.osc = OSCThreadServer()
         self.osc.listen(port=port, default=True)
         self.activity_server_address = activity_server_address
@@ -23,22 +25,22 @@ class OSCSever:
         self.osc.bind(b'/stop', self.pause)
         self.osc.bind(b'/unload', self.unload)
 
-        self.song = SoundAndroidPlayer(self.on_complete)
         self.api = API()
         self.db = Database()
         user = self.db.get_user()
         self.genres = user['genres']
         self.artists = user['artists']
-        self._volume = user['volume']
+        self.volume = user['volume']
         self.songs_path = user['songs_path']
         self.playlist = self.db.get_playlist()
         self.waiting_for_load = False
         self.seek_pos = 0
         self.downloading = None
         self.waiting_for_download = False
+        self.downloads = []
 
     def check_pos(self, *args):
-        if self.song.is_prepared and self.song.length - self.song.get_pos() < 20:
+        if self.song.state == "play" and self.song.length - self.song.get_pos() < 20:
             next_song = self.playlist.preview_next()
             if next_song is None or next_song.preview_file is None:
                 if next_song is None:
@@ -47,22 +49,30 @@ class OSCSever:
                 Logger.debug('SERVICE: Preloading next song.')
                 self.download_song(next_song)
 
-    def download_song(self, song):
-        if not self.downloading:
-            self.downloading = song.id
-            Logger.debug('SERVICE: Downloading song.')
-            try:
-                res = self.api.download_preview(song)
-            except Exception as e:
-                Logger.error("SERVICE: Failed download. Reason: %s", e)
-                self.downloading = None
-                return
+    def thread_download_song(self, song):
+        self.downloads.append(song.id)
+        try:
+            res = self.api.download_preview(song)
+        except Exception as e:
+            Logger.error("SERVICE: Download failed. Reason: %s", e)
+        else:
             song.preview_file = save_song(self.songs_path, song, res)
             self.db.update_track(song, 'preview_file', song.preview_file)
             Logger.debug('SERVICE: Downloading song finished.')
-            self.downloading = None
+        self.downloads.remove(song.id)
+
+    def download_song(self, song):
+        if song.id not in self.downloads and song.preview_file is None:
+            Logger.debug('SERVICE: Downloading %s.', song.id)
+            t = threading.Thread(
+                target=self.thread_download_song,
+                args=(song,)
+            )
+            t.daemon = True
+            t.start()
         else:
-            Logger.debug('SERVICE: Skipped download. Already in progress.')
+            Logger.debug('SERVICE: Skipped downloading %s. Already in progress.',
+                         song.id)
 
     def get_new_playlist(self):
         Logger.debug('SERVICE: getting new playlist.')
@@ -94,7 +104,7 @@ class OSCSever:
         if song.preview_file is None and self.downloading != song.id:
             Logger.debug('SERVICE: Song is not downloaded.')
             self.download_song(song)
-        if self.downloading == song.id:
+        if song.id in self.downloads:
             Logger.debug('SERVICE: Song is downloading. Returning.')
             self.waiting_for_download = song.id
             return
@@ -320,11 +330,13 @@ if __name__ == '__main__':
     activity_ip, activity_port, service_port = args[0], int(args[1]), int(args[2])
     activity_address = (activity_ip, activity_port)
     osc = OSCSever(activity_address, service_port)
+    osc.download_song(osc.playlist.current_track)
     Logger.debug('SERVICE: Started OSC server.')
     while True:
         if osc.waiting_for_download:
             osc.load(osc.waiting_for_download)
-        if osc.waiting_for_load:
+        elif osc.waiting_for_load:
             osc.play(osc.seek_pos, osc.volume)
-        osc.check_pos()
+        else:
+            osc.check_pos()
         sleep(.1)
