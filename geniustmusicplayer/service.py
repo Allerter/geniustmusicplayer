@@ -82,7 +82,6 @@ class OSCSever:
             song_type='preview',
         )
         playlist = Playlist(req)
-        self.db.update_playlist(playlist)
         self.osc.send_message(b'/update_playlist',
                               [],
                               *self.activity_server_address)
@@ -182,6 +181,7 @@ class OSCSever:
         if self.playlist.is_last:
             self.playlist = self.get_new_playlist()
         song = self.playlist.next()
+        self.db.update_playlist(self.playlist)
         self.load_play(song.id)
 
     def play_previous(self):

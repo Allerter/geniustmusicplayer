@@ -174,8 +174,10 @@ class API():
             async_request=async_request,
             timeout=timeout,
         )
-
-        return res
+        if isinstance(res, list):
+            return res
+        else:
+            return [Song(**x) for x in res['response']['tracks']]
 
     def search_artists(
         self,
