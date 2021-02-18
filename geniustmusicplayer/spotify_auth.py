@@ -1,11 +1,6 @@
-import logging
-
+from kivy.logger import Logger
 from jnius import autoclass, java_method, PythonJavaClass
 from android.runnable import run_on_ui_thread
-
-logging.basicConfig(format="%(levelname)s - %(message)s")
-Logger = logging.getLogger('spotify')
-Logger.setLevel(logging.DEBUG)
 
 
 class ConnectionListener(PythonJavaClass):
@@ -30,6 +25,7 @@ class ConnectionListener(PythonJavaClass):
 
 @run_on_ui_thread
 def start_spotify():
+    Logger.debug('starting spotify...')
     # ConnectionParams = autoclass("com.spotify.android.appremote.api.ConnectionParams")
     # Connector = autoclass("com.spotify.android.appremote.api.Connector")
     mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
@@ -50,3 +46,4 @@ def start_spotify():
     )
     connection_listener = ConnectionListener()
     SpotifyAppRemote.connect(mActivity, connectionParams, connection_listener)
+    Logger.debug('finished spotify.')
