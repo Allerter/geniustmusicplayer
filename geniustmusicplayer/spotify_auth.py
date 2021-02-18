@@ -35,7 +35,7 @@ def start_spotify():
     SpotifyAppRemote = autoclass("com.spotify.android.appremote.api.SpotifyAppRemote")
 
     CLIENT_ID = "0f3710c5e6654c7983ad32e438f68f9d"
-    REDIRECT_URI = "org.allerter.geniustmusicplayer://callback"
+    REDIRECT_URI = "http://www.gtplayer.org/callback"
 
     # mSpotifyAppRemote = SpotifyAppRemote()
     connectionParams = (
