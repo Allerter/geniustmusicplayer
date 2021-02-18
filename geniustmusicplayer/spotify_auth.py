@@ -1,6 +1,7 @@
 import logging
 
 from jnius import autoclass, java_method, PythonJavaClass
+from android.runnable import run_on_ui_thread
 
 logging.basicConfig(format="%(levelname)s - %(message)s")
 Logger = logging.getLogger('spotify')
@@ -27,23 +28,25 @@ class ConnectionListener(PythonJavaClass):
         Logger.info('SP: Failure. Reason: %s', throwable.getMessage())
 
 
-# ConnectionParams = autoclass("com.spotify.android.appremote.api.ConnectionParams")
-# Connector = autoclass("com.spotify.android.appremote.api.Connector")
-mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
-ConnectionParamsBuilder = autoclass(
-    "com.spotify.android.appremote.api.ConnectionParams$Builder"
-)
-SpotifyAppRemote = autoclass("com.spotify.android.appremote.api.SpotifyAppRemote")
+@run_on_ui_thread
+def start_spotify():
+    # ConnectionParams = autoclass("com.spotify.android.appremote.api.ConnectionParams")
+    # Connector = autoclass("com.spotify.android.appremote.api.Connector")
+    mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
+    ConnectionParamsBuilder = autoclass(
+        "com.spotify.android.appremote.api.ConnectionParams$Builder"
+    )
+    SpotifyAppRemote = autoclass("com.spotify.android.appremote.api.SpotifyAppRemote")
 
-CLIENT_ID = "0f3710c5e6654c7983ad32e438f68f9d"
-REDIRECT_URI = "org.allerter.geniustmusicplayer://callback"
+    CLIENT_ID = "0f3710c5e6654c7983ad32e438f68f9d"
+    REDIRECT_URI = "org.allerter.geniustmusicplayer://callback"
 
-# mSpotifyAppRemote = SpotifyAppRemote()
-connectionParams = (
-    ConnectionParamsBuilder(CLIENT_ID)
-    .setRedirectUri(REDIRECT_URI)
-    .showAuthView(True)
-    .build()
-)
-connection_listener = ConnectionListener()
-SpotifyAppRemote.connect(mActivity, connectionParams, connection_listener)
+    # mSpotifyAppRemote = SpotifyAppRemote()
+    connectionParams = (
+        ConnectionParamsBuilder(CLIENT_ID)
+        .setRedirectUri(REDIRECT_URI)
+        .showAuthView(True)
+        .build()
+    )
+    connection_listener = ConnectionListener()
+    SpotifyAppRemote.connect(mActivity, connectionParams, connection_listener)
