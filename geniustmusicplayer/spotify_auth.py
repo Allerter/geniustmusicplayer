@@ -38,7 +38,7 @@ SpotifyAppRemote = autoclass("com.spotify.android.appremote.api.SpotifyAppRemote
 CLIENT_ID = "0f3710c5e6654c7983ad32e438f68f9d"
 REDIRECT_URI = "org.allerter.geniustmusicplayer://callback"
 
-mSpotifyAppRemote = SpotifyAppRemote()
+# mSpotifyAppRemote = SpotifyAppRemote()
 connectionParams = (
     ConnectionParamsBuilder(CLIENT_ID)
     .setRedirectUri(REDIRECT_URI)
