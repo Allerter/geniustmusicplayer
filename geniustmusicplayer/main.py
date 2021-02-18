@@ -682,7 +682,8 @@ def remove_splash_screen(*args):
     from jnius import autoclass
     activity = autoclass('org.kivy.android.PythonActivity').mActivity
     activity.removeLoadingScreen()
-    import spotify_auth
+    from spotify_auth import start_spotify
+    start_spotify()
 
 
 class MainApp(MDApp):
