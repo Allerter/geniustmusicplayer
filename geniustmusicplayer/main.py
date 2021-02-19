@@ -22,7 +22,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import Screen
 from kivy.properties import (BooleanProperty, NumericProperty,
                              ObjectProperty, StringProperty)
-from kivy.clock import Clock, mainthread
+from kivy.clock import Clock
 from kivy.uix.image import Image
 from kivy.logger import Logger, LOG_LEVELS
 from kivy.utils import platform
@@ -503,8 +503,8 @@ class MainPage(FloatLayout):
         intent = Intent(Intent.ACTION_VIEW)
         intent.setData(Uri.parse(f"spotify:track:{song.id_spotify}"))
         intent.putExtra(
-           Intent.EXTRA_REFERRER,
-           Uri.parse("android-app://org.allerter.geniustmusicplayer").toString()
+            Intent.EXTRA_REFERRER,
+            Uri.parse("android-app://org.allerter.geniustmusicplayer").toString()
         )
         mActivity.startActivity(intent)
 
@@ -698,24 +698,6 @@ def remove_splash_screen(*args):
     activity.removeLoadingScreen()
 
 
-@mainthread
-def intent_data(*args):
-    Logger.debug("ACTIVITY: intent received.")
-    Logger.debug(args)
-
-
-@mainthread
-def activity_data(requestCode, resultCode, intent):
-    from jnius import autoclass
-    Logger.debug("ACTIVITY: activity result received.")
-    if getattr(app, "request_code", None) == requestCode:
-        AuthenticationClient = autoclass(
-            "com.spotify.sdk.android.auth.AuthorizationClient"
-        )
-        response = AuthenticationClient.getResponse(resultCode, intent)
-        code = response.getCode()
-
-
 class MainApp(MDApp):
     artists = []
     genres = []
@@ -740,8 +722,6 @@ class MainApp(MDApp):
             # request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
             # storage_path = primary_external_storage_path()
             from android.storage import app_storage_path
-            from android.activity import bind
-            bind(on_new_intent=intent_data, on_activity_result=activity_data)
             storage_path = app_storage_path()
         else:
             from kivy.core.window import Window

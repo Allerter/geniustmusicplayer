@@ -1,8 +1,9 @@
+import random
 from time import time
 
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
-from kivy.clock import Clock
+from kivy.clock import Clock, mainthread
 from kivy.logger import Logger
 from kivymd.app import MDApp
 from kivymd.uix.button import MDFlatButton
@@ -10,6 +11,7 @@ from kivymd.uix.list import OneLineListItem
 from kivymd.toast import toast
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import OneLineAvatarIconListItem
+from android.runnable import run_on_ui_thread
 
 from utils import switch_screen, create_snackbar
 
@@ -39,6 +41,47 @@ def loading_spinner(pos_hint, active=False):
     if not active:
         Clock.schedule_once(deactivate_loading)
     return loading
+
+
+@run_on_ui_thread
+def start_spotify_auth():
+    from jnius import autoclass
+    mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
+    AuthorizationRequestBuilder = autoclass(
+        "com.spotify.sdk.android.auth.AuthorizationRequest$Builder"
+    )
+    AuthorizationClient = autoclass(
+        "com.spotify.sdk.android.auth.AuthorizationClient"
+    )
+    AuthorizationResponseType = autoclass(
+        "com.spotify.sdk.android.auth.AuthorizationResponse$Type"
+    )
+    client_id = "0f3710c5e6654c7983ad32e438f68f9d"
+    redirect_uri = "http://gtplayer.org/callback"
+    request_code = random.randint(1, 9999)
+    MDApp.get_running_app().request_code = request_code
+
+    builder = AuthorizationRequestBuilder(
+        client_id,
+        AuthorizationResponseType.CODE,
+        redirect_uri
+    )
+    builder.setScopes(["user-top-read"])
+    request = builder.build()
+    AuthorizationClient.openLoginActivity(mActivity, request_code, request)
+
+
+@mainthread
+def activity_data(requestCode, resultCode, intent):
+    from jnius import autoclass
+    Logger.debug("ACTIVITY: activity result received.")
+    if getattr(MDApp.get_running_app(), "request_code", None) == requestCode:
+        AuthenticationClient = autoclass(
+            "com.spotify.sdk.android.auth.AuthorizationClient"
+        )
+        response = AuthenticationClient.getResponse(resultCode, intent)
+        code = response.getCode()
+
 
 class GenresDialog:
 
@@ -132,19 +175,9 @@ class StartPage(FloatLayout):
                    '&scope=me+vote'
                    f'&state={state}')
         else:
-            from spotify_auth import start_spotify
-            start_spotify()
-            state = f'spotify_android_{unique_value}'
-            # url = ('https://accounts.spotify.com/authorize?'
-            #        'client_id=0f3710c5e6654c7983ad32e438f68f9d'
-            #        '&redirect_uri=http%3A%2F%2Fgeniust.herokuapp.com%2Fcallback'
-            #        '&response_type=code'
-            #        '&scope=user-top-read'
-            #        '&show_dialog=true'
-            #        f'&state={state}')
-        # print('sending state to webserver')
-        # webbrowser.open(url)
-        # switch_screen(OAuthInfoPage(), 'auth_page')
+            from android.activity import bind
+            bind(on_activity_result=activity_data)
+            start_spotify_auth()
 
     def enter_age(self):
         if not self.age_dialog:
