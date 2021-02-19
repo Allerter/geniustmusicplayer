@@ -132,16 +132,18 @@ class StartPage(FloatLayout):
                    '&scope=me+vote'
                    f'&state={state}')
         else:
+            from spotify_auth import start_spotify
+            start_spotify()
             state = f'spotify_android_{unique_value}'
-            url = ('https://accounts.spotify.com/authorize?'
-                   'client_id=0f3710c5e6654c7983ad32e438f68f9d'
-                   '&redirect_uri=http%3A%2F%2Fgeniust.herokuapp.com%2Fcallback'
-                   '&response_type=code'
-                   '&scope=user-top-read'
-                   '&show_dialog=true'
-                   f'&state={state}')
-        print('sending state to webserver')
-        webbrowser.open(url)
+            # url = ('https://accounts.spotify.com/authorize?'
+            #        'client_id=0f3710c5e6654c7983ad32e438f68f9d'
+            #        '&redirect_uri=http%3A%2F%2Fgeniust.herokuapp.com%2Fcallback'
+            #        '&response_type=code'
+            #        '&scope=user-top-read'
+            #        '&show_dialog=true'
+            #        f'&state={state}')
+        # print('sending state to webserver')
+        # webbrowser.open(url)
         switch_screen(OAuthInfoPage(), 'auth_page')
 
     def enter_age(self):
