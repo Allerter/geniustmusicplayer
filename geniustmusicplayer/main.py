@@ -494,17 +494,17 @@ class MainPage(FloatLayout):
                 icon='close')
         song_menu.open()
 
-    def open_spotify(song):
+    def open_spotify(self, song):
         from jnius import autoclass
         Intent = autoclass("android.content.Intent")
         Uri = autoclass("android.net.Uri")
         mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
 
         intent = Intent(Intent.ACTION_VIEW)
-        intent.data = Uri.parse(f"spotify:track:{song.id_spotify}")
+        intent.setData(Uri.parse(f"spotify:track:{song.id_spotify}"))
         intent.putExtra(
-            Intent.EXTRA_REFERRER,
-            Uri.parse("android-app://org.allerter.geniustmusicplayer")
+           Intent.EXTRA_REFERRER,
+           Uri.parse("android-app://org.allerter.geniustmusicplayer").toString()
         )
         mActivity.startActivity(intent)
 
