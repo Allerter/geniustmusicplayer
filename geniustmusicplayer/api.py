@@ -174,7 +174,7 @@ class API():
             async_request=async_request,
             timeout=timeout,
         )
-        if isinstance(res, list):
+        if isinstance(res, Response):
             return res
         else:
             return [Song(**x) for x in res['response']['tracks']]
