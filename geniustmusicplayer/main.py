@@ -702,15 +702,12 @@ def remove_splash_screen(*args):
     @mainthread
     def intent_data(*args):
         Logger.debug(args)
-    
+
     @mainthread
     def activity_data(*args):
         Logger.debug(args)
 
     bind(on_new_intent=intent_data, on_activity_result=activity_data)
-    from spotify_auth import start_spotify
-    start_spotify()
-
 
 class MainApp(MDApp):
     artists = []

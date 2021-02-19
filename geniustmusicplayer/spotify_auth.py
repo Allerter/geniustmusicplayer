@@ -10,7 +10,6 @@ class ConnectionListener(PythonJavaClass):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        Logger.debug('SP: Initialized.')
 
     @java_method("(Lcom/spotify/android/appremote/api/SpotifyAppRemote;)V")
     def onConnected(self, spotifyAppRemote):
@@ -25,7 +24,6 @@ class ConnectionListener(PythonJavaClass):
 
 @run_on_ui_thread
 def start_spotify():
-    Logger.debug('starting spotify...')
     # ConnectionParams = autoclass("com.spotify.android.appremote.api.ConnectionParams")
     # Connector = autoclass("com.spotify.android.appremote.api.Connector")
     mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
@@ -35,7 +33,7 @@ def start_spotify():
     SpotifyAppRemote = autoclass("com.spotify.android.appremote.api.SpotifyAppRemote")
 
     CLIENT_ID = "0f3710c5e6654c7983ad32e438f68f9d"
-    REDIRECT_URI = "http://www.gtplayer.org/callback"
+    REDIRECT_URI = "http://gtplayer.org/callback"
 
     # mSpotifyAppRemote = SpotifyAppRemote()
     connectionParams = (
@@ -46,4 +44,3 @@ def start_spotify():
     )
     connection_listener = ConnectionListener()
     SpotifyAppRemote.connect(mActivity, connectionParams, connection_listener)
-    Logger.debug('finished spotify.')
