@@ -680,7 +680,7 @@ def start_service(args):
 
 def remove_splash_screen(*args):
     from jnius import autoclass
-    from android import bind
+    from android.activity import bind
     from kivy.clock import mainthread
     activity = autoclass('org.kivy.android.PythonActivity').mActivity
     activity.removeLoadingScreen()
