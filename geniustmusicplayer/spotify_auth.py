@@ -1,5 +1,6 @@
 import random
 
+from kivymd.app import MDApp
 from jnius import autoclass
 from android.runnable import run_on_ui_thread
 
@@ -9,26 +10,28 @@ def start_spotify():
     # ConnectionParams = autoclass("com.spotify.android.appremote.api.ConnectionParams")
     # Connector = autoclass("com.spotify.android.appremote.api.Connector")
     mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
-    AuthenticationRequestBuilder = autoclass(
-        "com.spotify.auth.AuthenticationRequest$Builder"
+    AuthorizationRequestBuilder = autoclass(
+        "com.spotify.sdk.android.auth.AuthorizationRequest$Builder"
     )
-    AuthenticationResponse = autoclass(
-        "com.spotify.sdk.android.authentication.AuthenticationResponse"
+    AuthorizationResponse = autoclass(
+        "com.spotify.sdk.android.auth.AuthorizationResponse"
     )
-    AuthenticationClient = autoclass(
-        "com.spotify.sdk.android.authentication.AuthenticationClient"
+    AuthorizationClient = autoclass(
+        "com.spotify.sdk.android.auth.AuthorizationClient"
     )
+    AuthorizationResponseType = autoclass(
+        "com.spotify.sdk.android.auth.AuthorizationResponse$Type"
+    )
+    client_id = "0f3710c5e6654c7983ad32e438f68f9d"
+    redirect_uri = "http://gtplayer.org/callback"
+    request_code = random.randint(1, 9999)
+    MDApp.get_running_app().request_code = request_code
 
-    CLIENT_ID = "0f3710c5e6654c7983ad32e438f68f9d"
-    REDIRECT_URI = "http://gtplayer.org/callback"
-    REQUEST_CODE = random.randint(1, 9999)
-
-    builder = AuthenticationRequestBuilder(
-        CLIENT_ID,
-        AuthenticationResponse.Type.TOKEN,
-        REDIRECT_URI
+    builder = AuthorizationRequestBuilder(
+        client_id,
+        AuthorizationResponseType.CODE,
+        redirect_uri
     )
     builder.setScopes(["user-top-read"])
     request = builder.build()
-    AuthenticationClient.openLoginActivity(mActivity, REQUEST_CODE, request)
-    return REQUEST_CODE
+    AuthorizationClient.openLoginActivity(mActivity, request_code, request)
