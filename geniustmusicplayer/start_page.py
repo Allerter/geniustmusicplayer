@@ -57,7 +57,7 @@ def start_spotify_auth():
         "com.spotify.sdk.android.auth.AuthorizationResponse$Type"
     )
     client_id = "0f3710c5e6654c7983ad32e438f68f9d"
-    redirect_uri = "http://geniust.herokuapp.com/callback"
+    redirect_uri = "https://geniust.herokuapp.com/callback"
     request_code = random.randint(1, 9999)
     MDApp.get_running_app().request_code = request_code
 
@@ -172,7 +172,7 @@ class StartPage(FloatLayout):
                    'qmOeuxHuqTZO0bNFuYEyTZhEjn3K7Aa8Fe'
                    '&redirect_uri=https%3A%2F%2Fgeniust.herokuapp.com%2Fcallback'
                    '&response_type=code'
-                   '&scope=me+vote'
+                   '&scope=me'
                    f'&state={state}')
         else:
             from android.activity import bind
