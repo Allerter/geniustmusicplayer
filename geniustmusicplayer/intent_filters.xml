@@ -1,9 +1,9 @@
 <intent-filter>
     <action android:name="android.intent.action.VIEW" />
     <category android:name="android.intent.category.DEFAULT" />
-    <!-- Accepts URIs that begin with "http://www.gtplayer.org/callback -->
+    <!-- Accepts URIs that begin with "http://geniust.herokuapp.com/callback -->
     <data android:scheme="http"
-          android:host="gtplayer.org"
+          android:host="geniust.herokuapp.com"
           android:pathPrefix="/callback" />
     <!-- note that the leading "/" is required for pathPrefix-->
 </intent-filter>

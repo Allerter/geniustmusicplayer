@@ -57,7 +57,7 @@ def start_spotify_auth():
         "com.spotify.sdk.android.auth.AuthorizationResponse$Type"
     )
     client_id = "0f3710c5e6654c7983ad32e438f68f9d"
-    redirect_uri = "http://gtplayer.org/callback"
+    redirect_uri = "http://geniust.herokuapp.com/callback"
     request_code = random.randint(1, 9999)
     MDApp.get_running_app().request_code = request_code
 
