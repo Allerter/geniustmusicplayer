@@ -470,7 +470,7 @@ class MainPage(FloatLayout):
         if i.id_spotify:
             song_menu.add_item(
                 text="Listen on Spotify",
-                callback=lambda x, song=i: toast(repr(song)),
+                callback=lambda x, song=i: self.open_spotify(i),
                 icon="spotify")
 
         # Favorited
@@ -493,6 +493,20 @@ class MainPage(FloatLayout):
                     self, song),
                 icon='close')
         song_menu.open()
+
+    def open_spotify(song):
+        from jnius import autoclass
+        Intent = autoclass("android.content.Intent")
+        Uri = autoclass("android.net.Uri")
+        mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
+
+        intent = Intent(Intent.ACTION_VIEW)
+        intent.data = Uri.parse(f"spotify:track:{song.id_spotify}")
+        intent.putExtra(
+            Intent.EXTRA_REFERRER,
+            Uri.parse("android-app://org.allerter.geniustmusicplayer")
+        )
+        mActivity.startActivity(intent)
 
     def play_from_playlist(self, track):
         # track = app.playlist.get_track(name=selected_item.text)
