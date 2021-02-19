@@ -133,7 +133,8 @@ class StartPage(FloatLayout):
                    f'&state={state}')
         else:
             from spotify_auth import start_spotify
-            start_spotify()
+            request_code = start_spotify()
+            self.app.request_code = request_code
             state = f'spotify_android_{unique_value}'
             # url = ('https://accounts.spotify.com/authorize?'
             #        'client_id=0f3710c5e6654c7983ad32e438f68f9d'
@@ -144,7 +145,7 @@ class StartPage(FloatLayout):
             #        f'&state={state}')
         # print('sending state to webserver')
         # webbrowser.open(url)
-        switch_screen(OAuthInfoPage(), 'auth_page')
+        # switch_screen(OAuthInfoPage(), 'auth_page')
 
     def enter_age(self):
         if not self.age_dialog:

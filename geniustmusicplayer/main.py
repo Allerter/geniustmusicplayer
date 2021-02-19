@@ -704,10 +704,19 @@ def remove_splash_screen(*args):
         Logger.debug(args)
 
     @mainthread
-    def activity_data(*args):
-        Logger.debug(args)
+    def activity_data(requestCode, resultCode, intent):
+        AuthenticationClient = autoclass(
+            "com.spotify.sdk.android.authentication.AuthenticationClient"
+        )
+        print(app.request_code, requestCode)
+        print(app.request_code == requestCode)
+        response = AuthenticationClient.getResponse(resultCode, intent)
+        print(response)
+        print(dir(response))
+        print(response.getType())
 
     bind(on_new_intent=intent_data, on_activity_result=activity_data)
+
 
 class MainApp(MDApp):
     artists = []
