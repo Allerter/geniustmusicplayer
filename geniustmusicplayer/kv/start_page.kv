@@ -178,3 +178,48 @@
         id: progress_bar
         pos_hint: {"center_y": .45}
         type: "indeterminate"
+
+
+<OAuthCompletePage>:
+MDFloatLayout
+    MDLabel:
+        halign: "left"
+        font_style: "H3"
+        pos_hint: {'center_y': .8}
+        text: "Genres"
+    MDSeparator
+        height: "4dp"
+        pos_hint: {'center_y': .75}
+    StackLayout:
+        id: selected_genres
+        size_hint_y: None
+        height: self.minimum_height
+        spacing: dp(5)
+        pos_hint: {'center_y': 0.7}
+
+    MDLabel:
+        halign: "left"
+        font_style: "H3"
+        pos_hint: {'center_y': .5}
+        text: "Artists"
+    MDSeparator
+        height: "4dp"
+        pos_hint: {'center_y': .45}
+    StackLayout:
+        id: selected_artists
+        size_hint_y: None
+        height: self.minimum_height
+        spacing: dp(5)
+        pos_hint: {'center_y': 0.4}
+
+    MDLabel:
+        halign: "center"
+        font_style: "Body1"
+        pos_hint: {'center_y': .2}
+        text: "You can change your preferences in the settings."
+
+    MDFillRoundFlatButton:
+        id: finish
+        text: 'FINISH'
+        pos_hint: {'center_x': 0.8, 'center_y': 0.1}
+        on_release: root.finish()

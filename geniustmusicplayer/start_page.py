@@ -209,7 +209,7 @@ class StartPage(FloatLayout):
                 self.app.artists = req.response['artists']
                 Logger.debug(self.app.genres)
                 if self.app.genres:
-                    ArtistsPage().finish()
+                    OAuthCompletePage(self.app.genres, self.app.artists)
                 else:
                     msg = (f"Sorry, couldn't guess "
                            f"preferences from {platform.capitalize()}")
@@ -449,3 +449,27 @@ class OAuthInfoPage(FloatLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.progress_bar.start()
+
+
+class OAuthCompletePage(FloatLayout):
+    def __init__(self, genres, artists, **kwargs):
+        super().__init__(**kwargs)
+        from kivymd.uix.chip import MDChip
+        for genre in genres:
+            chip = MDChip(
+                text=genre.capitalize(),
+                color=self.theme_cls.primary_light,
+            )
+            chip.remove_widget(chip.ids.icon)
+            self.root.ids.selected_genres.add_widget(chip)
+
+        for artist in artists:
+            chip = MDChip(
+                text=artist,
+                color=self.theme_cls.primary_light,
+            )
+            chip.remove_widget(chip.ids.icon)
+            self.root.ids.selected_artists.add_widget(chip)
+
+    def finish(self):
+        ArtistsPage().finish()
