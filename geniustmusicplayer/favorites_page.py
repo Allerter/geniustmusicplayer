@@ -20,6 +20,13 @@ class FavoriteSongListItem(TwoLineAvatarIconListItem):
         app = MDApp.get_running_app()
         self.song_menu = MDListBottomSheet(radius_from='top')
 
+        # Play song
+        if song != app.song.song_object:
+            self.song_menu.add_item(
+                text="Play",
+                callback=lambda *args, song=song: app.favorites_page.play_song(song),
+                icon='play')
+
         # Add to playlist
         self.song_menu.add_item(
             text="Add to playlist",
@@ -94,13 +101,23 @@ class FavoritesPage(FloatLayout):
                 FavoriteSongListItem(song=song, size_hint=(1, None))
             )
 
-    def playlist_add(self, song):
+    def playlist_add(self, song, index=-1):
+        self.app.playlist = self.app.db.get_playlist()
         if song not in self.app.playlist.tracks:
-            self.app.playlist.tracks.append(song)
-            self.app.db.add_playlist_track(song)
+            if index == -1:
+                self.app.playlist.tracks.append(song)
+            else:
+                self.app.playlist.tracks.insert(index, song)
+            self.app.db.add_playlist_track(song, index)
             toast('Song added to playlist')
         else:
             toast('Song already in playlist')
+
+    def play_song(self, song):
+        self.app.playlist = self.app.db.get_playlist()
+        if song not in self.app.playlist.tracks:
+            self.playlist_add(song, index=0)
+        self.app.main_page.play_from_playlist(song)
 
     def remove_song(self, song):
         if song == self.app.song.song_object:

@@ -1,7 +1,8 @@
 import sqlite3
+import logging
 from functools import wraps
 from contextlib import closing
-from typing import Any, List, TypeVar, Callable, Optional, Tuple, Union, Dict
+from typing import Any, TypeVar, Callable, Optional, Tuple
 
 from utils import Song, Playlist
 
@@ -15,7 +16,11 @@ def get_cursor(func: Callable[..., RT]) -> Callable[..., RT]:
     def wrapper(self, *args, **kwargs) -> RT:
         sqlite3.register_adapter(bool, int)
         sqlite3.register_converter("BOOLEAN", lambda v: bool(int(v)))
-        con = sqlite3.connect('user.db', isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES)
+        con = sqlite3.connect(
+            'user.db',
+            isolation_level=None,
+            detect_types=sqlite3.PARSE_DECLTYPES
+        )
         with closing(con.cursor()) as cursor:
             return func(self, *args, **kwargs, cursor=cursor)
 
@@ -63,7 +68,7 @@ class Database:
         column: str,
         id,
         data,
-        cursor = None,
+        cursor=None,
     ):
         query = f"UPDATE playlist SET {column} = ? WHERE id == {id};"
         values = (data,)
@@ -74,7 +79,7 @@ class Database:
         self,
         column: str,
         data,
-        cursor = None,
+        cursor=None,
     ):
         query = f"UPDATE user SET {column} = ?"
         values = (data,)
@@ -152,10 +157,15 @@ class Database:
         cursor.execute(f"""DELETE FROM favorites where id = {track.id};""")
 
     @get_cursor
-    def add_playlist_track(self, track, cursor=None):
-        query = """INSERT INTO playlist VALUES (?,?,?,?,?,?,?,?,?,?,?,?);"""
-        values = self._track_to_db(track, current=False)
-        cursor.execute(query, values)
+    def add_playlist_track(self, track, index, cursor=None):
+        if index == -1:
+            query = """INSERT INTO playlist VALUES (?,?,?,?,?,?,?,?,?,?,?,?);"""
+            values = self._track_to_db(track, current=False)
+            cursor.execute(query, values)
+        else:
+            playlist = self.get_playlist()
+            playlist.tracks.insert(index, track)
+            self.update_playlist(playlist)
 
     @get_cursor
     def add_favorites_track(self, track, cursor=None):
@@ -197,7 +207,7 @@ class Database:
             cursor.execute(query)
             user = cursor.fetchone()
         except sqlite3.OperationalError as e:
-            # TODO: Log e
+            logging.debug(e)
             return None
         return dict(
             genres=user[1].split(','),
