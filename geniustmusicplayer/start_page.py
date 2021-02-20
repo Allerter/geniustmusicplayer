@@ -189,6 +189,7 @@ class StartPage(FloatLayout):
         self.age_dialog = None
         self.genres_dialog = None
         self.get_genres_trigger = None
+        self.get_preferences_trigger = None
         bind(on_activity_result=activity_data)
 
     def get_preferences(self, code, platform):
