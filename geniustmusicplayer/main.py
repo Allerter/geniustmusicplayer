@@ -774,7 +774,6 @@ class MainApp(MDApp):
     def load_first_page(self, *args):
         if user := self.db.get_user():
             self.main_page = page = MainPage()
-            page_name = 'main_page'
             self.nav_drawer.type = 'modal'
 
             self.playlist = self.db.get_playlist()
