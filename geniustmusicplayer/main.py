@@ -586,15 +586,23 @@ class MainPage(FloatLayout):
         self.ids.title.text = song.name
         self.ids.artist.text = song.artist
 
+    def check_permission(self, permissions, grant_results):
+        for result in grant_results:
+            if result is False:
+                return
+        self.app.storage_permission = True
+        self.download_song(self.to_be_downloaded, self.show_progress)
+
     def download_song(self, song, show_progress=True):
         import threading
         import requests
         from io import BytesIO
         from kivymd.uix.progressbar import MDProgressBar
+        from junius import autoclass
         from get_song_file import get_download_info, get_file_from_encrypted
         from utils import save_song
 
-        def get_song(self, song, progress_bar=None):
+        def get_song(self, song, storage_path, progress_bar=None):
             if song.download_url:
                 url = song.download_url
                 encrypted = False
@@ -623,7 +631,7 @@ class MainPage(FloatLayout):
             if encrypted:
                 bio = get_file_from_encrypted(bio, data, BytesIO())
             filename = save_song(
-                self.app.songs_path,
+                storage_path,
                 song,
                 bio.getbuffer(),
                 preview=False
@@ -631,7 +639,7 @@ class MainPage(FloatLayout):
             song.download_file = filename
 
             if progress_bar:
-                toast('Download finished.')
+                toast(f'Downloaded to {storage_path}/{filename}.')
                 self.remove_widget(progress_bar)
 
         if song.download_file == 'downloading':
@@ -639,6 +647,23 @@ class MainPage(FloatLayout):
                 toast('Download in progress...')
             return
 
+        if not self.app.storage_permission:
+            from android.permissions import request_permissions, Permission
+            self.to_be_downloaded = song
+            self.show_progress = show_progress
+            request_permissions(
+                [
+                    Permission.READ_EXTERNAL_STORAGE,
+                    Permission.WRITE_EXTERNAL_STORAGE,
+                ],
+                callback=self.check_permission)
+            return
+
+        Environment = autoclass('android.os.Environment')
+        storage_path = Environment.GetExternalStoragePublicDirectory(
+            Environment.DirectoryMusic
+        ).ToString()
+        Logger.debug("DOWNLOAD: Storage path: %s", storage_path)
         if show_progress:
             progress_bar = MDProgressBar()
             progress_bar.pos = progress_bar.pos[0], self.ids.cover_art.pos[1] + dp(5)
@@ -647,7 +672,10 @@ class MainPage(FloatLayout):
         else:
             progress_bar = None
         song.download_file = 'downloading'
-        t = threading.Thread(target=get_song, args=(self, song, progress_bar))
+        t = threading.Thread(
+            target=get_song,
+            args=(self, song, storage_path, progress_bar),
+        )
         t.daemon = True
         t.start()
 
@@ -720,6 +748,7 @@ class MainApp(MDApp):
     main_page = None
     volume = 0.5
     api = API()
+    storage_permission = False
 
     def build(self):
         Logger.setLevel(LOG_LEVELS['debug'])
@@ -731,10 +760,6 @@ class MainApp(MDApp):
         self.screen_manager = self.nav_layout.screen_manager
         self.nav_drawer = self.nav_layout.nav_drawer
         if platform == 'android':
-            # from android.storage import primary_external_storage_path
-            # from android.permissions import request_permissions, Permission
-            # request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
-            # storage_path = primary_external_storage_path()
             from android.storage import app_storage_path
             storage_path = app_storage_path()
         else:
