@@ -109,7 +109,6 @@ def activity_data(requestCode, resultCode, intent):
         )
         response = AuthenticationClient.getResponse(resultCode, intent)
         code = response.getCode()
-        print(code)
 
 
 class GenresDialog:
@@ -184,15 +183,15 @@ class StartPage(FloatLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        from android.activity import bind
         self.app = MDApp.get_running_app()
         self.age_dialog = None
         self.genres_dialog = None
         self.get_genres_trigger = None
+        bind(on_activity_result=activity_data)
 
     def select_choice(self, button):
         import random
-        from android.activity import bind, unbind
-        bind(on_activity_result=activity_data)
         self.request_code = random.randint(1, 9999)
         if 'Genius' in button.text:
             self.platform = "genius"
@@ -200,7 +199,6 @@ class StartPage(FloatLayout):
         else:
             self.platform = "spotify"
             start_spotify_auth()
-        unbind(on_activity_result=activity_data)
 
     def enter_age(self):
         if not self.age_dialog:
