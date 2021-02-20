@@ -218,7 +218,7 @@ class API():
         trigger=None,
         async_request: bool = True
     ) -> List[str]:
-        params = {'code': code, 'platform': platform}
+        params = {f'{platform}_code': code}
         res = self.sender.make_request(
             'preferences',
             params=params,
