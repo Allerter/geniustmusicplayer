@@ -31,7 +31,7 @@ class Response:
             return
         Logger.debug('%s status code', req.resp_status)
         if self.status_code == 200:
-            if req.url.startswith('https://geniust.herokuapp.com/api/recommendations'):
+            if req.url.startswith(Sender.API_ROOT + 'recommendations'):
                 self.response = [Song(**x) for x in result['response']['tracks']]
             elif not req.url.startswith(Sender.API_ROOT):
                 self.response = result
@@ -41,7 +41,9 @@ class Response:
             Logger.debug('Failed request with payload: %s', result)
 
         if self.trigger is not None:
-            Logger.debug('Trigger: Activated for %s', req.url)
+            Logger.debug('Trigger: Activated for %s, Payload: %s',
+                         req.url,
+                         self.response)
             self.event.cancel()
             if not self.trigger.is_triggered:
                 self.trigger()
