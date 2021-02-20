@@ -852,7 +852,7 @@ class MainApp(MDApp):
             from utils import switch_screen
             import start_page
             self.nav_drawer.type = 'standard'
-            page = start_page.StartPage()
+            page = self.start_page = start_page.StartPage()
             page_name = 'start_page'
             switch_screen(page, page_name)
 

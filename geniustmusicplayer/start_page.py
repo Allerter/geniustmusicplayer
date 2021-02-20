@@ -1,4 +1,3 @@
-import random
 from time import time
 
 from kivy.uix.floatlayout import FloatLayout
@@ -46,6 +45,7 @@ def loading_spinner(pos_hint, active=False):
 @run_on_ui_thread
 def start_spotify_auth():
     from jnius import autoclass
+    app = MDApp.get_running_app()
     mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
     AuthorizationRequestBuilder = autoclass(
         "com.spotify.sdk.android.auth.AuthorizationRequest$Builder"
@@ -58,8 +58,7 @@ def start_spotify_auth():
     )
     client_id = "0f3710c5e6654c7983ad32e438f68f9d"
     redirect_uri = "https://geniust.herokuapp.com/callback"
-    request_code = random.randint(1, 9999)
-    MDApp.get_running_app().request_code = request_code
+    request_code = app.start_page.request_code
 
     builder = AuthorizationRequestBuilder(
         client_id,
@@ -71,16 +70,46 @@ def start_spotify_auth():
     AuthorizationClient.openLoginActivity(mActivity, request_code, request)
 
 
+@run_on_ui_thread
+def start_genius_auth():
+    from jnius import autoclass
+    app = MDApp.get_running_app()
+    mActivity = autoclass('org.kivy.android.PythonActivity').mActivity
+    AuthorizationRequestBuilder = autoclass(
+        "com.genius.sdk.android.auth.AuthorizationRequest$Builder"
+    )
+    AuthorizationClient = autoclass(
+        "com.genius.sdk.android.auth.AuthorizationClient"
+    )
+    AuthorizationResponseType = autoclass(
+        "com.genius.sdk.android.auth.AuthorizationResponse$Type"
+    )
+    client_id = "VnApM3tX-j1YzGOTu5pUjs9lzR-2-9qmOeuxHuqTZO0bNFuYEyTZhEjn3K7Aa8Fe"
+    redirect_uri = "https://geniust.herokuapp.com/callback"
+    request_code = app.start_page.request_code
+
+    builder = AuthorizationRequestBuilder(
+        client_id,
+        AuthorizationResponseType.CODE,
+        redirect_uri
+    )
+    builder.setScopes(["me"])
+    request = builder.build()
+    AuthorizationClient.openLoginActivity(mActivity, request_code, request)
+
+
 @mainthread
 def activity_data(requestCode, resultCode, intent):
     from jnius import autoclass
     Logger.debug("ACTIVITY: activity result received.")
-    if getattr(MDApp.get_running_app(), "request_code", None) == requestCode:
+    app = MDApp.get_running_app()
+    if app.start_page.request_code == requestCode:
         AuthenticationClient = autoclass(
-            "com.spotify.sdk.android.auth.AuthorizationClient"
+            f"com.{app.start_page.platform}.sdk.android.auth.AuthorizationClient"
         )
         response = AuthenticationClient.getResponse(resultCode, intent)
         code = response.getCode()
+        print(code)
 
 
 class GenresDialog:
@@ -161,23 +190,17 @@ class StartPage(FloatLayout):
         self.get_genres_trigger = None
 
     def select_choice(self, button):
-        # self.ids.separator.canvas.clear()
-        import secrets
-        import webbrowser
-        unique_value = secrets.token_urlsafe().replace("_", "-")
+        import random
+        from android.activity import bind, unbind
+        bind(on_activity_result=activity_data)
+        self.request_code = random.randint(1, 9999)
         if 'Genius' in button.text:
-            state = f'genius_android_{unique_value}'
-            url = ('https://api.genius.com/oauth/authorize?'
-                   'client_id=VnApM3tX-j1YzGOTu5pUjs9lzR-2-9'
-                   'qmOeuxHuqTZO0bNFuYEyTZhEjn3K7Aa8Fe'
-                   '&redirect_uri=https%3A%2F%2Fgeniust.herokuapp.com%2Fcallback'
-                   '&response_type=code'
-                   '&scope=me'
-                   f'&state={state}')
+            self.platform = "genius"
+            start_genius_auth()
         else:
-            from android.activity import bind
-            bind(on_activity_result=activity_data)
+            self.platform = "spotify"
             start_spotify_auth()
+        unbind(on_activity_result=activity_data)
 
     def enter_age(self):
         if not self.age_dialog:
