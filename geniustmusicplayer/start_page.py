@@ -213,6 +213,8 @@ class StartPage(FloatLayout):
                 else:
                     msg = (f"Sorry, couldn't guess "
                            f"preferences from {platform.capitalize()}")
+                    button = getattr(self.ids.choices_layout.ids, f"{platform}_info")
+                    button.disabled = True
                     self.snackbar = create_snackbar(msg, callback=None)
                     self.app.screen_manager.switch_to(self.parent)
                     self.snackbar.open()
