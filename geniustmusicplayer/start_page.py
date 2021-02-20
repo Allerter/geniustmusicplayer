@@ -214,7 +214,7 @@ class StartPage(FloatLayout):
                     msg = (f"Sorry, couldn't guess "
                            f"preferences from {platform.capitalize()}")
                     self.snackbar = create_snackbar(msg, callback=None)
-                    self.app.screen_manager.current = "start_page"
+                    self.app.screen_manager.switch_to(self.parent)
                     self.snackbar.open()
             else:
                 msg = "Failed to get preferences. Retrying in 3 seconds."
