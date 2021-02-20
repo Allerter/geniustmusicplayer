@@ -468,10 +468,24 @@ class MainPage(FloatLayout):
                 icon='download')
         # Spotify
         if i.id_spotify:
+            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+            context = PythonActivity.mActivity
+            print(dir(context))
+            package_manager = context.getPackageManager()
+            try:
+                package_manager.getPackageInfo("com.spotify.music", 0)
+                is_spotify_installed = True
+            except Exception as e:
+                Logger.debug(e)
+                is_spotify_installed = False
+            msg = "Spotify isn't installed on your device."
             song_menu.add_item(
                 text="Listen on Spotify",
-                callback=lambda x, song=i: self.open_spotify(i),
-                icon="spotify")
+                callback=lambda x, song=i: (self.open_spotify(i)
+                                            if is_spotify_installed
+                                            else toast(msg)),
+                icon="spotify",
+                disabled=not is_spotify_installed)
 
         # Favorited
         favorited = i in app.favorites
