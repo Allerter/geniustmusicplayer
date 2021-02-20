@@ -454,6 +454,7 @@ class MainPage(FloatLayout):
     def open_song_menu(self, i):
         # adding right-side icons
         from kivymd.uix.bottomsheet import MDListBottomSheet
+        import jnius
         song_menu = MDListBottomSheet(radius_from='top')
         if i.download_file:
             song_menu.add_item(
@@ -468,14 +469,13 @@ class MainPage(FloatLayout):
                 icon='download')
         # Spotify
         if i.id_spotify:
-            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+            PythonActivity = jnius.autoclass('org.kivy.android.PythonActivity')
             context = PythonActivity.mActivity
-            print(dir(context))
             package_manager = context.getPackageManager()
             try:
                 package_manager.getPackageInfo("com.spotify.music", 0)
                 is_spotify_installed = True
-            except Exception as e:
+            except jnius.jnius.JavaException as e:
                 Logger.debug(e)
                 is_spotify_installed = False
             msg = "Spotify isn't installed on your device."
@@ -484,8 +484,7 @@ class MainPage(FloatLayout):
                 callback=lambda x, song=i: (self.open_spotify(i)
                                             if is_spotify_installed
                                             else toast(msg)),
-                icon="spotify",
-                disabled=not is_spotify_installed)
+                icon="spotify")
 
         # Favorited
         favorited = i in app.favorites
