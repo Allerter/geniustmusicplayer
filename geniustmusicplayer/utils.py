@@ -126,6 +126,10 @@ class Playlist:
     def to_json(self):
         return json.dumps(self.to_dict())
 
+    @property
+    def current_track_index(self):
+        return self._current if self._current != -1 else 0
+
     def __repr__(self):
         return f'Playlist({len(self.tracks)} Tracks, current={self._current})'
 

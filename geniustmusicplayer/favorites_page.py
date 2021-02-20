@@ -116,7 +116,7 @@ class FavoritesPage(FloatLayout):
     def play_song(self, song):
         self.app.playlist = self.app.db.get_playlist()
         if song not in self.app.playlist.tracks:
-            self.playlist_add(song, index=0)
+            self.playlist_add(song, index=self.app.playlist.current_track_index + 1)
         self.app.main_page.play_from_playlist(song)
 
     def remove_song(self, song):
