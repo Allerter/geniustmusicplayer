@@ -210,3 +210,20 @@ class API():
         )
 
         return res
+
+    def get_preferences(
+        self,
+        code: str,
+        platform: str,
+        trigger=None,
+        async_request: bool = True
+    ) -> List[str]:
+        params = {'code': code, 'platform': platform}
+        res = self.sender.make_request(
+            'preferences',
+            params=params,
+            trigger=trigger,
+            async_request=async_request
+        )
+
+        return res

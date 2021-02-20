@@ -108,7 +108,8 @@ def activity_data(requestCode, resultCode, intent):
             f"com.{app.start_page.platform}.sdk.android.auth.AuthorizationClient"
         )
         response = AuthenticationClient.getResponse(resultCode, intent)
-        code = response.getCode()
+        if code := response.getCode():
+            app.start_page.get_preferences(code, app.start_page.platform)
 
 
 class GenresDialog:
@@ -189,6 +190,46 @@ class StartPage(FloatLayout):
         self.genres_dialog = None
         self.get_genres_trigger = None
         bind(on_activity_result=activity_data)
+
+    def get_preferences(self, code, platform):
+        page = OAuthInfoPage()
+        page_name = 'oauth_page'
+        switch_screen(page, page_name)
+
+        def retry(*args):
+            self.snackbar.dismiss()
+            self.retry_event.cancel()
+            self.get_preferences(code, platform)
+            return
+
+        def get_and_save_preferences(*args):
+            if req.status_code == 200:
+                self.app.genres = req.response['genres']
+                self.app.artists = req.response['artists']
+                Logger.debug(self.app.genres)
+                if self.app.genres:
+                    ArtistsPage().finish()
+                else:
+                    msg = (f"Sorry, couldn't guess "
+                           f"preferences from {platform.capitalize()}")
+                    self.snackbar = create_snackbar(msg, callback=None)
+                    self.app.screen_manager.current = "start_page"
+                    self.snackbar.open()
+            else:
+                msg = "Failed to get preferences. Retrying in 3 seconds."
+                self.snackbar = create_snackbar(msg, retry)
+                self.retry_event = Clock.schedule_once(retry, 3)
+                self.snackbar.open()
+
+        if self.get_preferences_trigger is None:
+            self.get_preferences_trigger = Clock.create_trigger(
+                get_and_save_preferences
+            )
+        req = self.app.api.get_preferences(
+            code=code,
+            platform=platform,
+            trigger=self.get_preferences_trigger
+        )
 
     def select_choice(self, button):
         import random
