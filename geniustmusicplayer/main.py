@@ -310,10 +310,10 @@ class PlayButton(ButtonBehavior, Image):
             song = app.playlist.next()
             self.play_track(song)
 
-    def stop_song(self):
+    def stop_song(self, release=False):
         if app.song.state == 'play':
             app.song.stop()
-            if platform == 'android':
+            if platform == 'android' and release:
                 app.song.unload()
             else:
                 Logger.debug('SONG UNLOAD: Skipped because of ffpyplayer crash.')
@@ -519,6 +519,7 @@ class MainPage(FloatLayout):
             Intent.EXTRA_REFERRER,
             Uri.parse("android-app://org.allerter.geniustmusicplayer").toString()
         )
+        self.app.play_button.stop_song(release=True)
         mActivity.startActivity(intent)
 
     def play_from_playlist(self, track):

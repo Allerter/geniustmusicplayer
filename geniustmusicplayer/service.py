@@ -200,7 +200,7 @@ class OSCSever:
             self.on_complete()
 
     def unload(self, *values):
-        pass  # self.song.unload()
+        self.song.unload()
 
 
 """
