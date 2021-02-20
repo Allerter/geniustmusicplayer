@@ -862,12 +862,12 @@ class MainApp(MDApp):
 
             Clock.schedule_once(lambda *args, song=song: self.complete_ui())
         else:
-            from utils import switch_screen
             import start_page
             self.nav_drawer.type = 'standard'
-            page = self.start_page = start_page.StartPage()
-            page_name = 'start_page'
-            switch_screen(page, page_name)
+            start_screen = Screen(name='start_page')
+            app.start_page = start_page.StartPage()
+            start_screen.add_widget(app.start_page)
+            self.screen_manager.add_widget(start_screen)
 
     def on_pause(self):
         self.on_stop()
