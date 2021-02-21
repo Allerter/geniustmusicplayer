@@ -604,13 +604,16 @@ class MainPage(FloatLayout):
         from utils import save_song
 
         def get_song(self, song, storage_path, progress_bar=None):
+            Logger.debug("DOWNLOAD: Thread started.")
             if song.download_url:
                 url = song.download_url
                 encrypted = False
             else:
+                Logger.debug("DOWNLOAD: Getting song info.")
                 data = get_download_info(song.isrc)
                 url = data['url']
                 encrypted = True
+            Logger.debug("DOWNLOAD: Downloading chunks...")
             req = requests.get(url, stream=True)
             song_bytes = b''
             chunk_size = 500000
@@ -638,6 +641,7 @@ class MainPage(FloatLayout):
                 preview=False
             )
             song.download_file = filename
+            Logger.debug("DOWNLOAD: Saved file.")
             MediaScanner = autoclass("android.media.MediaScannerConnection")
             scanner = MediaScanner()
             scanner.connect()
