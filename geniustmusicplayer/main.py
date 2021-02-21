@@ -364,9 +364,9 @@ class FavoriteButton(MDIconButton):
 class MyBaseListItem(ContainerSupport, BaseListItem):
     _txt_left_pad = NumericProperty("10dp")
     _txt_top_pad = NumericProperty("20dp")
-    _txt_bot_pad = NumericProperty("19dp")  # dp(24) - dp(5)
+    _txt_bot_pad = NumericProperty("10dp")  # dp(24) - dp(5)
     _height = NumericProperty()
-    _num_lines = 1
+    _num_lines = 2
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -435,6 +435,7 @@ class MainPage(FloatLayout):
         for i in app.playlist.tracks:
             item = PlaylistSongItem(
                 text=i.name,
+                secondary_text=i.artist,
                 on_release=lambda *args, song=i: self.play_from_playlist(song),
             )
             item.song = i
