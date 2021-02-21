@@ -650,6 +650,7 @@ class MainPage(FloatLayout):
             if progress_bar:
                 toast(f'Downloaded to {filename}')
                 self.remove_widget(progress_bar)
+            Logger.debug("DOWNLOAD: Thread finished.")
 
         if song.download_file == 'downloading':
             if show_progress:
