@@ -1,20 +1,6 @@
 #:import rgba kivy.utils.get_color_from_hex
-#: include kv/start_page.kv
-#: include kv/favorites_page.kv
-#: include kv/settings_page.kv
+#: include kv/utils.kv
 #: import toast kivymd.toast.toast
-<ScaleLabel@MDLabel>:
-    text_size: self.width, None
-    _scale: 1. if self.texture_size[1] < self.height else float(self.height) / self.texture_size[1]
-    canvas.before:
-        PushMatrix
-        Scale:
-            origin: self.center
-            x: self._scale or 1.
-            y: self._scale or 1.
-    canvas.after:
-        PopMatrix
-
 <PlaylistSongItem>
 
     BoxLayout:
@@ -74,6 +60,7 @@
             id: nav_drawer_list
 
             ItemDrawer:
+                id: music_player_page
                 text: "Music Player"
                 text_color:
                     app.theme_cls.primary_color if app.theme_cls.theme_style != 'Dark' else app.theme_cls.primary_light
@@ -270,8 +257,6 @@
     max: 100
     hint: False
     orientation: 'horizontal'
-
-<ImageButton@ButtonBehavior+Image>
 
 <PlaylistLayout@BoxLayout>:
     songs_grid: songs_grid

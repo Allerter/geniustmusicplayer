@@ -1,16 +1,3 @@
-
-<ScaleLabel@MDLabel>:
-    text_size: self.width, None
-    _scale: 1. if self.texture_size[1] < self.height else float(self.height) / self.texture_size[1]
-    canvas.before:
-        PushMatrix
-        Scale:
-            origin: self.center
-            x: self._scale or 1.
-            y: self._scale or 1.
-    canvas.after:
-        PopMatrix
-
 <AgeDialogContent>
     orientation: "vertical"
     spacing: "12dp"

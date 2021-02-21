@@ -764,6 +764,7 @@ class MainApp(MDApp):
         self.nav_layout = Factory.NavLayout()
         self.screen_manager = self.nav_layout.screen_manager
         self.nav_drawer = self.nav_layout.nav_drawer
+        self.nav_drawer_list = self.nav_drawer.children[0].ids.nav_drawer_list
         if platform == 'android':
             from android.storage import app_storage_path
             storage_path = app_storage_path()
@@ -790,13 +791,16 @@ class MainApp(MDApp):
         return self.nav_layout
 
     def complete_ui(self):
+        from kivy.lang import Builder
         import settings_page
         import favorites_page
+        Builder.load_file("kv/favorites_page.kv")
         favorites_screen = Screen(name='favorites_page')
         app.favorites_page = favorites_page.FavoritesPage()
         favorites_screen.add_widget(app.favorites_page)
         self.screen_manager.add_widget(favorites_screen)
 
+        Builder.load_file("kv/settings_page.kv")
         settings_screen = Screen(name='settings_page')
         app.settings_page = settings_page.SettingsPage()
         settings_screen.add_widget(app.settings_page)
@@ -892,8 +896,10 @@ class MainApp(MDApp):
 
             Clock.schedule_once(lambda *args, song=song: self.complete_ui())
         else:
+            from kivy.lang import Builder
             import start_page
             self.nav_drawer.type = 'standard'
+            Builder.load_file("kv/start_page.kv")
             start_screen = Screen(name='start_page')
             app.start_page = start_page.StartPage()
             start_screen.add_widget(app.start_page)
