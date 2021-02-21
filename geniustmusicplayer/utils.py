@@ -233,3 +233,18 @@ def switch_screen(page, name):
     screen = Screen(name=name)
     screen.add_widget(page)
     MDApp.get_running_app().screen_manager.switch_to(screen)
+
+
+def spotify_installed():
+    import jnius
+    from kivy.logger import Logger
+    PythonActivity = jnius.autoclass('org.kivy.android.PythonActivity')
+    context = PythonActivity.mActivity
+    package_manager = context.getPackageManager()
+    try:
+        package_manager.getPackageInfo("com.spotify.music", 0)
+        is_spotify_installed = True
+    except jnius.jnius.JavaException as e:
+        Logger.debug(e)
+        is_spotify_installed = False
+    return is_spotify_installed
