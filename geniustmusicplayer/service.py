@@ -1,4 +1,5 @@
 import threading
+import os
 from os import environ
 from time import sleep
 import logging
@@ -85,6 +86,11 @@ class OSCSever:
         self.osc.send_message(b'/update_playlist',
                               [],
                               *self.activity_server_address)
+        # clean up playlist songs
+        favorites = self.db.get_favorites()
+        for song in self.app.playlist.tracks:
+            if song not in favorites and song != self.song.song_object:
+                os.remove(song.preview_file)
         return playlist
 
     def get_pos(self, *values):
