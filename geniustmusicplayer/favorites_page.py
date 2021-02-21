@@ -35,9 +35,13 @@ class FavoriteSongListItem(TwoLineAvatarIconListItem):
 
         # Spotify
         if song.id_spotify:
+            from utils import spotify_installed
+            msg = "Spotify isn't installed on your device."
             self.song_menu.add_item(
                 text="Listen on Spotify",
-                callback=lambda x, song=song: toast(repr(song)),
+                callback=lambda x, song=song: (app.main_page.open_spotify(song)
+                                               if spotify_installed()
+                                               else toast(msg)),
                 icon="spotify")
 
         # Remove from favorites
