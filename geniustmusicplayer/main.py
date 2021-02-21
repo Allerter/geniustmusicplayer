@@ -598,7 +598,8 @@ class MainPage(FloatLayout):
         import requests
         from io import BytesIO
         from kivymd.uix.progressbar import MDProgressBar
-        from junius import autoclass
+        from jnius import autoclass
+        from android.storage import primary_external_storage_path
         from get_song_file import get_download_info, get_file_from_encrypted
         from utils import save_song
 
@@ -637,9 +638,13 @@ class MainPage(FloatLayout):
                 preview=False
             )
             song.download_file = filename
+            MediaScanner = autoclass("android.media.MediaScannerConnection")
+            scanner = MediaScanner()
+            scanner.connect()
+            scanner.scanFile(filename, "audio/mp3")
 
             if progress_bar:
-                toast(f'Downloaded to {storage_path}/{filename}.')
+                toast(f'Downloaded to {filename}')
                 self.remove_widget(progress_bar)
 
         if song.download_file == 'downloading':
@@ -659,10 +664,13 @@ class MainPage(FloatLayout):
                 callback=self.check_permission)
             return
 
-        Environment = autoclass('android.os.Environment')
-        storage_path = Environment.GetExternalStoragePublicDirectory(
-            Environment.DirectoryMusic
-        ).ToString()
+        primary_ext_storage = primary_external_storage_path()
+        if os.path.exists(os.path.join(primary_ext_storage, "Music")):
+            storage_path = os.path.join(primary_ext_storage, "Music")
+        elif os.path.exists(os.path.join(primary_ext_storage, "Download")):
+            storage_path = os.path.join(primary_ext_storage, "Download")
+        else:
+            storage_path = primary_ext_storage
         Logger.debug("DOWNLOAD: Storage path: %s", storage_path)
         if show_progress:
             progress_bar = MDProgressBar()
