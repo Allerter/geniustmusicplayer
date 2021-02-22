@@ -327,6 +327,7 @@ def start_debug_server(activity_address, service_port):
 
 
 if __name__ == '__main__':
+    from jnius import autoclass
     from android_audio_player import SoundAndroidPlayer
     args = environ.get('PYTHON_SERVICE_ARGUMENT', '')
     logging.basicConfig(format="%(levelname)s - %(message)s")
@@ -338,6 +339,8 @@ if __name__ == '__main__':
     osc = OSCSever(activity_address, service_port)
     osc.download_song(osc.playlist.current_track)
     Logger.debug('SERVICE: Started OSC server.')
+    PythonService = autoclass('org.kivy.android.PythonService')
+    PythonService.mService.setAutoRestartService(True)
     while True:
         if osc.waiting_for_download:
             osc.load(osc.waiting_for_download)
