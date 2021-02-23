@@ -190,6 +190,26 @@ class StartPage(FloatLayout):
         self.get_genres_trigger = None
         self.get_preferences_trigger = None
         bind(on_activity_result=activity_data)
+        self.age_dialog = MDDialog(
+            title="Enter age",
+            text="Enter your age and I'll guess your favorite genres.",
+            type="custom",
+            content_cls=AgeDialogContent(),
+            buttons=[
+                MDFlatButton(
+                    text="CANCEL", text_color=self.app.theme_cls.primary_color,
+                    on_release=lambda *args: self.age_dialog.dismiss()
+                ),
+                MDFlatButton(
+                    text="OK", text_color=self.app.theme_cls.primary_color,
+                    on_release=lambda *args: self.submit_age(
+                        self.age_dialog.content_cls.ids.age_textfield.text)
+                ),
+            ],
+        )
+        self.loading = loading_spinner(pos_hint={'center_x': .5, 'center_y': .2})
+        self.age_dialog.add_widget(self.loading)
+
 
     def get_preferences(self, code, platform):
         page = OAuthInfoPage()
@@ -244,26 +264,6 @@ class StartPage(FloatLayout):
             start_spotify_auth()
 
     def enter_age(self):
-        if not self.age_dialog:
-            self.age_dialog = MDDialog(
-                title="Enter age",
-                text="Enter your age and I'll guess your favorite genres.",
-                type="custom",
-                content_cls=AgeDialogContent(),
-                buttons=[
-                    MDFlatButton(
-                        text="CANCEL", text_color=self.app.theme_cls.primary_color,
-                        on_release=lambda *args: self.age_dialog.dismiss()
-                    ),
-                    MDFlatButton(
-                        text="OK", text_color=self.app.theme_cls.primary_color,
-                        on_release=lambda *args: self.submit_age(
-                            self.age_dialog.content_cls.ids.age_textfield.text)
-                    ),
-                ],
-            )
-            self.loading = loading_spinner(pos_hint={'center_x': .5, 'center_y': .2})
-            self.age_dialog.add_widget(self.loading)
         self.age_dialog.open()
 
     def submit_age(self, age):
