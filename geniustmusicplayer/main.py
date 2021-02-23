@@ -145,7 +145,7 @@ class ServerSong():
         self.pos_callback(value)
 
     def update_playlist(self):
-        self.app.playlist = self.db.get_playlist()
+        self.app.playlist = self.app.db.get_playlist()
         Logger.debug('ACTIVITY: Updated playlist.')
 
 
