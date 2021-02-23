@@ -106,7 +106,6 @@ class OSCSever:
         return self.osc.getaddress()
 
     def load(self, id):
-        self.song.reset()
         self.song.id = id
         self.song.is_prepared = False
         Logger.debug('SERVICE: Loading %d.', id)
@@ -121,6 +120,7 @@ class OSCSever:
         else:
             Logger.debug('SERVICE: %d file is available.', id)
             self.waiting_for_download = None
+        self.song.reset()
         self.song.load(song.preview_file)
         self.song.song_object = song
         self.db.update_current_track(song)
