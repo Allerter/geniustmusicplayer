@@ -148,6 +148,7 @@ class OSCSever:
         self.db.update_current_track(song)
         self.playlist = self.db.get_playlist()
         self.song.is_prepared = True
+        self.update_notification()
         Logger.debug('SERVICE: Song loaded.')
 
     def load_play(self, id, volume=None):
@@ -239,7 +240,7 @@ class OSCSever:
     def unload(self, *values):
         self.song.unload()
 
-    def update_notification(self, artist, name):
+    def update_notification(self):
         notification = self.create_notification()
         notification_manager = context.getSystemService(Context.NOTIFICATION_SERVICE)
         notification_manager.notify("gtplayer", notification)
