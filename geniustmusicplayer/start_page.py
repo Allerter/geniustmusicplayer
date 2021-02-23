@@ -121,7 +121,6 @@ class GenresDialog:
         self.genres_dialog = None
         self.app = MDApp.get_running_app()
         self.get_genres_trigger = None
-        self.select_genres()
 
     def select_genres(self):
         if not self.genres_dialog:
@@ -300,6 +299,7 @@ class StartPage(FloatLayout):
 
     def select_genres(self, *args):
         self.genres_dialog = GenresDialog(root=self, callback=self.submit_genres)
+        self.genres_dialog.select_genres()
 
     def submit_genres(self, genres):
         Logger.info('GENRES: %s', genres)

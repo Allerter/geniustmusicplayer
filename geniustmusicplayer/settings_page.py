@@ -118,6 +118,7 @@ class SettingsPage(FloatLayout):
             callback=self.submit_genres,
             genres=self.app.genres,
         )
+        self.genres_dialog.select_genres()
 
     def submit_genres(self, genres):
         Logger.info('GENRES: %s', genres)
