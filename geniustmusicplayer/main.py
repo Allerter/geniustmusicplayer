@@ -632,10 +632,28 @@ class MainPage(FloatLayout):
             )
             song.download_file = filename
             Logger.debug("DOWNLOAD: Saved file.")
-            MediaScanner = autoclass("android.media.MediaScannerConnection")
-            scanner = MediaScanner()
-            scanner.connect()
-            scanner.scanFile(filename, "audio/mp3")
+            from jnius import PythonJavaClass, java_method
+            class OnScanCompletedListener(PythonJavaClass):
+                __javainterfaces__ = ["android/media/MediaScannerConnection$OnScanCompletedListener"]
+                __javacontext__ = "app"
+
+                def __init__(self, **kwargs):
+                    super().__init__(**kwargs)
+
+                @java_method("(Ljava/lang/String;Landroid/net/Uri;)V")
+                def onScanCompleted(self, path, uri):
+                    Logger.debug("DOWNLOAD: Scan completed.")
+
+            MediaScannerConnection = autoclass("android.media.MediaScannerConnection")
+            PythonActivity = autoclass("org.kivy.android.PythonActivity")
+            mActivity = PythonActivity.mActivity
+            listener = OnScanCompletedListener()
+            MediaScannerConnection.scanFile(
+                mActivity.getApplicationContext(),
+                [filename],
+                ["audio/mp3"],
+                listener
+            )
 
             if progress_bar:
                 toast(f'Downloaded to {filename}')
