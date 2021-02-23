@@ -246,7 +246,7 @@ class OSCSever:
 
     def create_notification(self):
         song = getattr(self.song, "song_object", None)
-        builder = NotificationCompatBuilder(context, channel_id)
+        builder = NotificationCompatBuilder(context, "gtplayer")
         (
             builder
             .setContentTitle(song.name if song else "GTPlayer")
@@ -258,7 +258,7 @@ class OSCSever:
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC).setSmallIcon(icon)
         )
         if song is None:
-            return
+            return builder.build()
         if not self.playlist.is_first:
             previous_intent = MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
@@ -337,7 +337,8 @@ if __name__ == '__main__':
     osc.download_song(osc.playlist.current_track)
     Logger.debug('SERVICE: Started OSC server.')
     Logger.debug("SERVICE: Genres: %s - Artists: %s", osc.genres, osc.artists)
-    service.startForeground(1, osc.create_notification())
+    notification = osc.create_notification()
+    service.startForeground(1, notification)
     while True:
         if osc.waiting_for_download:
             osc.load(osc.waiting_for_download)
