@@ -162,6 +162,7 @@ class GenresDialog:
                         ),
                     ],
                 )
+                Logger.debug("GENRE DIALOG: Created.")
                 self.root.remove_widget(self.loading)
                 self.genres_dialog.open()
 
