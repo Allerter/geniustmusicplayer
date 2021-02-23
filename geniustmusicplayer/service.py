@@ -90,7 +90,7 @@ class OSCSever:
         favorites = self.db.get_favorites()
         for song in self.app.playlist.tracks:
             if song not in favorites and song != self.song.song_object:
-                Logger.debug("CACHE: Removed %s", song.id)
+                Logger.debug("Service: Removed %s", song.id)
                 os.remove(song.preview_file)
         return playlist
 
@@ -105,7 +105,7 @@ class OSCSever:
     def load(self, id):
         self.song.reset()
         self.song.is_prepared = False
-        Logger.debug('SERVICE: Loading song.')
+        Logger.debug('SERVICE: Loading %d.', id)
         song = self.db.get_track(id)
         if song.preview_file is None and self.downloading != song.id:
             Logger.debug('SERVICE: Song is not downloaded.')
@@ -125,13 +125,13 @@ class OSCSever:
         Logger.debug('SERVICE: Song loaded.')
 
     def load_play(self, id, volume=None):
-        Logger.debug('SERVICE: Loading and playing song.')
+        Logger.debug('SERVICE: Loading and playing %d.', id)
         self.load(id)
         self.play(0, volume if volume is not None else self.volume)
 
     def play(self, seek, volume):
         if not self.song.is_prepared:
-            Logger.debug('SERVICE: Song is not prepared.')
+            Logger.debug('SERVICE: %d is not prepared.', self.song.song_object)
             if not self.waiting_for_download:
                 self.load(self.playlist.current_track.id)
             else:
@@ -151,17 +151,17 @@ class OSCSever:
         self.osc.send_message(b'/playing',
                               values,
                               *self.activity_server_address)
-        Logger.debug('SERVICE: Playing song.')
+        Logger.debug('SERVICE: Playing %d.', self.song.song_object.id)
 
     def stop(self, *values):
-        Logger.debug('SERVICE: stopping song.')
+        Logger.debug('SERVICE: stopping %d.', self.song.song_object.id)
         self.waiting_for_load = False
         if self.song.is_prepared and self.song.state == 'play':
             self.song.is_prepared = False
             self.song.stop()
 
     def pause(self, *values):
-        Logger.debug('SERVICE: pausing song.')
+        Logger.debug('SERVICE: pausing %d.', self.song.song_object.id)
         self.waiting_for_load = False
         if self.song.is_prepared and self.song.state == 'play':
             self.song.pause()
