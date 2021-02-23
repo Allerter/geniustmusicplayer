@@ -4,8 +4,6 @@ from datetime import timedelta
 from os.path import join
 from time import time
 
-os.environ['KIVY_IMAGE'] = 'pil,sdl2,gif'
-
 from kivy.loader import Loader
 from kivymd.app import MDApp
 from kivymd.uix.slider import MDSlider
@@ -759,7 +757,7 @@ class MainApp(MDApp):
         Logger.setLevel(LOG_LEVELS['debug'])
         self.theme_cls.primary_palette = "Indigo"
         self.theme_cls.accent_palette = "Amber"
-        Loader.loading_image = 'images/loading_coverart.gif'
+        Loader.loading_image = 'images/empty_coverart.png'
 
         self.nav_layout = Factory.NavLayout()
         self.screen_manager = self.nav_layout.screen_manager
