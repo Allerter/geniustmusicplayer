@@ -91,8 +91,8 @@ class OSCSever:
                               *self.activity_server_address)
         # clean up playlist songs
         favorites = self.db.get_favorites()
-        for song in self.app.playlist.tracks:
-            if song not in favorites and song != self.song.song_object:
+        for song in self.playlist.tracks:
+            if song.preview_file and song not in favorites and song != self.song.song_object:
                 Logger.debug("Service: Removed %s", song.id)
                 os.remove(song.preview_file)
         return playlist
