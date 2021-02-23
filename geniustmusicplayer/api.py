@@ -94,24 +94,27 @@ class Sender:
             url = path
 
         params = params if params else {}
-
-        for key in list(params):
-            if params[key] is None:
-                params.pop(key)
-        url_parse = parse.urlparse(url)
-        query = url_parse.query
-        url_dict = dict(parse.parse_qsl(query))
-        url_dict.update(params)
-        url_new_query = parse.urlencode(url_dict)
-        url_parse = url_parse._replace(query=url_new_query)
-        new_url = parse.urlunparse(url_parse)
         use_requests = use_requests or trigger is None
         if use_requests:
-            req = self.session.get(url)
+            req = self.session.get(url, params=params)
             response = req.content if raw else req.json()
-            Logger.debug("RESPONSE: URL %s - Payload: %s", url, response)
+            Logger.debug("RESPONSE: %s - URL %s - Payload: %s",
+                         req.status_code,
+                         req.url,
+                         response if not raw else "Bytes")
         else:
             from kivy.network.urlrequest import UrlRequest
+
+            for key in list(params):
+                if params[key] is None:
+                    params.pop(key)
+            url_parse = parse.urlparse(url)
+            query = url_parse.query
+            url_dict = dict(parse.parse_qsl(query))
+            url_dict.update(params)
+            url_new_query = parse.urlencode(url_dict)
+            url_parse = url_parse._replace(query=url_new_query)
+            new_url = parse.urlunparse(url_parse)
 
             # Make the request
             req = UrlRequest(new_url,
