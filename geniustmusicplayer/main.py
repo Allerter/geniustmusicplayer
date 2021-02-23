@@ -302,6 +302,8 @@ class PlayButton(ButtonBehavior, Image):
             app.playlist.current_track,
             app.playlist.is_first
         )
+        if self.event:
+            self.event.cancel()
         if app.playlist.is_last:
             app.song.play_new_playlist()
         else:
