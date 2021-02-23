@@ -322,6 +322,8 @@ class PlayButton(ButtonBehavior, Image):
         current = kwargs.get('current')
         if current is None:
             new_value = slider.value + 1
+            if new_value >= 5:
+                app.main_page.download_next_coverart()
             if new_value <= slider.max:
                 slider.value = new_value
                 app.song.last_pos = new_value
@@ -572,6 +574,12 @@ class MainPage(FloatLayout):
                 image.texture.save(cover_art, flipped=False)
                 Logger.debug('CACHE: Saved %s', cover_art)
 
+    def download_next_coverart(self):
+        song = self.playlist.preview_next()
+        if song.cover_art and not os.path.isfile(self._get_cover_art_path(song)):
+            image = Loader.image(song.cover_art, load_callback=self.save_cover_art)
+            image.source = None
+
     def update_song_info(self, song):
         self.ids.title.text = song.name
         self.ids.artist.text = song.artist
@@ -588,7 +596,7 @@ class MainPage(FloatLayout):
         import requests
         from io import BytesIO
         from kivymd.uix.progressbar import MDProgressBar
-        from jnius import autoclass
+        from jnius import autoclass, PythonJavaClass, java_method
         from android.storage import primary_external_storage_path
         from get_song_file import get_download_info, get_file_from_encrypted
         from utils import save_song
@@ -632,9 +640,10 @@ class MainPage(FloatLayout):
             )
             song.download_file = filename
             Logger.debug("DOWNLOAD: Saved file.")
-            from jnius import PythonJavaClass, java_method
+
             class OnScanCompletedListener(PythonJavaClass):
-                __javainterfaces__ = ["android/media/MediaScannerConnection$OnScanCompletedListener"]
+                __javainterfaces__ = ["android/media/MediaScannerConnection"
+                                      "$OnScanCompletedListener"]
                 __javacontext__ = "app"
 
                 def __init__(self, **kwargs):
