@@ -90,6 +90,7 @@ class OSCSever:
         favorites = self.db.get_favorites()
         for song in self.app.playlist.tracks:
             if song not in favorites and song != self.song.song_object:
+                Logger.debug("CACHE: Removed %s", song.id)
                 os.remove(song.preview_file)
         return playlist
 
