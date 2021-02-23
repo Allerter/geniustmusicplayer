@@ -132,8 +132,8 @@ class OSCSever:
 
     def play(self, seek, volume):
         if not self.song.is_prepared:
-            song = getattr(self.song, "id", None)
-            Logger.debug('SERVICE: %s is not prepared.', song.id if song else "Song")
+            song_id = getattr(self.song, "id", None)
+            Logger.debug('SERVICE: %s is not prepared.', song_id if song_id else "Song")
             if not self.waiting_for_download:
                 self.load(self.playlist.current_track.id)
             else:
