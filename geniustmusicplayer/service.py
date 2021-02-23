@@ -112,14 +112,14 @@ class OSCSever:
         Logger.debug('SERVICE: Loading %d.', id)
         song = self.db.get_track(id)
         if song.preview_file is None and self.downloading != song.id:
-            Logger.debug('SERVICE: Song is not downloaded.')
+            Logger.debug('SERVICE: %d is not downloaded.', id)
             self.download_song(song)
         if song.id in self.downloads:
-            Logger.debug('SERVICE: Song is downloading. Returning.')
+            Logger.debug('SERVICE: %d is downloading. Returning.', id)
             self.waiting_for_download = song.id
             return
         else:
-            Logger.debug('SERVICE: Song file is available.')
+            Logger.debug('SERVICE: %d file is available.', id)
             self.waiting_for_download = None
         self.song.load(song.preview_file)
         self.song.song_object = song
@@ -237,7 +237,6 @@ controller = mediaSession.getController()
 mediaMetadata = controller.getMetadata()
 icon = getattr(IconDrawable, 'icon')
 
-Logger.debug("ANDROID: api version %s", api_version)
 if api_version >= 26:
     NotificationChannel = autoclass('android.app.NotificationChannel')
     NotificationManager = autoclass("android.app.NotificationManager")
@@ -313,12 +312,14 @@ if __name__ == '__main__':
     logging.basicConfig(format="%(levelname)s - %(message)s")
     Logger = logging.getLogger('gtplayer')
     Logger.setLevel(logging.DEBUG)
+    Logger.debug("ANDROID: api version %s", api_version)
     args = args.split(',') if args else []
     activity_ip, activity_port, service_port = args[0], int(args[1]), int(args[2])
     activity_address = (activity_ip, activity_port)
     osc = OSCSever(activity_address, service_port)
     osc.download_song(osc.playlist.current_track)
     Logger.debug('SERVICE: Started OSC server.')
+    Logger.debug("SERVICE: Genres: %s - Artists: %s", osc.genres, osc.artists)
     service.startForeground(1, builder.build())
     while True:
         if osc.waiting_for_download:
