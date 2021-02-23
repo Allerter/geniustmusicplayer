@@ -109,7 +109,7 @@ class Sender:
         if use_requests:
             req = self.session.get(url)
             response = req.content if raw else req.json()
-            Logger.debug("RESPONSE: Payload: %s", response)
+            Logger.debug("RESPONSE: URL %s - Payload: %s", url, response)
         else:
             from kivy.network.urlrequest import UrlRequest
 
