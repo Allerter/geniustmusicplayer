@@ -575,10 +575,11 @@ class MainPage(FloatLayout):
                 Logger.debug('CACHE: Saved %s', cover_art)
 
     def download_next_coverart(self):
-        song = self.playlist.preview_next()
+        song = self.app.playlist.preview_next()
         if song.cover_art and not os.path.isfile(self._get_cover_art_path(song)):
-            image = Loader.image(song.cover_art, load_callback=self.save_cover_art)
+            image = Loader.image(song.cover_art)
             image.source = None
+            image.bind(on_load=self.save_cover_art)
 
     def update_song_info(self, song):
         self.ids.title.text = song.name
