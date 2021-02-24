@@ -68,9 +68,9 @@ class ServerSong():
         self.osc.bind(b'/set_complete', self.set_complete)
         self.osc.bind(b'/playing', self.playing)
         self.osc.bind(b'/update_playlist', self.update_playlist)
-        self.osc.bind(b'/ready', self.ready)
+        self.osc.bind(b'/ready', self.ready_callback)
 
-    def ready(self):
+    def ready_callback(self):
         self.ready = True
         Logger.debug("ACTIVITY: Service is ready.")
 
