@@ -132,7 +132,7 @@ class OSCSever:
         return self.osc.getaddress()
 
     def load(self, id):
-        self.first_load = getattr(self.song, "id", None)
+        self.first_load = getattr(self.song, "id", True)
         self.song.id = id
         self.song.is_prepared = False
         Logger.debug('SERVICE: Loading %d.', id)
