@@ -204,7 +204,7 @@ class OSCSever:
         self.update_notification()
 
     def pause(self, *values):
-        Logger.debug('SERVICE: pausing %d.', self.song.song_object.id)
+        Logger.debug('SERVICE: pausing Song.')
         self.waiting_for_load = False
         if self.song.is_prepared and self.song.state == 'play':
             self.song.pause()
