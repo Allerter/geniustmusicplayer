@@ -211,7 +211,6 @@ class StartPage(FloatLayout):
         self.loading = loading_spinner(pos_hint={'center_x': .5, 'center_y': .2})
         self.age_dialog.add_widget(self.loading)
 
-
     def get_preferences(self, code, platform):
         page = OAuthInfoPage()
         page_name = 'oauth_page'
@@ -301,7 +300,8 @@ class StartPage(FloatLayout):
         req = self.app.api.get_genres(age=age, trigger=self.get_genres_trigger)
 
     def select_genres(self, *args):
-        self.genres_dialog = GenresDialog(root=self, callback=self.submit_genres)
+        if self.genres_dialog is None:
+            self.genres_dialog = GenresDialog(root=self, callback=self.submit_genres)
         self.genres_dialog.select_genres()
 
     def submit_genres(self, genres):
