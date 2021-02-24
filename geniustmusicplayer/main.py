@@ -58,6 +58,7 @@ class ServerSong():
         self.length = 30
         self.is_complete = False
         self.song_object = None
+        self.ready = False
 
         self.osc = OSCThreadServer()
         self.osc.listen(port=port, default=True)
@@ -67,6 +68,11 @@ class ServerSong():
         self.osc.bind(b'/set_complete', self.set_complete)
         self.osc.bind(b'/playing', self.playing)
         self.osc.bind(b'/update_playlist', self.update_playlist)
+        self.osc.bind(b'/ready', self.ready)
+
+    def ready(self):
+        self.ready = True
+        Logger.debug("ACTIVITY: Service is ready.")
 
     def playing(self, id, pos):
         Logger.debug('ACTIVITY: Playing.')
@@ -230,6 +236,7 @@ class PlayButton(ButtonBehavior, Image):
         super().__init__(**kwargs)
         self.bind(on_release=lambda instance: self.control(instance))
         self.event = None
+        self.check_event = None
         self.snackbar = None
         app.play_button = self
 
@@ -245,8 +252,20 @@ class PlayButton(ButtonBehavior, Image):
 
     def play_track(self, song, seek=0):
         self.update_track_current(current=seek)
+        self.source = f'images/stop_{app.theme_cls.theme_style.lower()}.png'
         if self.event:
             self.event.cancel()
+
+        def check_service(*args):
+            if not app.song.ready:
+                self.play_track(song, seek)
+        if not app.song.ready:
+            if self.check_event is None:
+                self.check_event = Clock.schedule_interval(check_service, .5)
+            return
+        else:
+            self.check_event.cancel()
+
         if app.song is None or app.song.song_object != song:
             self.load_song(song)
             app.song.load_play(song, app.volume)
@@ -254,11 +273,7 @@ class PlayButton(ButtonBehavior, Image):
         else:
             Logger.info('SONG: resume.')
             app.song.play(seek, app.volume)
-        # app.song.song_object = song
-        # app.playlist.set_current(song)
         app.song.state = 'play'
-        self.source = f'images/stop_{app.theme_cls.theme_style.lower()}.png'
-
         Logger.info('play_track: playing %s | seek: %s', song.name, seek)
 
     def control(self, instance, **kwargs):
