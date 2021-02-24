@@ -247,7 +247,10 @@ class OSCSever:
 
     def create_notification(self):
         song = getattr(self.song, "song_object", None)
-        builder = NotificationCompatBuilder(context)
+        if api_version >= 26:
+            builder = NotificationCompatBuilder(context, "gtplayer")
+        else:
+            builder = NotificationCompatBuilder(context)
         (
             builder
             .setContentTitle(song.name if song else "GTPlayer")
