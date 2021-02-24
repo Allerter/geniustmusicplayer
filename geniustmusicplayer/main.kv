@@ -139,18 +139,6 @@
         font_style: "Subtitle1"
         halign: "center"
 
-    # Download
-    ImageButton:
-        id: download_button
-        allow_stretch: True
-        ripple_scale: 0
-        size_hint: None, None
-        size: sp(20), sp(20)
-        source: "images/download_light.png" if app.theme_cls.theme_style == 'Light' else "images/download_dark.png"
-        on_release:
-            root.download_song(app.song.song_object) if app.song.song_object.download_url or app.song.song_object.isrc else toast('Download unavailable.')
-        pos_hint: {'center_x': 0.9, 'center_y': 0.92}
-
     # Volume
     MDIconButton:
         pos_hint: {'center_y': 0.85}

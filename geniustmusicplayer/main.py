@@ -422,16 +422,7 @@ class MainPage(FloatLayout):
             self.update_playlist_menu(song=song)
             self.update_cover_art(song)
             self.update_song_info(song)
-            self.update_download_button(song)
             self.song = song
-
-    def update_download_button(self, song):
-        if song.download_url or song.isrc:
-            Logger.debug('DOWNLOAD: Available.')
-            self.download_button.text_color = app.theme_cls.text_color
-        else:
-            Logger.debug('DOWNLOAD: Unavailable.')
-            self.download_button.text_color = app.theme_cls.disabled_hint_text_color
 
     def update_playlist_menu(self, *args, song=None):
         from kivymd.uix.bottomsheet import MDCustomBottomSheet
@@ -463,17 +454,6 @@ class MainPage(FloatLayout):
         # adding right-side icons
         from kivymd.uix.bottomsheet import MDListBottomSheet
         song_menu = MDListBottomSheet(radius_from='top')
-        if i.download_file:
-            song_menu.add_item(
-                text="Song Downloaded",
-                callback=lambda *args: None,
-                icon='check')
-        elif i.download_url or i.isrc:
-            song_menu.add_item(
-                text="Download Full Song",
-                callback=lambda *args, song=i: self.download_song(
-                    song, show_progress=False),
-                icon='download')
         # Spotify
         if i.id_spotify:
             from utils import spotify_installed
@@ -591,131 +571,6 @@ class MainPage(FloatLayout):
     def update_song_info(self, song):
         self.ids.title.text = song.name
         self.ids.artist.text = song.artist
-
-    def check_permission(self, permissions, grant_results):
-        for result in grant_results:
-            if result is False:
-                return
-        self.app.storage_permission = True
-        self.download_song(self.to_be_downloaded, self.show_progress)
-
-    def download_song(self, song, show_progress=True):
-        import threading
-        import requests
-        from io import BytesIO
-        from kivymd.uix.progressbar import MDProgressBar
-        from jnius import autoclass, PythonJavaClass, java_method
-        from android.storage import primary_external_storage_path
-        from get_song_file import get_download_info, get_file_from_encrypted
-        from utils import save_song
-
-        def get_song(self, song, storage_path, progress_bar=None):
-            Logger.debug("DOWNLOAD: Thread started.")
-            if song.download_url:
-                url = song.download_url
-                encrypted = False
-            else:
-                Logger.debug("DOWNLOAD: Getting song info.")
-                data = get_download_info(song.isrc)
-                url = data['url']
-                encrypted = True
-            Logger.debug("DOWNLOAD: Downloading chunks...")
-            req = requests.get(url, stream=True)
-            song_bytes = b''
-            chunk_size = 500000
-            num_chunks = int(req.headers['Content-Length']) // chunk_size
-            chunk_progress = 100 // num_chunks
-            try:
-                for i, chunk in enumerate(req.iter_content(chunk_size)):
-                    song_bytes += chunk
-                    if progress_bar:
-                        progress_bar.value += chunk_progress
-                    Logger.debug('DOWNLOAD: Received chunk %s/%s', i, num_chunks)
-            except Exception as e:
-                Logger.error(e)
-                if progress_bar:
-                    toast('Download failed.')
-                song.download_file = None
-                return
-            bio = BytesIO(song_bytes)
-            if encrypted:
-                bio = get_file_from_encrypted(bio, data, BytesIO())
-            filename = save_song(
-                storage_path,
-                song,
-                bio.getbuffer(),
-                preview=False
-            )
-            song.download_file = filename
-            Logger.debug("DOWNLOAD: Saved file.")
-
-            class OnScanCompletedListener(PythonJavaClass):
-                __javainterfaces__ = ["android/media/MediaScannerConnection"
-                                      "$OnScanCompletedListener"]
-                __javacontext__ = "app"
-
-                def __init__(self, **kwargs):
-                    super().__init__(**kwargs)
-
-                @java_method("(Ljava/lang/String;Landroid/net/Uri;)V")
-                def onScanCompleted(self, path, uri):
-                    Logger.debug("DOWNLOAD: Scan completed.")
-
-            MediaScannerConnection = autoclass("android.media.MediaScannerConnection")
-            PythonActivity = autoclass("org.kivy.android.PythonActivity")
-            mActivity = PythonActivity.mActivity
-            listener = OnScanCompletedListener()
-            MediaScannerConnection.scanFile(
-                mActivity.getApplicationContext(),
-                [filename],
-                ["audio/mp3"],
-                listener
-            )
-
-            if progress_bar:
-                toast(f'Downloaded to {filename}')
-                self.remove_widget(progress_bar)
-            Logger.debug("DOWNLOAD: Thread finished.")
-
-        if song.download_file == 'downloading':
-            if show_progress:
-                toast('Download in progress...')
-            return
-
-        if not self.app.storage_permission:
-            from android.permissions import request_permissions, Permission
-            self.to_be_downloaded = song
-            self.show_progress = show_progress
-            request_permissions(
-                [
-                    Permission.READ_EXTERNAL_STORAGE,
-                    Permission.WRITE_EXTERNAL_STORAGE,
-                ],
-                callback=self.check_permission)
-            return
-
-        primary_ext_storage = primary_external_storage_path()
-        if os.path.exists(os.path.join(primary_ext_storage, "Music")):
-            storage_path = os.path.join(primary_ext_storage, "Music")
-        elif os.path.exists(os.path.join(primary_ext_storage, "Download")):
-            storage_path = os.path.join(primary_ext_storage, "Download")
-        else:
-            storage_path = primary_ext_storage
-        Logger.debug("DOWNLOAD: Storage path: %s", storage_path)
-        if show_progress:
-            progress_bar = MDProgressBar()
-            progress_bar.pos = progress_bar.pos[0], self.ids.cover_art.pos[1] + dp(5)
-            self.add_widget(progress_bar)
-            toast('Download started.')
-        else:
-            progress_bar = None
-        song.download_file = 'downloading'
-        t = threading.Thread(
-            target=get_song,
-            args=(self, song, storage_path, progress_bar),
-        )
-        t.daemon = True
-        t.start()
 
 
 # -------------------- App --------------------
