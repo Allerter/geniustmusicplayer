@@ -4,6 +4,7 @@ from os import environ
 from time import sleep
 import logging
 
+import jnius
 from oscpy.server import OSCThreadServer
 from android import api_version
 from android.storage import app_storage_path
@@ -146,7 +147,14 @@ class OSCSever:
             Logger.debug('SERVICE: %d file is available.', id)
             self.waiting_for_download = None
         self.song.reset()
-        self.song.load(song.preview_file)
+        try:
+            self.song.load(song.preview_file)
+        except jnius.jnius.JavaException as e:
+            if "ioexception" in str(e).lower():
+                return
+            else:
+                raise e
+
         self.song.song_object = song
         self.db.update_current_track(song)
         self.playlist = self.db.get_playlist()
