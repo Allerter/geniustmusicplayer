@@ -352,6 +352,7 @@ if __name__ == '__main__':
     activity_address = (activity_ip, activity_port)
     osc = OSCSever(activity_address, service_port)
     osc.download_song(osc.playlist.current_track)
+    osc.load(osc.playlist.current_track.id)
     Logger.debug('SERVICE: Started OSC server.')
     Logger.debug("SERVICE: Genres: %s - Artists: %s", osc.genres, osc.artists)
     service.startForeground(1, osc.create_notification())
