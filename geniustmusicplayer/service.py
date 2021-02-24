@@ -151,6 +151,8 @@ class OSCSever:
             self.song.load(song.preview_file)
         except jnius.jnius.JavaException as e:
             if "ioexception" in str(e).lower():
+                self.song.reset()
+                Logger.debug("SERVICE: IOException caught. Returning.")
                 return
             else:
                 raise e
