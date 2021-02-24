@@ -132,7 +132,7 @@ class OSCSever:
         return self.osc.getaddress()
 
     def load(self, id):
-        self.first_load = not getattr(self.song, "id", None)
+        self.first_load = not getattr(self.song, "id", 0)
         self.song.id = id
         self.song.is_prepared = False
         Logger.debug('SERVICE: Loading %d.', id)
@@ -144,9 +144,8 @@ class OSCSever:
             Logger.debug('SERVICE: %d is downloading. Returning.', id)
             self.waiting_for_download = song.id
             return
-        else:
-            Logger.debug('SERVICE: %d file is available.', id)
-            self.waiting_for_download = None
+        Logger.debug('SERVICE: %d file is available.', id)
+        self.waiting_for_download = None
         if not self.first_load:
             self.song.reset()
         self.song.load(song.preview_file)
