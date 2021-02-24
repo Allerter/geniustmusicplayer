@@ -151,7 +151,9 @@ class OSCSever:
             self.song.load(song.preview_file)
         except jnius.jnius.JavaException as e:
             if "ioexception" in str(e).lower():
-                self.song.reset()
+                self.song = SoundAndroidPlayer(self.on_complete)
+                self.song.is_prepared = False
+                self.song.id = id
                 Logger.debug("SERVICE: IOException caught. Returning.")
                 return
             else:
@@ -361,11 +363,11 @@ if __name__ == '__main__':
     osc = OSCSever(activity_address, service_port)
     osc.download_song(osc.playlist.current_track)
     Logger.debug('SERVICE: Started OSC server.')
+    Logger.debug("SERVICE: Genres: %s - Artists: %s", osc.genres, osc.artists)
+    service.startForeground(1, osc.create_notification())
     osc.osc.send_message(b'/ready',
                          [],
                          *osc.activity_server_address)
-    Logger.debug("SERVICE: Genres: %s - Artists: %s", osc.genres, osc.artists)
-    service.startForeground(1, osc.create_notification())
     while True:
         if osc.waiting_for_download:
             osc.load(osc.waiting_for_download)

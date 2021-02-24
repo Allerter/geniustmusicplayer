@@ -257,14 +257,14 @@ class PlayButton(ButtonBehavior, Image):
             self.event.cancel()
 
         def check_service(*args):
-            if not app.song.ready:
+            if app.song.ready:
+                self.check_event.cancel()
+                self.check_event = None
                 self.play_track(song, seek)
         if not app.song.ready:
             if self.check_event is None:
                 self.check_event = Clock.schedule_interval(check_service, .5)
             return
-        else:
-            self.check_event.cancel()
 
         if app.song is None or app.song.song_object != song:
             self.load_song(song)
