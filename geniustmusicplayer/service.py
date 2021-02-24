@@ -132,6 +132,7 @@ class OSCSever:
         return self.osc.getaddress()
 
     def load(self, id):
+        self.first_load = getattr(self.song, "id", None)
         self.song.id = id
         self.song.is_prepared = False
         Logger.debug('SERVICE: Loading %d.', id)
@@ -146,19 +147,9 @@ class OSCSever:
         else:
             Logger.debug('SERVICE: %d file is available.', id)
             self.waiting_for_download = None
-        self.song.reset()
-        try:
-            self.song.load(song.preview_file)
-        except jnius.jnius.JavaException as e:
-            if "ioexception" in str(e).lower():
-                self.song = SoundAndroidPlayer(self.on_complete)
-                self.song.is_prepared = False
-                self.song.id = id
-                Logger.debug("SERVICE: IOException caught. Returning.")
-                return
-            else:
-                raise e
-
+        if not self.first_load:
+            self.song.reset()
+        self.song.load(song.preview_file)
         self.song.song_object = song
         self.db.update_current_track(song)
         self.playlist = self.db.get_playlist()
