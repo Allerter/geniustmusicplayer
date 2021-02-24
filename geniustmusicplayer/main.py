@@ -820,7 +820,7 @@ class MainApp(MDApp):
         self.load_first_page()
         Logger.debug('DISPLAY: Loaded first page.')
         if platform == 'android':
-            Clock.schedule_once(remove_splash_screen, .1)
+            Clock.schedule_once(remove_splash_screen, 1)
         return self.nav_layout
 
     def complete_ui(self):
