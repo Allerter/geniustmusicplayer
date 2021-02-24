@@ -181,7 +181,6 @@ class SettingsPage(FloatLayout):
         self.reset_dialog.open()
 
     def reset_preferences(self, *args):
-        import start_page
         self.reset_dialog.dismiss()
         self.app.db.delete_user()
-        switch_screen(start_page.StartPage(), 'start_page')
+        self.app.load_first_page()
