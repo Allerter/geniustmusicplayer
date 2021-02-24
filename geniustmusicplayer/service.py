@@ -158,6 +158,7 @@ class OSCSever:
 
     def load_play(self, id, volume=None):
         Logger.debug('SERVICE: Loading and playing %d.', id)
+        self.pause()
         self.load(id)
         self.play(0, volume if volume is not None else self.volume)
 
