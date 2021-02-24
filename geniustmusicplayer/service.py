@@ -243,11 +243,11 @@ class OSCSever:
     def update_notification(self):
         notification = self.create_notification()
         notification_manager = context.getSystemService(Context.NOTIFICATION_SERVICE)
-        notification_manager.notify("gtplayer", notification)
+        notification_manager.notify(1, notification)
 
     def create_notification(self):
         song = getattr(self.song, "song_object", None)
-        builder = NotificationCompatBuilder(context, "gtplayer")
+        builder = NotificationCompatBuilder(context)
         (
             builder
             .setContentTitle(song.name if song else "GTPlayer")
@@ -258,14 +258,16 @@ class OSCSever:
                 PlaybackStateCompat.ACTION_STOP))
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC).setSmallIcon(icon)
         )
-        if song is None:
-            return builder.build()
-        if not self.playlist.is_first:
+        style = MediaStyle().setShowActionsInCompactView(0)
+        builder.setStyle(style)
+
+        if song is not None not self.playlist.is_first:
             previous_intent = MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
             action = NotificationCompatAction(
                 RDrawable.ic_media_previous, "Previous", previous_intent)
             builder.addAction(action)
+
         if self.song.state == "play":
             intent = MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_PAUSE)
@@ -278,23 +280,22 @@ class OSCSever:
                 RDrawable.ic_media_play, "Play", intent)
         builder.addAction(action)
 
-        next_intent = MediaButtonReceiver.buildMediaButtonPendingIntent(
-            context, PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
-        action = NotificationCompatAction(
-            RDrawable.ic_media_next, "Next", next_intent)
-        builder.addAction(action)
-        style = MediaStyle().setShowActionsInCompactView(0)
-        builder.setStyle(style)
+        if song is not None:
+            next_intent = MediaButtonReceiver.buildMediaButtonPendingIntent(
+                context, PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
+            action = NotificationCompatAction(
+                RDrawable.ic_media_next, "Next", next_intent)
+            builder.addAction(action)
+
         return builder.build()
 
 
-channel_id = 'gtplayer'
 if api_version >= 26:
     NotificationChannel = autoclass('android.app.NotificationChannel')
     NotificationManager = autoclass("android.app.NotificationManager")
     channel_name = 'GTPlayer'
     channel_importance = NotificationManager.IMPORTANCE_DEFAULT
-    channel = NotificationChannel(channel_id, channel_name, channel_importance)
+    channel = NotificationChannel("gtplayer", channel_name, channel_importance)
     channel.setDescription('GeniusT Music Player')
     NotificationManagerClass = autoclass('android.app.NotificationManager.class')
     notificationManager = service.getSystemService(NotificationManagerClass)
@@ -338,8 +339,7 @@ if __name__ == '__main__':
     osc.download_song(osc.playlist.current_track)
     Logger.debug('SERVICE: Started OSC server.')
     Logger.debug("SERVICE: Genres: %s - Artists: %s", osc.genres, osc.artists)
-    notification = osc.create_notification()
-    service.startForeground(1, notification)
+    service.startForeground(1, osc.create_notification())
     while True:
         if osc.waiting_for_download:
             osc.load(osc.waiting_for_download)
