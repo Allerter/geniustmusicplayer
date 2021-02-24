@@ -181,7 +181,7 @@
     MDLabel:
         id: track_current
         text: '0:00'
-        size_hint: 0.1, None
+        font_style: "Subtitle1"
         pos_hint: {'center_y': 0.25}
         pos: root.playback_slider.pos[0] - dp(30), self.pos[1]
     PlaybackSlider:
@@ -189,7 +189,7 @@
     MDLabel:
         id: track_length
         text: ''
-        size_hint: 0.1, None
+        font_style: "Subtitle1"
         pos_hint: {'center_y': 0.25}
         pos: root.playback_slider.pos[0] + root.playback_slider.size[0], self.pos[1]
 
@@ -249,7 +249,7 @@
     min: 0
     value: 0
     hint: False
-    size_hint: 0.8, None
+    size_hint: 0.75, None
     pos_hint: {'center_x': 0.5, 'center_y': 0.25}
 
 <VolumeSlider>:
