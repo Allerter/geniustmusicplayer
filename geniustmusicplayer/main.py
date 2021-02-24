@@ -166,9 +166,8 @@ class PlaybackSlider(MDSlider):
         # self.bind(value=self.on_value)
         # TODO: by using these, slider value won't update automatically
         # how do I set it myself?
-        # self.bind(on_touch_down=self.stop_slider_update)
-        # self.bind(on_touch_up=self.seek)
-        self.bind(value=self.seek)
+        self.bind(on_touch_down=self.seek, on_touch_up=self.seek)
+        # self.bind(value=self.seek)
 
     def stop_slider_update(self, slider, motion, *args):
         touch = motion.pos
@@ -196,14 +195,20 @@ class PlaybackSlider(MDSlider):
             return True
         return False
 
-    def seek(self, slider, touch, *args):
-        if abs(slider.value - app.song.last_pos) > 1.5:
-            play_button = app.play_button
-            app.song.last_pos = value = self.value
-            play_button.update_track_current(current=value)
-            if app.song.state == 'play':
-                Logger.info('SEEK: %s', value)
-                app.song.seek(value)
+    def seek(self, slider, motion, *args, **kwargs):
+        if motion:
+            if slider.collide_point(*motion.pos):
+                super().on_touch_down(motion)
+                play_button = app.play_button
+                app.song.last_pos = value = self.value
+                play_button.update_track_current(current=value)
+                if app.song.state == 'play':
+                    Logger.info('SEEK: %s', value)
+                    app.song.seek(value)
+                return True
+            return False
+        else:
+            slider.value = kwargs.pop("value")
 
 class VolumeSlider(MDSlider):
 
@@ -327,7 +332,7 @@ class PlayButton(ButtonBehavior, Image):
             if new_value >= 5:
                 app.main_page.download_next_coverart()
             if new_value <= slider.max:
-                slider.value = new_value
+                slider.seek(slider, None, value=new_value)
                 app.song.last_pos = new_value
         else:
             slider.value = current
@@ -914,7 +919,7 @@ class MainApp(MDApp):
             self.play_button.load_song(song)
             self.song.last_pos = user['last_pos']
             slider = self.main_page.ids.playback_slider
-            slider.value = self.song.last_pos
+            slider.seek(slider, None, value=self.song.last_pos)
             self.main_page.ids.track_current.text = str(timedelta(
                 seconds=slider.value
             ))[3:7]
