@@ -297,8 +297,7 @@ if api_version >= 26:
     channel_importance = NotificationManager.IMPORTANCE_DEFAULT
     channel = NotificationChannel("gtplayer", channel_name, channel_importance)
     channel.setDescription('GeniusT Music Player')
-    NotificationManagerClass = autoclass('android.app.NotificationManager.class')
-    notificationManager = service.getSystemService(NotificationManagerClass)
+    notificationManager = service.getSystemService(NotificationManager)
     notificationManager.createNotificationChannel(channel)
 
 
