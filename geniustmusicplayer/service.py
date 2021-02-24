@@ -264,7 +264,7 @@ class OSCSever:
         style = MediaStyle().setShowActionsInCompactView(0)
         builder.setStyle(style)
 
-        if song is not None not self.playlist.is_first:
+        if song is not None and not self.playlist.is_first:
             previous_intent = MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
             action = NotificationCompatAction(
