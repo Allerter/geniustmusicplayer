@@ -233,7 +233,7 @@ class StartPage(FloatLayout):
                 else:
                     msg = (f"Sorry, couldn't guess "
                            f"preferences from {platform.capitalize()}")
-                    for button in self.ids.choices_layout.children[0]:
+                    for button in self.ids.choices_layout.children[0].children:
                         if platform in button.text.lower():
                             button.disabled = True
                             break
