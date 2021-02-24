@@ -6,6 +6,7 @@ import logging
 
 from oscpy.server import OSCThreadServer
 from android import api_version
+from android.storage import app_storage_path
 from jnius import autoclass
 
 from utils import save_song, Playlist
@@ -26,11 +27,13 @@ MediaStyle = autoclass("androidx.media.app.NotificationCompat$MediaStyle")
 NotificationCompatAction = autoclass("androidx.core.app.NotificationCompat$Action")
 NotificationCompatBuilder = autoclass("androidx.core.app.NotificationCompat$Builder")
 PlaybackStateCompat = autoclass("android.support.v4.media.session.PlaybackStateCompat")
+BitmapFactory = autoclass("android.graphics.BitmapFactory")
 IconDrawable = autoclass("{}.R$drawable".format("org.allerter.geniustmusicplayer"))
 mediaSession = MediaSession(context, "gtplayer music notification")
 controller = mediaSession.getController()
 mediaMetadata = controller.getMetadata()
 icon = getattr(IconDrawable, 'icon')
+images_path = os.path.join(app_storage_path(), "temp")
 
 
 class OSCSever:
@@ -283,12 +286,20 @@ class OSCSever:
                 RDrawable.ic_media_play, "Play", intent)
         builder.addAction(action)
 
+        coverart = None
         if song is not None:
             next_intent = MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
             action = NotificationCompatAction(
                 RDrawable.ic_media_next, "Next", next_intent)
             builder.addAction(action)
+
+            path = os.path.join(images_path, f"{song.id}.png")
+            if os.path.isfile(path):
+                coverart = path
+
+        coverart = coverart if coverart is not None else "images/empty_coverart.png"
+        builder.setLargeIcon(BitmapFactory.decodeFile(coverart))
 
         return builder.build()
 
