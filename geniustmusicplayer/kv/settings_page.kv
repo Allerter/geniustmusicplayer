@@ -39,17 +39,6 @@
                             on_release: root.open_artists()
 
             CustomOneLineIconListItem:
-                text: 'Play Mode'
-
-                RightContent:
-                    pos_hint: {"center_y": .5}
-                    MDDropDownItem:
-                        pos_hint: {"center_y": .5}
-                        id: drop_item
-                        text: root.get_play_mode_text(app.play_mode)
-                        on_release: root.menu.open()
-
-            CustomOneLineIconListItem:
                 text: 'Dark Mode'
 
                 RightContent:

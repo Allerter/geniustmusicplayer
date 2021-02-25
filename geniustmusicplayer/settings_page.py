@@ -16,8 +16,6 @@ from kivy.uix.screenmanager import Screen
 from kivy.logger import Logger
 from kivymd.uix.list import BaseListItem, ContainerSupport
 
-from utils import switch_screen
-
 
 class CustomOneLineIconListItem(OneLineAvatarIconListItem):
     def __init__(self, **kwargs):
@@ -52,49 +50,6 @@ class SettingsPage(FloatLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app = MDApp.get_running_app()
-        menu_items = [
-            {"text": "Any"},
-            {"text": "Previews"},
-            {"text": "Full Songs"}
-
-        ]
-
-        def unavailable(*args):
-            toast('Play mode not available. Try again later.')
-            self.menu.dismiss()
-        self.menu = MDDropdownMenu(
-            caller=self.ids.drop_item,
-            items=menu_items,
-            position="bottom",
-            width_mult=4,
-        )
-        self.menu.bind(
-            on_release=unavailable
-            # self.set_play_mode
-        )
-
-    def set_play_mode(self, instance_menu, instance_menu_item):
-        self.ids.drop_item.set_item(instance_menu_item.text)
-        self.menu.dismiss()
-        mode = self.ids.drop_item.current_item
-        if mode == 'Any':
-            mode = 'any_file'
-        elif mode == 'Previews':
-            mode = 'preview'
-        else:
-            mode = 'full'
-        self.app.db.update_play_mode(mode)
-        self.app.play_mode = mode
-        Logger.info('PLAY MODE: %s', mode)
-
-    def get_play_mode_text(self, mode):
-        if mode == 'any_file':
-            mode = 'Any'
-        elif mode == 'preview':
-            mode = 'Previews'
-        else:
-            mode = 'Full Songs'
-        return mode
 
     def disable_dark_mode(self):
         # self.app.theme_cls.primary_palette = "Indigo"
