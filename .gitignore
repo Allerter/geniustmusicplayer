@@ -140,4 +140,3 @@ user.db
 .buildozer
 !buildozer.spec
 !geniustmusicplayer/Crypto/**
-bin/
