@@ -99,11 +99,14 @@ RUN mkdir ${ANDROID_HOME} && chown --recursive ${USER} ${HOME_DIR} ${ANDROID_HOM
 USER ${USER}
 
 # clone allerter python-for-android fork
-RUN git clone https://github.com/allerter/python-for-android ${WORK_DIR}/python-for-android \
-    && cd python-for-android \
-    && cp ci/makefiles/android.mk /tmp/android.mk \
-    && make --file /tmp/android.mk \
-    && sudo rm /tmp/android.mk
+RUN mkdir ${WORK_DIR}/python-for-android \
+    cd ${WORK_DIR}/python-for-android \
+    git clone https://github.com/allerter/python-for-android .
+
+WORKDIR ${WORK_DIR}/python-for-android
+COPY ci/makefiles/android.mk /tmp/android.mk \
+     && make --file /tmp/android.mk \
+     && sudo rm /tmp/android.mk
 
 # install python-for-android from current branch
 COPY --chown=user:user Makefile README.md setup.py pythonforandroid/__init__.py ${WORK_DIR}/
