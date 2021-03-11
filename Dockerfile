@@ -100,8 +100,8 @@ USER ${USER}
 
 # clone allerter python-for-android fork
 RUN mkdir ${WORK_DIR}/python-for-android \
-    cd ${WORK_DIR}/python-for-android \
-    git clone https://github.com/allerter/python-for-android .
+    && cd ${WORK_DIR}/python-for-android \
+    && git clone https://github.com/allerter/python-for-android .
 
 WORKDIR ${WORK_DIR}/python-for-android
 COPY ci/makefiles/android.mk /tmp/android.mk \
