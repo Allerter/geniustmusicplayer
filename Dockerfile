@@ -99,14 +99,11 @@ RUN mkdir ${ANDROID_HOME} && chown --recursive ${USER} ${HOME_DIR} ${ANDROID_HOM
 USER ${USER}
 
 # clone allerter python-for-android fork
-RUN git clone https://github.com/allerter/python-for-android ${WORK_DIR}/python-for-android
-RUN ls
 WORKDIR ${WORKDIR}/python-for-android
-RUN ls
-
-# Download and install android's NDK/SDK
-COPY ci/makefiles/android.mk /tmp/android.mk
-RUN make --file /tmp/android.mk \
+RUN git clone https://github.com/allerter/python-for-android ${WORK_DIR}/python-for-android \
+    && ls \
+    && cp ci/makefiles/android.mk /tmp/android.mk \
+    && make --file /tmp/android.mk \
     && sudo rm /tmp/android.mk
 
 # install python-for-android from current branch
