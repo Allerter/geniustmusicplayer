@@ -12,7 +12,7 @@ jobs:
     name: build
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout python-for-android
+    - name: Checkout files
       uses: actions/checkout@v2
     # helps with GitHub runner getting out of space
     - name: Free disk space

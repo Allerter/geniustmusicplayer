@@ -99,8 +99,10 @@ RUN mkdir ${ANDROID_HOME} && chown --recursive ${USER} ${HOME_DIR} ${ANDROID_HOM
 USER ${USER}
 
 # clone allerter python-for-android fork
-WORKDIR ${WORKDIR}/python-for-android
 RUN git clone https://github.com/allerter/python-for-android ${WORK_DIR}/python-for-android
+RUN ls
+WORKDIR ${WORKDIR}/python-for-android
+RUN ls
 
 # Download and install android's NDK/SDK
 COPY ci/makefiles/android.mk /tmp/android.mk
@@ -115,8 +117,8 @@ RUN mkdir pythonforandroid \
     && rm -rf ~/.cache/
 
 # run build
-WORKDIR ${WORK_DIR}/geniustmusicplayer
-RUN git clone https://github.com/allerter/geniustmusicplayer ${WORK_DIR}/geniustmusicplayer
+WORKDIR ${WORK_DIR}
+RUN ls
 RUN p4a apk \
     --enable-androidx \
     --sdk_dir ${ANDROID_SDK_HOME} \
@@ -130,7 +132,7 @@ RUN p4a apk \
     --requirements python3,kivy==2.0.0,https://github.com/kivymd/KivyMD/archive/c792038.zip,android,sdl2_ttf==2.0.15,requests,urllib3,idna,chardet,oscpy,pillow \
     --orientation portrait \
     --window \
-    --private ${WORK_DIR}/geniustmusicplayer/geniustmusicplayer \
+    --private ${WORK_DIR}/geniustmusicplayer \
     --permission INTERNET \
     --permission ACCESS_NETWORK_STATE \
     --permission FOREGROUND_SERVICE \
@@ -138,9 +140,9 @@ RUN p4a apk \
     --depend "com.android.support:support-compat:28.0.0" \
     --depend "androidx.legacy:legacy-support-v4:1.0.0" \
     --depend "com.google.code.gson:gson:2.8.5" \
-    --presplash-lottie ${WORK_DIR}/geniustmusicplayer/geniustmusicplayer/images/presplash.json \
+    --presplash-lottie ${WORK_DIR}/geniustmusicplayer/images/presplash.json \
     --presplash-color white \
-    --icon ${WORK_DIR}/geniustmusicplayer/geniustmusicplayer/images/icon.png \
-    --add-aar ${WORK_DIR}/geniustmusicplayer/geniustmusicplayer/spotify-auth-release-1.2.3.aar \
-    --add-aar ${WORK_DIR}/geniustmusicplayer/geniustmusicplayer/genius-auth-release-1.2.4.aar \
-    --intent-filters ${WORK_DIR}/geniustmusicplayer/geniustmusicplayer/intent_filters.xml
+    --icon ${WORK_DIR}/geniustmusicplayer/images/icon.png \
+    --add-aar ${WORK_DIR}/geniustmusicplayer/spotify-auth-release-1.2.3.aar \
+    --add-aar ${WORK_DIR}/geniustmusicplayer/genius-auth-release-1.2.4.aar \
+    --intent-filters ${WORK_DIR}/geniustmusicplayer/intent_filters.xml
