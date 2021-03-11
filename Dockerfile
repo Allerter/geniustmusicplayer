@@ -99,9 +99,8 @@ RUN mkdir ${ANDROID_HOME} && chown --recursive ${USER} ${HOME_DIR} ${ANDROID_HOM
 USER ${USER}
 
 # clone allerter python-for-android fork
-WORKDIR ${WORKDIR}/python-for-android
 RUN git clone https://github.com/allerter/python-for-android ${WORK_DIR}/python-for-android \
-    && ls \
+    && cd python-for-android \
     && cp ci/makefiles/android.mk /tmp/android.mk \
     && make --file /tmp/android.mk \
     && sudo rm /tmp/android.mk
