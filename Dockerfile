@@ -102,8 +102,9 @@ USER ${USER}
 RUN mkdir ${WORK_DIR}/python-for-android \
     && cd ${WORK_DIR}/python-for-android \
     && git clone https://github.com/allerter/python-for-android .
-RUN ls
 
+WORKDIR ${WORK_DIR}/python-for-android
+RUN ls
 COPY ci/makefiles/android.mk /tmp/android.mk \
      && make --file /tmp/android.mk \
      && sudo rm /tmp/android.mk
