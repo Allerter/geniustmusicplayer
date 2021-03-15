@@ -101,7 +101,7 @@ USER ${USER}
 
 # clone allerter python-for-android fork
 WORKDIR ${WORK_DIR}/python-for-android
-RUN ls ci/makefiles/
+RUN test -f ci/makefiles/android.mk && echo "android.mk exists"    
 COPY ci/makefiles/android.mk /tmp/android.mk \
      && make --file /tmp/android.mk \
      && sudo rm /tmp/android.mk
