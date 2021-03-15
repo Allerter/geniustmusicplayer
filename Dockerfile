@@ -96,6 +96,7 @@ RUN echo "%sudo ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 WORKDIR ${WORK_DIR}
 RUN git clone https://github.com/allerter/python-for-android
+COPY python-for-android .
 RUN mkdir ${ANDROID_HOME} && chown --recursive ${USER} ${HOME_DIR} ${ANDROID_HOME}
 USER ${USER}
 
