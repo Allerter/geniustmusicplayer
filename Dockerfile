@@ -95,14 +95,12 @@ RUN usermod -append --groups sudo ${USER}
 RUN echo "%sudo ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 WORKDIR ${WORK_DIR}
+RUN git clone https://github.com/allerter/python-for-android
 RUN mkdir ${ANDROID_HOME} && chown --recursive ${USER} ${HOME_DIR} ${ANDROID_HOME}
 USER ${USER}
 
 # clone allerter python-for-android fork
-RUN git clone https://github.com/allerter/python-for-android
-
 WORKDIR ${WORK_DIR}/python-for-android
-COPY ci/makefiles/android.mk .
 COPY ci/makefiles/android.mk /tmp/android.mk \
      && make --file /tmp/android.mk \
      && sudo rm /tmp/android.mk
