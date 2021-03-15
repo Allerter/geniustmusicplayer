@@ -21,7 +21,6 @@ This music player uses the recommender at the [GeniusT](https://github.com/aller
 The app doesn't play full songs, only their previews. The app used to be able to download full songs and eventually playing full songs would be an option, but I decided to remove it.
 
 ## Build
-You can read the walk-through here or just use the Docker file (coming soon).
 To build the app, you need to run my python-for-android fork. It has the adjustments needed for the app. The Most important of them is that AndroidX is enabled on it (at the time of writing this, upstream P4A doesn't have it). Other than that the `PythonActivity.java` has been edited to extend the splash screen to 30s (it's manually removed in the app once the UI is loaded) and the `AndroidManifest.tmpl.xml` has been modified to add activities for the OAuth logins.
 Install the [P4A dependencies](https://python-for-android.readthedocs.io/en/latest/quickstart/#installing-dependencies) and then install my P4A fork.
 ```bash
