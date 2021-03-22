@@ -10,24 +10,59 @@ on:
 jobs:
   build:
     name: build
+    env:
+      ANDROID_API_LEVEL: 30
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout files
+    - name: Checkout python-for-android
       uses: actions/checkout@v2
-    # helps with GitHub runner getting out of space
+    # helps with GitHub runner running out of space
     - name: Free disk space
       run: |
-        df -h
         sudo swapoff -a
         sudo rm -f /swapfile
         sudo apt -y clean
-        docker rmi $(docker image ls -aq)
-        df -h
-    - name: Build apk
+    - name: Install python-for-android (P4A) dependencies
       run: |
-        mkdir -p build-bin
-        docker build --tag=p4a --file Dockerfile .
-
+        sudo dpkg --add-architecture i386
+        sudo apt-get update
+        sudo apt-get install -y build-essential ccache git zlib1g-dev python3 python3-dev libncurses5:i386 libstdc++6:i386 zlib1g:i386 openjdk-8-jdk unzip ant ccache autoconf libtool libssl-dev
+    - name: Fork and Install P4A
+      run: |
+        git clone https://github.com/allerter/python-for-android
+        pip install ./python-for-android
+    - name: Download Android SDK and NDK
+      run: make --file python-for-android/ci/makefiles/android.mk
+    - name: Build APK
+      run: |
+        make -f python-for-android/Makefile virutalenv
+        p4a apk \
+            --enable-androidx \
+            --sdk_dir $ANDROID_SDK_HOME \
+            --ndk_dir $ANDROID_NDK_HOME \
+            --android_api 30 \
+            --bootstrap sdl2 \
+            --dist_name geniustmusicplayer \
+            --name="GeniusT Music Player" \
+            --version 0.8 \
+            --package org.allerter.geniustmusicplayer \
+            --requirements python3,kivy==2.0.0,https://github.com/kivymd/KivyMD/archive/c792038.zip,android,sdl2_ttf==2.0.15,requests,urllib3,idna,chardet,oscpy,pillow \
+            --orientation portrait \
+            --window \
+            --private ~/geniustmusicplayer/geniustmusicplayer \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --permission FOREGROUND_SERVICE \
+            --service gtplayer:~/geniustmusicplayer/service.py \
+            --depend "com.android.support:support-compat:28.0.0" \
+            --depend "androidx.legacy:legacy-support-v4:1.0.0" \
+            --depend "com.google.code.gson:gson:2.8.5" \
+            --presplash-lottie ~/geniustmusicplayer/geniustmusicplayer/images/presplash.json \
+            --presplash-color white \
+            --icon ~/geniustmusicplayer/geniustmusicplayer/images/icon.png \
+            --add-aar ~/geniustmusicplayer/geniustmusicplayer/spotify-auth-release-1.2.3.aar \
+            --add-aar ~/geniustmusicplayer/geniustmusicplayer/genius-auth-release-1.2.4.aar \
+            --intent-filters ~/geniustmusicplayer/geniustmusicplayer/intent_filters.xml
     - uses: actions/upload-artifact@v1
       with:
         name: geniustmusicplayer-debug.apk
