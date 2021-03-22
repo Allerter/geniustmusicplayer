@@ -12,7 +12,7 @@ jobs:
     name: build
     env:
       ANDROID_API_LEVEL: 30
-      ANDROID_SDK_BUILD_TOOLS_VERSION: 30.0.5
+      ANDROID_SDK_BUILD_TOOLS_VERSION: 30.0.2
     runs-on: ubuntu-latest
     steps:
     - name: Checkout geniustmusicplayer
