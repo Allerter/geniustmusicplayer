@@ -51,7 +51,7 @@ jobs:
             --requirements python3,kivy==2.0.0,https://github.com/kivymd/KivyMD/archive/c792038.zip,android,sdl2_ttf==2.0.15,requests,urllib3,idna,chardet,oscpy,pillow \
             --orientation portrait \
             --window \
-            --private ./geniustmusicplayer \
+            --private ./geniustmusicplayer/ \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --permission FOREGROUND_SERVICE \
