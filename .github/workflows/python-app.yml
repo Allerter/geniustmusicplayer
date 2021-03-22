@@ -30,12 +30,14 @@ jobs:
     - name: Fork and Install P4A
       run: |
         git clone https://github.com/allerter/python-for-android
-        pip install ./python-for-android
+        pip install -e ./python-for-android
     - name: Download Android SDK and NDK
       run: make --file python-for-android/ci/makefiles/android.mk
     - name: Build APK
+      env:
+        ANDROID_SDK_HOME: $(HOME)/.android/android-sdk
+        ANDROID_NDK_HOME: $(HOME)/.android/android-ndk
       run: |
-        make -f python-for-android/Makefile virutalenv
         p4a apk \
             --enable-androidx \
             --sdk_dir $ANDROID_SDK_HOME \
