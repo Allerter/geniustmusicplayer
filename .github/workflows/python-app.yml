@@ -14,6 +14,8 @@ jobs:
       ANDROID_API_LEVEL: 30
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout geniustmusicplayer
+      uses: actions/checkout@v2
     # helps with GitHub runner running out of space
     - name: Free disk space
       run: |
@@ -32,8 +34,6 @@ jobs:
         pip install -e ./python-for-android
     - name: Download Android SDK and NDK
       run: make --file python-for-android/ci/makefiles/android.mk
-    - name: Checkout geniustmusicplayer
-      uses: actions/checkout@v2
     - name: Build APK
       env:
         ANDROID_SDK_HOME: /usr/local/lib/android/sdk/android-sdk
