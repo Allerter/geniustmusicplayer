@@ -38,8 +38,7 @@ jobs:
         ANDROID_SDK_HOME: $(HOME)/.android/android-sdk
         ANDROID_NDK_HOME: $(HOME)/.android/android-ndk
       run: |
-        ls $HOME
-        ls $HOME/.android
+        ls /usr/local/lib/android/sdk
         p4a apk \
             --enable-androidx \
             --sdk_dir $ANDROID_SDK_HOME \
