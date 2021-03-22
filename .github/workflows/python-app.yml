@@ -20,7 +20,7 @@ jobs:
       uses: actions/checkout@v2
     - name: Current Dir
       run: |
-        pwd
+        ls
         exit 1
     # helps with GitHub runner running out of space
     - name: Free disk space
