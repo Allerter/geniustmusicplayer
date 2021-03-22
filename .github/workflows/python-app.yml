@@ -46,7 +46,8 @@ jobs:
         p4a apk \
             --enable-androidx \
             --ndk_dir $ANDROID_NDK_HOME \
-            --android_api 30 \
+            --ndk_api 21
+            --android_api $ANDROID_API_LEVEL \
             --bootstrap sdl2 \
             --dist_name geniustmusicplayer \
             --name="GeniusT Music Player" \
