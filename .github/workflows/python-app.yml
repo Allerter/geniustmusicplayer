@@ -14,7 +14,7 @@ jobs:
       ANDROID_API_LEVEL: 30
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout python-for-android
+    - name: Checkout geniustmusicplayer
       uses: actions/checkout@v2
     # helps with GitHub runner running out of space
     - name: Free disk space
@@ -39,6 +39,8 @@ jobs:
         ANDROID_SDK_HOME: /usr/local/lib/android/sdk/android-sdk
         ANDROID_NDK_HOME: /usr/local/lib/android/sdk/android-ndk
       run: |
+        ls
+        exit 1
         p4a apk \
             --enable-androidx \
             --sdk_dir $ANDROID_SDK_HOME \
