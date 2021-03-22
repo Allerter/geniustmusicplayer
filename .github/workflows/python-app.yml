@@ -41,6 +41,7 @@ jobs:
         ANDROID_NDK_HOME: /usr/local/lib/android/sdk/android-ndk
       run: |
         cd geniustmusicplayer
+        export CURRENT_DIR=$(echo pwd)
         p4a apk \
             --enable-androidx \
             --ndk_dir $ANDROID_NDK_HOME \
@@ -54,20 +55,20 @@ jobs:
             --requirements python3,kivy==2.0.0,https://github.com/kivymd/KivyMD/archive/c792038.zip,android,sdl2_ttf==2.0.15,requests,urllib3,idna,chardet,oscpy,pillow \
             --orientation portrait \
             --window \
-            --private ./ \
+            --private $CURRENT_DIR \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --permission FOREGROUND_SERVICE \
-            --service gtplayer:./service.py \
+            --service gtplayer:$CURRENT_DIR/service.py \
             --depend "com.android.support:support-compat:28.0.0" \
             --depend "androidx.legacy:legacy-support-v4:1.0.0" \
             --depend "com.google.code.gson:gson:2.8.5" \
-            --presplash-lottie ./images/presplash.json \
+            --presplash-lottie $CURRENT_DIR/images/presplash.json \
             --presplash-color white \
-            --icon ./images/icon.png \
-            --add-aar ./spotify-auth-release-1.2.3.aar \
-            --add-aar ./genius-auth-release-1.2.4.aar \
-            --intent-filters ./intent_filters.xml
+            --icon $CURRENT_DIR/images/icon.png \
+            --add-aar $CURRENT_DIR/spotify-auth-release-1.2.3.aar \
+            --add-aar $CURRENT_DIR/genius-auth-release-1.2.4.aar \
+            --intent-filters $CURRENT_DIR/intent_filters.xml
     - uses: actions/upload-artifact@v1
       with:
         name: geniustmusicplayer-debug.apk
