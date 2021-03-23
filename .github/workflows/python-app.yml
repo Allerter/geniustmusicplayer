@@ -72,26 +72,14 @@ jobs:
             --add-aar $CURRENT_DIR/spotify-auth-release-1.2.3.aar \
             --add-aar $CURRENT_DIR/genius-auth-release-1.2.4.aar \
             --intent-filters $CURRENT_DIR/intent_filters.xml
-    - name: Check APK file
-      run: |
-        ls /home/runner/work/geniustmusicplayer/geniustmusicplayer/
-        filename=/home/runner/work/geniustmusicplayer/geniustmusicplayer/geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk
-        if [ ! $filename ]; then
-            echo "File not found!"
-        else
-          filesize=$(stat -c%s "$filename")
-          echo "File exists! Size: $filesize bytes"
-        fi
-        ls
-        pwd
     - uses: actions/upload-artifact@v1
       with:
         name: build_apk_file
-        path: geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk
+        path: geniustmusicplayer/geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk
     - name: Release
       uses: fnkr/github-action-ghr@v1
       if: startsWith(github.ref, 'refs/tags/')
       env:
         GHR_COMPRESS: zip
-        GHR_PATH: geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk
+        GHR_PATH: geniustmusicplayer/geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk
         GITHUB_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
