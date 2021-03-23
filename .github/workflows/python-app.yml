@@ -74,7 +74,7 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: GeniusTMusicPlayer_debug_$ARCH_$VERSION.apk
-        path: $CURRENT_DIR/geniustmusicplayer__$ARCH-debug-$VERSION-.apk
+        path: geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk
     - name: dir
       run: pwd
     - name: Release
