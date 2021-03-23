@@ -18,11 +18,6 @@ jobs:
     steps:
     - name: Checkout geniustmusicplayer
       uses: actions/checkout@v2
-    - name: dir content
-      run: |
-        cd geniustmusicplayer
-        ls
-        exit 1
     # helps with GitHub runner running out of space
     - name: Free disk space
       run: |
