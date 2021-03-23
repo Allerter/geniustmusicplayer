@@ -74,6 +74,7 @@ jobs:
             --intent-filters $CURRENT_DIR/intent_filters.xml
     - name: Check APK file
       run: |
+        ls /home/runner/work/geniustmusicplayer/geniustmusicplayer/
         filename=/home/runner/work/geniustmusicplayer/geniustmusicplayer/geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk
         if [ ! $filename ]; then
             echo "File not found!"
