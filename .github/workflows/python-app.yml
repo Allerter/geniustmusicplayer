@@ -71,6 +71,7 @@ jobs:
             --add-aar $CURRENT_DIR/spotify-auth-release-1.2.3.aar \
             --add-aar $CURRENT_DIR/genius-auth-release-1.2.4.aar \
             --intent-filters $CURRENT_DIR/intent_filters.xml
+        ls
     - uses: actions/upload-artifact@v1
       with:
         name: GeniusTMusicPlayer_debug_$ARCH_$VERSION.apk
