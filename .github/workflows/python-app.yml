@@ -73,13 +73,18 @@ jobs:
             --intent-filters $CURRENT_DIR/intent_filters.xml
     - name: Check APK file
       run: |
-        if [ ! /home/runner/work/geniustmusicplayer/geniustmusicplayer/geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk ]; then
+        filename=/home/runner/work/geniustmusicplayer/geniustmusicplayer/geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk
+        if [ ! $filename ]; then
             echo "File not found!"
+        else
+          filesize=$(stat -c%s "$filename")
+          echo "File exists! Size: $filesize bytes"
         fi
+        ls
         pwd
     - uses: actions/upload-artifact@v1
       with:
-        name: GeniusTMusicPlayer Debug ${{ env.ARCH }} ${{ env.VERSION }}.apk
+        name: build_apk_file
         path: geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk
     - name: Release
       uses: fnkr/github-action-ghr@v1
