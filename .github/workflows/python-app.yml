@@ -46,6 +46,7 @@ jobs:
         export CURRENT_DIR=$(echo | pwd)
         p4a apk \
             --enable-androidx \
+            --arch ${{ env.ARCH }} \
             --ndk_dir ${{ env.ANDROID_NDK_HOME }} \
             --ndk-api 21 \
             --android_api ${{ env.ANDROID_API_LEVEL }} \
