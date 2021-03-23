@@ -82,5 +82,5 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       env:
         GHR_COMPRESS: zip
-        GHR_PATH: $CURRENT_DIR/geniustmusicplayer__$ARCH-debug-$VERSION-.apk
+        GHR_PATH: geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk
         GITHUB_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
