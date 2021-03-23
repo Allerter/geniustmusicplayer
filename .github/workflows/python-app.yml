@@ -47,6 +47,8 @@ jobs:
       run: |
         cd geniustmusicplayer
         export CURRENT_DIR=$(echo pwd)
+        ls $CURRENT_DIR
+        exit 1
         p4a apk \
             --enable-androidx \
             --ndk_dir $ANDROID_NDK_HOME \
