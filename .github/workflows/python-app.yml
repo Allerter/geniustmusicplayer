@@ -18,6 +18,7 @@ jobs:
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64/
       VERSION: 0.81
       ARCH: armeabi-v7a
+      PATH: ~/.local/bin:${{ env.PATH }}
     runs-on: ubuntu-latest
     steps:
     - name: Checkout geniustmusicplayer
@@ -42,7 +43,8 @@ jobs:
       run: make --file python-for-android/ci/makefiles/android.mk
     - name: test P4A
       run: |
-        pip show python-for-android
+        pwd ~
+        ls ~/.local/bin
     - name: Build APK
       env:
         ANDROID_NDK_HOME: /usr/local/lib/android/sdk/android-ndk
