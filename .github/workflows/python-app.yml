@@ -37,12 +37,9 @@ jobs:
     - name: Fork and Install allerter/P4A
       run: |
         git clone https://github.com/allerter/python-for-android
-        pip install -e ./python-for-android
-        echo "~/.local/bin" >> $GITHUB_PATH
+        sudo pip install -e ./python-for-android
     - name: test path
       run: |
-        echo "$PATH"
-        echo "$GITHUB_PATH"
         which p4a
     - name: Download Android SDK and NDK
       run: make --file python-for-android/ci/makefiles/android.mk
