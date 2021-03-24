@@ -18,7 +18,6 @@ jobs:
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64/
       VERSION: 0.81
       ARCH: armeabi-v7a
-      PATH: ~/.local/bin:${{ env.PATH }}
     runs-on: ubuntu-latest
     steps:
     - name: Checkout geniustmusicplayer
@@ -39,10 +38,12 @@ jobs:
       run: |
         git clone https://github.com/allerter/python-for-android
         pip install -e ./python-for-android
+        echo "{PATH}={~/.local/bin:$PATH}" >> $GITHUB_ENV
     - name: Download Android SDK and NDK
       run: make --file python-for-android/ci/makefiles/android.mk
     - name: test P4A
       run: |
+        echo "$PATH"
         pwd ~
         ls ~/.local/bin
     - name: Build APK
