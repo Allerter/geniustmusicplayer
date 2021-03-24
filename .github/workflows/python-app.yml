@@ -43,7 +43,6 @@ jobs:
     - name: test P4A
       run: |
         pip show python-for-android
-        which p4a
     - name: Build APK
       env:
         ANDROID_NDK_HOME: /usr/local/lib/android/sdk/android-ndk
