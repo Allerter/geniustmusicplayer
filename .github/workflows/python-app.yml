@@ -37,7 +37,10 @@ jobs:
     - name: Fork and Install allerter/P4A
       run: |
         git clone https://github.com/allerter/python-for-android
-        pip install -e ./python-for-android
+        sudo pip install -e ./python-for-android
+    - name: test path
+      run: |
+        which p4a
     - name: Download Android SDK and NDK
       run: make --file python-for-android/ci/makefiles/android.mk
     - name: Build APK
@@ -84,4 +87,4 @@ jobs:
       env:
         GHR_COMPRESS: zip
         GHR_PATH: geniustmusicplayer/geniustmusicplayer__${{ env.ARCH }}-debug-${{ env.VERSION }}-.apk
-        GITHUB_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
