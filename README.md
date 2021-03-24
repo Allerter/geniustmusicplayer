@@ -42,7 +42,6 @@ Now you can run the following command to compile the APK. Just replace `--ndk_di
 ```bash
 export ANDROID_API_LEVEL=30
 export ARCH=armeabi-v7a
-export SDK_DIR={my_sdk_dir}
 export NDK_DIR={my_ndk_dir}
 ```
 Build command:
