@@ -21,9 +21,16 @@ This music player uses the recommender at the [GeniusT](https://github.com/aller
 The app doesn't play full songs, only their previews. The app used to be able to download full songs and eventually playing full songs would be an option, but I decided to remove it.
 
 ## Build
-To build the app, you need to run my python-for-android fork. It has the adjustments needed for the app. The Most important of them is that AndroidX is enabled on it (at the time of writing this, upstream P4A doesn't have it). Other than that the `PythonActivity.java` has been edited to extend the splash screen to 30s (it's manually removed in the app once the UI is loaded) and the `AndroidManifest.tmpl.xml` has been modified to add activities for the OAuth logins.
+You can read the guide below or check out the [GitHub Action](https://github.com/allerter/geniustmusicplayer/blob/main/.github/workflows/python-app.yml) that builds the APK on every push.
+To build the app, you need to run my python-for-android fork for three reasons:
+ - The Most important of them is that AndroidX is enabled on it (at the time of writing this, upstream P4A doesn't have it).
+ - `PythonActivity.java` has been edited to extend the splash screen to 30s (it's manually removed in the app once the UI is loaded)
+ - `AndroidManifest.tmpl.xml` has been edited to add activities for the OAuth logins.
+
 Install the [P4A dependencies](https://python-for-android.readthedocs.io/en/latest/quickstart/#installing-dependencies) and then install my P4A fork.
 ```bash
+# Feel free to use a higher Cython version if it works
+pip install Cython==0.29.22
 pip install git+https://github.com/Allerter/python-for-android.git
 ```
 Then fork this repo:
@@ -31,22 +38,24 @@ Then fork this repo:
 git clone https://github.com/allerter/geniustmusicplayer ~/geniustmusicplayer
 cd ~/geniustmusicplayer
 ```
-Now you can run the following command to compile the APK. Just replace `--sdk_dir` and `--ndk_dir` with your SDK and NDK paths. P4A usually recommends `ndk-r19c` for the SDK and you'll need the one for API 30. Although you can just change the `--android_api` and compile for any API >= 21 that you want.
+Now you can run the following command to compile the APK. Just replace `--ndk_dir` with your NDK path. P4A usually recommends `ndk-r19c` for the SDK and you'll need the one for API 30. Although you can just change the `--android_api` and compile for any API >= 21 that you want.
 ```bash
-export SDK_DIR={my_sdk_dir}
+export ANDROID_API_LEVEL=30
+export VERSION=0.81
+export ARCH=armeabi-v7a
 export NDK_DIR={my_ndk_dir}
 ```
 Build command:
 ```bash
 p4a apk \
     --enable-androidx \
-    --sdk_dir $SDK_DIR \
+    --arch $ARCH \
     --ndk_dir $NDK_DIR \
-    --android_api 30 \
+    --android_api $ANDROID_API_LEVEL \
     --bootstrap sdl2 \
     --dist_name geniustmusicplayer \
     --name="GeniusT Music Player" \
-    --version 0.8 \
+    --version $VERSION \
     --package org.allerter.geniustmusicplayer \
     --requirements python3,kivy==2.0.0,https://github.com/kivymd/KivyMD/archive/c792038.zip,android,sdl2_ttf==2.0.15,requests,urllib3,idna,chardet,oscpy,pillow \
     --orientation portrait \
@@ -71,6 +80,7 @@ Note: The Spotify auth AAR is from the [Spotify Authentication Library](https://
 
 ## Missing Features/Issues
 - Playing songs on loop
+- Canceling retries for requests after 3 consecutive failures. Right now the app will infinitely retry to make network requests.
 - Changing playlist length. Currently all new playlists only have 5 songs.
 - Making the app respond to notification controls. The app shows a notification with media controls, but the media controls do nothing.
 Currently the app will just display a toast saying that `Spotify isn't installed on this device`.
