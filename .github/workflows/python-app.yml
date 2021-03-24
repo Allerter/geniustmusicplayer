@@ -14,7 +14,7 @@ jobs:
       ANDROID_API_LEVEL: 30
       ANDROID_SDK_BUILD_TOOLS_VERSION: 30.0.2
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64/
-      VERSION: 0.8
+      VERSION: 0.81
       ARCH: armeabi-v7a
     runs-on: ubuntu-latest
     steps:

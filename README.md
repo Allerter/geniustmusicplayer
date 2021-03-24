@@ -41,6 +41,7 @@ cd ~/geniustmusicplayer
 Now you can run the following command to compile the APK. Just replace `--ndk_dir` with your NDK path. P4A usually recommends `ndk-r19c` for the SDK and you'll need the one for API 30. Although you can just change the `--android_api` and compile for any API >= 21 that you want.
 ```bash
 export ANDROID_API_LEVEL=30
+export VERSION=0.81
 export ARCH=armeabi-v7a
 export NDK_DIR={my_ndk_dir}
 ```
@@ -54,7 +55,7 @@ p4a apk \
     --bootstrap sdl2 \
     --dist_name geniustmusicplayer \
     --name="GeniusT Music Player" \
-    --version 0.8 \
+    --version $VERSION \
     --package org.allerter.geniustmusicplayer \
     --requirements python3,kivy==2.0.0,https://github.com/kivymd/KivyMD/archive/c792038.zip,android,sdl2_ttf==2.0.15,requests,urllib3,idna,chardet,oscpy,pillow \
     --orientation portrait \
