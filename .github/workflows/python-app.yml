@@ -43,9 +43,7 @@ jobs:
     - name: test P4A
       run: |
         pip list
-        echo("-------")
         pip show python-for-android
-        echo("-------")
         which p4a
     - name: Build APK
       env:
