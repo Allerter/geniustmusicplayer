@@ -38,7 +38,12 @@ jobs:
       run: |
         git clone https://github.com/allerter/python-for-android
         pip install -e ./python-for-android
-        echo "{PATH}={~/.local/bin:$PATH}" >> $GITHUB_ENV
+        echo "~/.local/bin" >> $GITHUB_PATH
+    - name: test path
+      run: |
+        echo "$PATH"
+        echo "$GITHUB_PATH"
+        which p4a
     - name: Download Android SDK and NDK
       run: make --file python-for-android/ci/makefiles/android.mk
     - name: Build APK
