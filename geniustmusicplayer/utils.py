@@ -9,7 +9,7 @@ class Song:
     def __init__(self, id, name, artist, genres=None,
                  id_spotify=None, isrc=None, cover_art=None,
                  preview_url=None, download_url=None, preview_file=None,
-                 download_file=None, date_favorited=None,):
+                 download_file=None, date_favorited=None, **kwargs):
         self.id = id
         self.name = name
         self.artist = artist

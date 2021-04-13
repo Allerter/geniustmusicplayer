@@ -32,11 +32,9 @@ class Response:
         Logger.debug('%s status code', req.resp_status)
         if self.status_code == 200:
             if req.url.startswith(Sender.API_ROOT + 'recommendations'):
-                self.response = [Song(**x) for x in result['response']['tracks']]
-            elif not req.url.startswith(Sender.API_ROOT):
-                self.response = result
+                self.response = [Song(**x) for x in result['recommendations']]
             else:
-                self.response = result['response']
+                self.response = result
         else:
             Logger.debug('Failed request with payload: %s', result)
 
@@ -56,7 +54,13 @@ class Response:
 class Sender:
     """Sends HTTP requests."""
     # Create a persistent requests connection
-    API_ROOT = 'https://geniust.herokuapp.com/api/'
+    API_ROOT = 'https://geniust-recommender.herokuapp.com/'
+    AUTH_HEADER = {
+        "Authorization": ("Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9."
+                          "eyJ1c2VyIjoiZ2VuaXVzdG11c2ljcGxheWVyIiwiZ3Jvd"
+                          "XAiOiJkZWZhdWx0In0.IDXKFocZM4JpDzE3xsO-M-iCOk"
+                          "4LhAZjr7IxR0OJz4U")
+    }
 
     def __init__(
         self,
@@ -90,13 +94,19 @@ class Sender:
         """Makes a request to Genius."""
         if api:
             url = self.API_ROOT + path
+            if "headers" in kwargs:
+                headers = kwargs["headers"]
+                headers.update(self.AUTH_HEADER)
+            else:
+                headers = self.AUTH_HEADER
         else:
+            headers = kwargs.get("headers")
             url = path
 
         params = params if params else {}
         use_requests = use_requests or trigger is None
         if use_requests:
-            req = self.session.get(url, params=params)
+            req = self.session.get(url, headers=headers, params=params)
             response = req.content if raw else req.json()
             Logger.debug("RESPONSE: %s - URL %s - Payload: %s",
                          req.status_code,
@@ -117,8 +127,13 @@ class Sender:
             new_url = parse.urlunparse(url_parse)
 
             # Make the request
+            if headers is not None:
+                req_headers = self.headers.copy()
+                req_headers.update(headers)
+            else:
+                req_headers = self.headers
             req = UrlRequest(new_url,
-                             req_headers=self.headers,
+                             req_headers=req_headers,
                              timeout=timeout or self.timeout,
                              debug=True,
                              verify=False,
@@ -183,7 +198,7 @@ class API():
         if isinstance(res, Response):
             return res
         else:
-            return [Song(**x) for x in res['response']['tracks']]
+            return [Song(**x) for x in res['recommendations']]
 
     def search_artists(
         self,
@@ -191,15 +206,15 @@ class API():
         trigger=None,
         async_request: bool = True
     ) -> List[str]:
-        params = {'artist': artist}
+        params = {'q': artist}
         res = self.sender.make_request(
-            'search',
+            'search/artists',
             params=params,
             trigger=trigger,
             async_request=async_request
         )
 
-        return res
+        return [x["name"] for x in res["hits"]]
 
     def download_preview(
         self,
@@ -226,10 +241,11 @@ class API():
     ) -> List[str]:
         params = {f'{platform}_code': code}
         res = self.sender.make_request(
-            'preferences',
+            'https://geniust.herokuapp.com/preferences',
             params=params,
             trigger=trigger,
-            async_request=async_request
+            async_request=async_request,
+            api=False
         )
 
-        return res
+        return res["preferences"]
