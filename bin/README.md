@@ -1,0 +1,1 @@
+The latest APK bundled in a ZIP file is available on the [releases page](https://github.com/allerter/geniustmusicplayer/releases). After pushing a Git tag the APK is automatically compiled by the GitHub workflow and is added to the tag's files in a release. The APK is also compiled on every push and saved as the workflow's artifact. But those artifacts are removed after a while.
